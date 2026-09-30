@@ -136,25 +136,29 @@
   /* ===== MOBIL: hracia plocha + horná lišta, ostatné až po ťuknutí na hráča ===== */
   @media (max-width: 700px) {
     :root { --bw: min(calc(100vw - 28px), 360px, max(150px, calc((100vh - 235px) / 2))); }
-    body { align-items: flex-start; }
-    #game.on { width: 100%; max-width: 440px; }
+    body { align-items: stretch; }
+    #game.on { display: flex; flex-direction: column; width: 100%; max-width: 440px; }
     #game.glass { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
     .brand { display: none; }
     body { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
-    #hud { grid-template-columns: 1.25fr 1fr .8fr; gap: 6px; margin: 0 0 8px; }
-    .card { padding: 6px 10px; border-radius: 14px; }
-    .lbl { margin-bottom: 0; font-size: .66rem; }
-    .sub { font-size: .72rem; }
-    .pname { font-size: .95rem; }
-    .big { font-size: 1.3rem; }
+    #hud { grid-template-columns: 1.3fr 1.1fr .7fr; gap: 6px; margin: 0 0 6px; }
+    .card { padding: 5px 10px; border-radius: 12px; }
+    #hud .lbl { display: none; }
+    .sub { font-size: .7rem; line-height: 1.3; }
+    .pname { font-size: .92rem; line-height: 1.3; }
+    .big { font-size: 1.2rem; line-height: 1.25; }
+    #pScore .big::before { content: "Skóre "; font-size: .6rem; font-weight: 400; color: var(--muted); }
+    #pPlayer .sub { white-space: nowrap; }
     .chev { display: inline; }
     #pPlayer { cursor: pointer; }
-    #pNext canvas { width: 40px; height: 40px; margin-top: 0; }
-    #main { display: block; }
+    #pNext { display: flex; align-items: center; justify-content: center; }
+    #pNext canvas { width: 36px; height: 36px; margin: 0; }
+    #main { display: flex; flex-direction: column; flex: 1; }
+    #left { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     body.isAdmin #pPlayer .adminBtn { display: none; }
     body.isAdmin #pHelp .adminBtn { display: inline-block; }
-    #touch { width: 100%; margin-top: 10px; gap: 8px; }
-    #touch button { padding: 0; height: 56px; }
+    #touch { width: 100%; margin-top: 6px; gap: 8px; }
+    #touch button { padding: 0; height: 54px; }
     .scroll { max-height: none; }
     .side {
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 86vh; overflow: auto;
@@ -196,8 +200,8 @@
   <!-- Horná lišta: hráč, skóre, ďalšia kocka -->
   <div id="hud">
     <div class="card" id="pPlayer">
-      <div class="lbl">Hráč <span class="chev">▾</span></div>
-      <div class="pname" id="player"></div>
+      <div class="lbl">Hráč</div>
+      <div class="pname"><span id="player"></span><span class="chev">▾</span></div>
       <div class="sub">Najlepšie: <span id="best">0</span></div>
       <button class="adminBtn sm ghost">👥 Správa používateľov</button>
     </div>
@@ -255,6 +259,7 @@
           <button class="adminBtn sm ghost">👥 Správa používateľov</button>
           <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
         </div>
+        <div class="sub" style="margin-top:8px">Verzia 7</div>
       </div>
     </div>
   </div>

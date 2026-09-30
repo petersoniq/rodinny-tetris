@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#14161c">
+<meta name="theme-color" content="#0b0e17">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Tetris">
@@ -13,109 +13,155 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Rodinný Tetris</title>
 <style>
-  /* ===== FARBY A ZÁKLAD (tu si môžeš meniť vzhľad) ===== */
+  /* ===== FARBY A ZÁKLAD ===== */
   :root {
-    --bg: #14161c;        /* pozadie stránky */
-    --panel: #1e222b;     /* pozadie panelov */
-    --line: #2d3340;      /* orámovanie */
-    --text: #e8eaf0;      /* hlavný text */
-    --muted: #8b93a5;     /* tlmený text */
-    --accent: #ffd23f;    /* zvýraznenie */
+    --bg: #0b0e17; --text: #eef0f6; --muted: #8e97ad;
+    --gold: #E9C46A; --accent: #E9C46A;
+    --line: rgba(255,255,255,.12); --glass: rgba(255,255,255,.06);
+    --bw: 300px;                       /* šírka hracej plochy */
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
-    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
-    display: flex; align-items: center; justify-content: center; padding: 16px;
-  }
-  h1 { margin: 0 0 12px; font-size: 1.6rem; letter-spacing: 1px; }
-  h2 { margin: 0 0 8px; font-size: 1rem; color: var(--muted); font-weight: 600; }
-  .panel { background: var(--panel); border: 2px solid var(--line); border-radius: 8px; padding: 14px; }
-  button {
-    background: var(--accent); color: #14161c; border: 0; border-radius: 6px;
-    padding: 10px 18px; font-size: 1rem; font-weight: 700; cursor: pointer;
-  }
-  button:hover { filter: brightness(1.1); }
-  button:focus-visible, input:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-  input {
-    width: 100%; padding: 10px; font-size: 1rem; border-radius: 6px;
-    border: 2px solid var(--line); background: var(--bg); color: var(--text); margin-bottom: 12px;
-  }
-
-  /* ===== PRIHLASOVACIA OBRAZOVKA ===== */
-  #login { width: 100%; max-width: 380px; text-align: center; }
-  #loginMsg { min-height: 1.4em; color: var(--accent); margin-top: 10px; }
-  #knownNames { color: var(--muted); font-size: .9rem; margin-top: 12px; }
-
-  /* ===== HERNÁ OBRAZOVKA ===== */
-  #game { display: none; gap: 16px; flex-wrap: wrap; justify-content: center; align-items: flex-start; }
-  canvas#board { background: #0b0c10; border: 2px solid var(--line); border-radius: 4px; max-width: 100%; }
-  .side { width: 220px; display: flex; flex-direction: column; gap: 12px; }
-  .big { font-size: 1.7rem; font-weight: 700; color: var(--accent); }
-  #player { font-weight: 700; font-size: 1.15rem; }
-  #board-wrap { position: relative; }
-  #overlay {
-    position: absolute; inset: 0; display: none; flex-direction: column; gap: 10px;
-    align-items: center; justify-content: center; text-align: center;
-    background: rgba(11,12,16,.85); font-size: 1.3rem; font-weight: 700;
-  }
-  table { width: 100%; border-collapse: collapse; font-size: .95rem; }
-  td { padding: 4px 2px; border-bottom: 1px solid var(--line); }
-  td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
-  tr.me td { color: var(--accent); font-weight: 700; }
-  .help { color: var(--muted); font-size: .8rem; line-height: 1.5; }
-  /* Dotykové tlačidlá pre mobil */
-  #touch { display: none; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; margin-top: 8px; }
-  #touch button { padding: 12px 0; }
-  @media (pointer: coarse) { #touch { display: grid; } }
-
-  /* ===== PRIHLÁSENIE (záložky) A ADMIN ===== */
-  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-  .tab { flex: 1; background: var(--bg); color: var(--muted); border: 2px solid var(--line); }
-  .tab.on { background: var(--accent); color: #14161c; border-color: var(--accent); }
-  #admin { position: fixed; inset: 0; background: rgba(11,12,16,.94); display: none; overflow: auto; padding: 16px; z-index: 10; }
-  #admin .panel { max-width: 820px; margin: 0 auto; }
-  .adm td { text-align: left; vertical-align: middle; }
-  .adm td:last-child { text-align: left; }
-  .sm { padding: 4px 8px; font-size: .78rem; margin: 2px 2px 2px 0; }
-  .danger { background: #ff4d5e; color: #fff; }
-  .ghost { background: var(--line); color: var(--text); }
-
-  /* ===== MOBIL A INŠTALOVATEĽNÁ APLIKÁCIA ===== */
   html, body { overscroll-behavior: none; }
-  body { -webkit-tap-highlight-color: transparent; touch-action: manipulation;
-         padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
-  #game.on { display: flex; }
-  canvas#board { width: min(300px, 100%); height: auto; aspect-ratio: 1 / 2; touch-action: none; display: block; margin: 0 auto; }
-  #touch { touch-action: manipulation; }
-  #touch button { font-size: 1.3rem; user-select: none; -webkit-user-select: none; }
-  .tc { display: none; }
+  body {
+    margin: 0; min-height: 100vh; min-height: 100dvh; color: var(--text); color-scheme: dark;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(900px 500px at 15% -5%, #1d2748 0%, transparent 60%),
+                radial-gradient(800px 500px at 100% 100%, #2b2040 0%, transparent 55%), var(--bg);
+    background-attachment: fixed;
+    display: flex; align-items: center; justify-content: center;
+    padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  }
+  /* Sklenený panel */
+  .glass, .panel, .card {
+    background: var(--glass); border: 1px solid var(--line); border-radius: 16px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  .card { padding: 12px 14px; }
+  .panel { padding: 14px; }
+  .glass { padding: 18px; border-radius: 22px; }
+  h1 { margin: 0 0 12px; font-size: 1.4rem; }
+  h2 { margin: 0 0 8px; font-size: .95rem; font-weight: 600; }
+  .logo { font-size: 1.7rem; font-weight: 300; letter-spacing: .5em; padding-left: .5em; }
+  .tag { font-size: .66rem; letter-spacing: .32em; color: var(--muted); margin: 2px 0 14px; }
+  .lbl { font-size: .72rem; color: var(--muted); margin-bottom: 4px; }
+  .sub, .help { color: var(--muted); font-size: .8rem; line-height: 1.5; }
+
+  /* Tlačidlá a polia */
+  button {
+    background: linear-gradient(180deg, #f3d27f, #dfa845); color: #2a1d00; border: 0; border-radius: 12px;
+    padding: 11px 18px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  button:hover { filter: brightness(1.07); }
+  button:focus-visible, input:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  input {
+    width: 100%; padding: 11px 12px; font-size: 1rem; border-radius: 12px; margin-bottom: 10px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.07); color: var(--text); font-family: inherit;
+  }
+  .sm { padding: 5px 10px; font-size: .78rem; margin: 2px 3px 2px 0; border-radius: 9px; }
+  .ghost { background: rgba(255,255,255,.1); color: var(--text); border: 1px solid var(--line); }
+  .danger { background: #d64545; color: #fff; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab { flex: 1; background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--line); }
+  .tab.on { background: linear-gradient(180deg, #f3d27f, #dfa845); color: #2a1d00; border-color: transparent; }
+
+  /* Prihlásenie */
+  #login { width: 100%; max-width: 380px; text-align: center; }
+  #loginMsg { min-height: 1.4em; color: var(--gold); margin-top: 10px; font-size: .9rem; }
   .inst { margin-top: 12px; font-size: .85rem; color: var(--muted); }
-  .installBtn { display: none; }
-  .iosHint { display: none; }
-  .ucard { border: 1px solid var(--line); border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+  .installBtn, .iosHint { display: none; }
+
+  /* Hra: rám, horná lišta, hlavná časť */
+  #game { display: none; width: min(680px, 100%); }
+  #game.on { display: block; }
+  #hud { display: grid; grid-template-columns: 1.15fr 1.15fr .9fr; gap: 12px; margin: 12px 0 16px; }
+  #main { display: grid; grid-template-columns: var(--bw) 1fr; gap: 16px; align-items: start; }
+  .pname { font-weight: 700; font-size: 1.15rem; overflow-wrap: anywhere; }
+  .big { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+  .chev { display: none; float: right; color: var(--muted); }
+  #pNext canvas { display: block; margin: 2px auto 0; }
+
+  #board-wrap { position: relative; width: var(--bw); margin: 0 auto; }
+  canvas#board {
+    width: var(--bw); height: auto; aspect-ratio: 1 / 2; display: block; touch-action: none;
+    background: rgba(6,8,15,.6); border: 1px solid var(--line); border-radius: 14px;
+  }
+  #overlay {
+    position: absolute; inset: 0; display: none; flex-direction: column; gap: 14px; align-items: center; justify-content: center;
+    text-align: center; padding: 16px; background: rgba(8,10,18,.74); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    border-radius: 14px; font-size: 1.25rem; font-weight: 700;
+  }
+  .ovsub { font-size: .9rem; font-weight: 500; color: var(--muted); margin-top: 6px; }
+
+  /* Bočný stĺpec (na mobile sa mení na spodný panel) */
+  .side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .sheetHead { display: none; }
+  .scroll { max-height: 250px; overflow: auto; }
+  .quote { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); text-align: center; color: var(--muted); font-size: .85rem; font-style: italic; }
+  #backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 25; }
+  body.sheetOpen #backdrop { display: block; }
+
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  td { padding: 7px 8px; }
+  td:first-child { width: 30px; color: var(--muted); }
+  td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+  tr.me td { background: rgba(233,196,106,.16); color: #fff; }
+  tr.me td:first-child { border-radius: 10px 0 0 10px; color: var(--gold); }
+  tr.me td:last-child { border-radius: 0 10px 10px 0; }
+
+  /* Ovládacie tlačidlá (mobil) */
+  #touch { display: none; grid-template-columns: repeat(6, 1fr); gap: 8px; width: var(--bw); margin: 12px auto 0; touch-action: manipulation; }
+  #touch button {
+    padding: 14px 0; font-size: 1.25rem; user-select: none; -webkit-user-select: none; color: #fff;
+    background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)); border: 1px solid rgba(255,255,255,.16);
+    border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.35);
+  }
+  #touch button[data-a="pause"] { background: linear-gradient(180deg, #f7c35a, #e69a2e); color: #3a2500; border-color: transparent; box-shadow: 0 0 18px rgba(240,140,74,.55); }
+  @media (pointer: coarse), (max-width: 700px) { #touch { display: grid; } }
+  .tc { display: none; }
+  @media (pointer: coarse) { .kb { display: none; } .tc { display: inline; } }
+
+  /* Admin tlačidlá: na počítači v karte Hráč, na mobile v paneli účtu */
+  .adminBtn { display: none; }
+  body.isAdmin #pPlayer .adminBtn { display: inline-block; margin-top: 8px; }
+  body.isAdmin #pHelp .adminBtn { display: none; }
+
+  /* ===== ADMIN PANEL ===== */
+  #admin { position: fixed; inset: 0; background: rgba(6,8,14,.92); display: none; overflow: auto; padding: 16px; z-index: 40; }
+  #admin .panel { max-width: 820px; margin: 0 auto; }
+  .ucard { border: 1px solid var(--line); border-radius: 12px; padding: 10px; margin-bottom: 8px; background: rgba(255,255,255,.04); }
   .uhead { font-weight: 700; margin-bottom: 2px; }
   .ucard .help div { padding: 2px 0; }
-  @media (pointer: coarse) { .kb { display: none; } .tc { display: inline; } }
+
+  /* ===== MOBIL: hracia plocha + horná lišta, ostatné až po ťuknutí na hráča ===== */
   @media (max-width: 700px) {
+    :root { --bw: min(calc(100vw - 28px), 360px, max(150px, calc((100vh - 235px) / 2))); }
     body { align-items: flex-start; }
-    h1 { font-size: 1.3rem; }
-    #game.on { display: grid; grid-template-columns: 1fr 1fr 92px; gap: 8px; width: 100%; max-width: 440px; }
-    .side { display: contents; }
-    #left { grid-column: 1 / -1; grid-row: 2; }
-    #pPlayer { grid-column: 1; grid-row: 1; }
-    #pScore { grid-column: 2; grid-row: 1; }
-    #pNext { grid-column: 3; grid-row: 1; }
-    #pMy, #pLb, #pHelp { grid-column: 1 / -1; }
-    .panel { padding: 8px 10px; }
-    h2 { font-size: .8rem; margin-bottom: 4px; }
-    .big { font-size: 1.35rem; }
-    #player { font-size: 1rem; overflow-wrap: anywhere; }
-    #next { width: 64px; height: 64px; display: block; margin: 0 auto; }
-    canvas#board { width: min(100%, max(150px, calc((100vh - 250px) / 2))); width: min(100%, max(150px, calc((100dvh - 250px) / 2))); }
-    #touch { grid-template-columns: repeat(6, 1fr); margin-top: 8px; }
-    #touch button { padding: 14px 0; }
-    #adminBtn { padding: 4px 6px; }
+    #game.on { width: 100%; max-width: 440px; }
+    #game.glass { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
+    .brand { display: none; }
+    #hud { grid-template-columns: 1.25fr 1fr .8fr; gap: 8px; margin: 0 0 12px; }
+    .card { padding: 9px 10px; border-radius: 14px; }
+    .pname { font-size: 1rem; }
+    .big { font-size: 1.45rem; }
+    .chev { display: inline; }
+    #pPlayer { cursor: pointer; }
+    #pNext canvas { width: 56px; height: 56px; }
+    #main { display: block; }
+    body.isAdmin #pPlayer .adminBtn { display: none; }
+    body.isAdmin #pHelp .adminBtn { display: inline-block; }
+    .scroll { max-height: none; }
+    .side {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 86vh; overflow: auto;
+      padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); background: rgba(16,20,32,.97);
+      border-top: 1px solid rgba(255,255,255,.14); border-radius: 22px 22px 0 0;
+      transform: translateY(110%); visibility: hidden; transition: transform .25s ease, visibility 0s .25s;
+    }
+    .side.open { transform: none; visibility: visible; transition: transform .25s ease, visibility 0s; }
+    .sheetHead { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  }
+  @supports (height: 100dvh) {
+    @media (max-width: 700px) { :root { --bw: min(calc(100vw - 28px), 360px, max(150px, calc((100dvh - 235px) / 2))); } }
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -123,8 +169,9 @@
 <body>
 
 <!-- ===== 1. PRIHLÁSENIE / REGISTRÁCIA ===== -->
-<div id="login" class="panel">
-  <h1>Rodinný Tetris</h1>
+<div id="login" class="glass">
+  <div class="logo">TETRIS</div>
+  <div class="tag">PLAY TOGETHER</div>
   <div class="tabs">
     <button id="tabLogin" class="tab on" type="button">Prihlásenie</button>
     <button id="tabReg" class="tab" type="button">Registrácia</button>
@@ -138,58 +185,76 @@
 </div>
 
 <!-- ===== 2. HRA ===== -->
-<div id="game">
-  <div id="left">
-    <div id="board-wrap">
-      <canvas id="board" width="300" height="600"></canvas>
-      <div id="overlay">
-        <div id="overlayText"></div>
-        <button id="restartBtn">Hrať znova</button>
-      </div>
+<div id="game" class="glass">
+  <div class="brand"><div class="logo" style="font-size:1.3rem;padding-left:0">TETRIS</div><div class="tag" style="margin-bottom:0">PLAY TOGETHER</div></div>
+
+  <!-- Horná lišta: hráč, skóre, ďalšia kocka -->
+  <div id="hud">
+    <div class="card" id="pPlayer">
+      <div class="lbl">Hráč <span class="chev">▾</span></div>
+      <div class="pname" id="player"></div>
+      <div class="sub">Najlepšie: <span id="best">0</span></div>
+      <button class="adminBtn sm ghost">👥 Správa používateľov</button>
     </div>
-    <div id="touch">
-      <button data-a="left" aria-label="Doľava">◀</button>
-      <button data-a="rotate" aria-label="Otočiť">⟳</button>
-      <button data-a="right" aria-label="Doprava">▶</button>
-      <button data-a="down" aria-label="Rýchlejšie dole">▼</button>
-      <button data-a="drop" aria-label="Pád na dno">⤓</button>
-      <button data-a="pause" aria-label="Pauza">⏸</button>
+    <div class="card" id="pScore">
+      <div class="lbl">Skóre</div>
+      <div class="big" id="score">0</div>
+      <div class="sub">Riadky <span id="lines">0</span> · Úr. <span id="level">1</span></div>
+    </div>
+    <div class="card" id="pNext">
+      <div class="lbl">Ďalšia</div>
+      <canvas id="next" width="120" height="120"></canvas>
     </div>
   </div>
 
-  <div class="side">
-    <div class="panel" id="pPlayer">
-      <h2>Hráč</h2>
-      <div id="player"></div>
-      <div class="help">Najlepšie: <span id="best">0</span></div>
-      <button id="adminBtn" class="sm" style="display:none;margin-top:8px">Správa používateľov</button>
+  <div id="main">
+    <div id="left">
+      <div id="board-wrap">
+        <canvas id="board" width="300" height="600"></canvas>
+        <div id="overlay">
+          <div id="overlayText"></div>
+          <button id="restartBtn">Spustiť hru</button>
+        </div>
+      </div>
+      <div id="touch">
+        <button data-a="left" aria-label="Doľava">◀</button>
+        <button data-a="rotate" aria-label="Otočiť">⟳</button>
+        <button data-a="right" aria-label="Doprava">▶</button>
+        <button data-a="down" aria-label="Rýchlejšie dole">▼</button>
+        <button data-a="drop" aria-label="Pád na dno">⤓</button>
+        <button data-a="pause" aria-label="Pauza">⏸</button>
+      </div>
     </div>
-    <div class="panel" id="pScore">
-      <h2>Skóre</h2>
-      <div class="big" id="score">0</div>
-      <div class="help">Riadky <span id="lines">0</span> · Úr. <span id="level">1</span></div>
-    </div>
-    <div class="panel" id="pNext">
-      <h2>Ďalšia</h2>
-      <canvas id="next" width="120" height="120"></canvas>
-    </div>
-    <div class="panel" id="pMy">
-      <h2>Moje skóre</h2>
-      <div class="help" id="myStats"></div>
-      <table id="myScores"></table>
-    </div>
-    <div class="panel" id="pLb">
-      <h2>Rodinný rebríček</h2>
-      <table id="leaderboard"></table>
-    </div>
-    <div class="panel help" id="pHelp">
-      <span class="kb">← → pohyb<br>↑ otočenie<br>↓ zrýchlenie<br>Medzerník = pád na dno<br>P = pauza</span>
-      <span class="tc">Ťuk = otočiť<br>Ťahanie prstom = pohyb<br>Rýchly švih dole = pád na dno</span>
-      <div class="inst"><button class="installBtn sm">Nainštalovať aplikáciu</button><span class="iosHint">iPhone: ťukni na Zdieľať a potom Pridať na plochu.</span></div>
-      <br><button id="logoutBtn" style="padding:6px 12px;font-size:.85rem">Odhlásiť sa</button>
+
+    <!-- Bočný stĺpec (na mobile vysúvací panel po ťuknutí na hráča) -->
+    <div class="side" id="side">
+      <div class="sheetHead">
+        <div><div class="pname" id="sheetName"></div><div class="sub">Najlepšie: <span id="best2">0</span></div></div>
+        <button id="closeSheet" class="ghost sm" aria-label="Zavrieť">✕</button>
+      </div>
+      <div class="card" id="pLb">
+        <h2>🏆 Rebríček rodiny</h2>
+        <div class="scroll"><table id="leaderboard"></table></div>
+        <div class="quote">„Malé kroky vedú k veľkým výsledkom."</div>
+      </div>
+      <div class="card" id="pMy">
+        <h2>⭐ Moje najlepšie skóre</h2>
+        <table id="myScores"></table>
+        <div class="sub" id="myStats" style="margin-top:6px"></div>
+      </div>
+      <div class="card help" id="pHelp">
+        <span class="kb">← → pohyb · ↑ otočenie · ↓ zrýchlenie<br>Medzerník = pád na dno · P = pauza</span>
+        <span class="tc">Ťuk = otočiť · ťahanie prstom = pohyb<br>Rýchly švih dole = pád na dno</span>
+        <div class="inst"><button class="installBtn sm">Nainštalovať aplikáciu</button><span class="iosHint">iPhone: ťukni na Zdieľať a potom Pridať na plochu.</span></div>
+        <div style="margin-top:10px">
+          <button class="adminBtn sm ghost">👥 Správa používateľov</button>
+          <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+<div id="backdrop"></div>
 
 <!-- ===== ADMIN: SPRÁVA POUŽÍVATEĽOV ===== -->
 <div id="admin">
@@ -213,13 +278,13 @@ const POINTS = [0, 100, 300, 500, 800];         // body za 0–4 riadky naraz
 
 /* Tvary kociek: každý je matica, 1 = štvorček. Farby sú pri každom tvare. */
 const SHAPES = {
-  I: { color: "#00d4e6", m: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]] },
-  J: { color: "#3b6cff", m: [[1,0,0],[1,1,1],[0,0,0]] },
-  L: { color: "#ff9a1f", m: [[0,0,1],[1,1,1],[0,0,0]] },
-  O: { color: "#ffd23f", m: [[1,1],[1,1]] },
-  S: { color: "#3ddc6b", m: [[0,1,1],[1,1,0],[0,0,0]] },
-  T: { color: "#b455ff", m: [[0,1,0],[1,1,1],[0,0,0]] },
-  Z: { color: "#ff4d5e", m: [[1,1,0],[0,1,1],[0,0,0]] }
+  I: { color: "#4DD0E1", m: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]] },
+  J: { color: "#5C7CFA", m: [[1,0,0],[1,1,1],[0,0,0]] },
+  L: { color: "#F08C4A", m: [[0,0,1],[1,1,1],[0,0,0]] },
+  O: { color: "#E9C46A", m: [[1,1],[1,1]] },
+  S: { color: "#52B788", m: [[0,1,1],[1,1,0],[0,0,0]] },
+  T: { color: "#9D6BCE", m: [[0,1,0],[1,1,1],[0,0,0]] },
+  Z: { color: "#D96C9D", m: [[1,1,0],[0,1,1],[0,0,0]] }
 };
 const TYPES = Object.keys(SHAPES);
 
@@ -276,7 +341,10 @@ async function submitAuth() {
   } finally { $("loginBtn").disabled = false; }
 }
 
-/* Načíta profil prihláseného hráča a spustí hru */
+/* Načíta profil prihláseného hráča; hra sa spustí až tlačidlom „Spustiť hru" */
+let myBest = 0;                    // najlepšie skóre prihláseného hráča
+const isMobile = () => window.matchMedia("(max-width: 700px)").matches;
+
 async function enterGame() {
   const { data: { user } } = await db.auth.getUser();
   if (!user) return;
@@ -286,17 +354,48 @@ async function enterGame() {
   player = prof;
   $("login").style.display = "none";
   $("game").classList.add("on");
-  $("player").textContent = player.username + (player.is_admin ? " ★" : "");
-  $("adminBtn").style.display = player.is_admin ? "inline-block" : "none";
+  const meno = player.username + (player.is_admin ? " ★" : "");
+  $("player").textContent = meno; $("sheetName").textContent = meno;
+  document.body.classList.toggle("isAdmin", !!player.is_admin);
   $("passInput").value = "";
+  myBest = 0;
+  showStart();
   refreshPanels();
-  newGame();
 }
 
+/* Úvodná obrazovka: prázdna plocha a tlačidlo „Spustiť hru" */
+function renderStartText() {
+  const t = $("overlayText"); t.textContent = "";
+  const h = document.createElement("div"); h.textContent = "Ahoj, " + player.username + "!";
+  const sub = document.createElement("div"); sub.className = "ovsub";
+  sub.textContent = myBest ? "Tvoje najlepšie skóre: " + myBest : "Zahraj si svoju prvú hru";
+  t.append(h, sub);
+}
+function showStart() {
+  cancelAnimationFrame(rafId);
+  running = false; paused = false; current = null;
+  grid = emptyGrid(); score = 0; lines = 0; level = 1;
+  updateStats(); nctx.clearRect(0, 0, 120, 120); draw();
+  overlayMode = "start";
+  renderStartText();
+  $("restartBtn").textContent = "Spustiť hru";
+  $("overlay").style.display = "flex";
+}
+
+/* Mobil: informácie o hráčovi sa vysunú po ťuknutí na kartu Hráč */
+function openSheet() {
+  if (!isMobile()) return;
+  if (running && !paused) togglePause();          // hra sa pri otvorení pozastaví
+  $("side").classList.add("open"); document.body.classList.add("sheetOpen");
+}
+function closeSheet() { $("side").classList.remove("open"); document.body.classList.remove("sheetOpen"); }
+
 async function logout() {
+  closeSheet();
   running = false; cancelAnimationFrame(rafId);
   await db.auth.signOut();
   player = null;
+  document.body.classList.remove("isAdmin");
   $("game").classList.remove("on");
   $("login").style.display = "block";
   say(""); $("nameInput").focus();
@@ -305,38 +404,48 @@ async function logout() {
 /* =========================================================
    REBRÍČEK A MOJE SKÓRE
    ========================================================= */
-function fillTable(table, rows, mark) {
+function fillTable(table, rows, hi) {
   table.innerHTML = "";
   rows.forEach((r, i) => {
     const tr = document.createElement("tr");
-    if (mark && mark(r)) tr.className = "me";
-    r.forEach((v, j) => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+    if (hi(i, r)) tr.className = "me";
+    r.forEach(v => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
     table.appendChild(tr);
   });
+  if (!rows.length) {
+    const td = table.insertRow().insertCell(); td.colSpan = 3; td.textContent = "Zatiaľ nič.";
+    td.style.cssText = "color:var(--muted);text-align:left;font-weight:400";
+  }
+}
+
+function setBest(n) {
+  myBest = n; $("best").textContent = n; $("best2").textContent = n;
+  if (overlayMode === "start" && !running && player) renderStartText();
 }
 
 async function refreshPanels() {
-  // Rodinný rebríček (najlepšie skóre každého hráča)
+  // Rodinný rebríček: najlepšie skóre každého hráča
   const lb = await db.rpc("leaderboard");
-  if (!lb.error) fillTable($("leaderboard"), lb.data.map((r, i) => [(i + 1) + ". " + r.username, r.best]),
-                           r => r[0].slice(r[0].indexOf(" ") + 1) === player.username);
-  // Moje skóre (RLS vráti len moje hry)
-  const my = await db.from("scores").select("score,lines,level,created_at")
-                     .order("created_at", { ascending: false }).limit(200);
-  if (my.error) return;
-  const list = my.data, best = list.reduce((m, r) => Math.max(m, r.score), 0);
-  const avg = list.length ? Math.round(list.reduce((a, r) => a + r.score, 0) / list.length) : 0;
-  $("best").textContent = best;
-  $("myStats").textContent = "Hier: " + list.length + " · Priemer: " + avg;
-  fillTable($("myScores"), list.slice(0, 8).map(r =>
-    [new Date(r.created_at).toLocaleDateString("sk-SK"), r.score]));
+  if (!lb.error) fillTable($("leaderboard"), lb.data.map((r, i) => [i + 1, r.username, r.best]), (i, r) => r[1] === player.username);
+  // Moje top 5 (najvyššie skóre je zároveň moje maximum)
+  const top = await db.from("scores").select("score,created_at")
+                      .order("score", { ascending: false }).order("created_at", { ascending: false }).limit(5);
+  if (!top.error) {
+    fillTable($("myScores"), top.data.map((r, i) => [i + 1, fmtDate(r.created_at), r.score]), i => i === 0);
+    setBest(top.data.length ? top.data[0].score : 0);
+  }
+  const cnt = await db.from("scores").select("id", { count: "exact", head: true });
+  if (!cnt.error) $("myStats").textContent = "Odohraté hry: " + cnt.count;
 }
 
-/* Po konci hry: uloží skóre do databázy a obnoví tabuľky */
+/* Po konci hry: skóre sa uloží do databázy a tabuľky sa obnovia */
 async function saveIfBest() {
   if (score <= 0) return;
+  const record = score > myBest;
   const { error } = await db.rpc("submit_score", { p_score: score, p_lines: lines, p_level: level });
-  if (error) $("overlayText").append(document.createElement("br"), "Skóre sa neuložilo: " + error.message);
+  const t = $("overlayText");
+  if (error) t.append(document.createElement("br"), "Skóre sa neuložilo: " + error.message);
+  else if (record) t.append(document.createElement("br"), "🏆 Nový osobný rekord!");
   refreshPanels();
 }
 
@@ -421,7 +530,10 @@ $("loginBtn").onclick = submitAuth;
   $(id).addEventListener("keydown", e => { if (e.key === "Enter") submitAuth(); }));
 $("logoutBtn").onclick = logout;
 $("restartBtn").onclick = () => (overlayMode === "pause" ? togglePause() : newGame());
-$("adminBtn").onclick = openAdmin;
+document.querySelectorAll(".adminBtn").forEach(b => b.onclick = openAdmin);
+$("pPlayer").onclick = openSheet;
+$("closeSheet").onclick = closeSheet;
+$("backdrop").onclick = closeSheet;
 $("closeAdmin").onclick = closeAdmin;
 $("saveCode").onclick = () => adminCall("admin_set_code", { p_code: $("codeAdmin").value }, "Rodinný kód uložený.");
 
@@ -583,34 +695,43 @@ function updateStats() {
 /* =========================================================
    KRESLENIE
    ========================================================= */
+/* Svetlejší odtieň farby (lesklý horný okraj kocky) */
+const svetla = {};
+function lighten(hex, k) {
+  const key = hex + k;
+  if (svetla[key]) return svetla[key];
+  const n = parseInt(hex.slice(1), 16), m = v => Math.round(v + (255 - v) * k);
+  return (svetla[key] = "rgb(" + m(n >> 16) + "," + m((n >> 8) & 255) + "," + m(n & 255) + ")");
+}
+function roundRectPath(c, x, y, w, h, r) {
+  c.beginPath(); c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
 function drawCell(c, x, y, color, size) {
-  c.fillStyle = color;
-  c.fillRect(x * size, y * size, size, size);
-  c.strokeStyle = "rgba(0,0,0,.45)";
-  c.lineWidth = 2;
-  c.strokeRect(x * size + 1, y * size + 1, size - 2, size - 2);
+  const pad = Math.max(1, size * 0.06), px = x * size + pad, py = y * size + pad, w = size - 2 * pad, r = size * 0.22;
+  const g = c.createLinearGradient(px, py, px, py + w);
+  g.addColorStop(0, lighten(color, 0.3)); g.addColorStop(0.6, color); g.addColorStop(1, color);
+  roundRectPath(c, px, py, w, w, r); c.fillStyle = g; c.fill();
+  c.lineWidth = 1; c.strokeStyle = "rgba(255,255,255,.28)"; c.stroke();
+  roundRectPath(c, px + w * 0.18, py + w * 0.14, w * 0.64, w * 0.16, r * 0.5);   // jemný lesk
+  c.fillStyle = "rgba(255,255,255,.22)"; c.fill();
 }
 
 function draw() {
   ctx.clearRect(0, 0, COLS * CELL, ROWS * CELL);
-  // jemná mriežka
-  ctx.strokeStyle = "#171a22"; ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(255,255,255,.045)"; ctx.lineWidth = 1;          // jemná mriežka
   for (let x = 1; x < COLS; x++) { ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, ROWS * CELL); ctx.stroke(); }
   for (let y = 1; y < ROWS; y++) { ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(COLS * CELL, y * CELL); ctx.stroke(); }
-  // uložené kocky
   grid.forEach((row, y) => row.forEach((c, x) => { if (c) drawCell(ctx, x, y, c, CELL); }));
   if (!current) return;
-  // tieň (kde kocka dopadne)
-  let gy = current.y;
+  let gy = current.y;                                                      // tieň: kde kocka dopadne
   while (!collides(current.m, current.x, gy + 1)) gy++;
+  ctx.save(); ctx.globalAlpha = 0.4; ctx.lineWidth = 2; ctx.strokeStyle = SHAPES[current.type].color;
   current.m.forEach((row, y) => row.forEach((v, x) => {
-    if (v) {
-      ctx.strokeStyle = SHAPES[current.type].color; ctx.globalAlpha = .35; ctx.lineWidth = 2;
-      ctx.strokeRect((current.x + x) * CELL + 2, (gy + y) * CELL + 2, CELL - 4, CELL - 4);
-      ctx.globalAlpha = 1;
-    }
+    if (v) { roundRectPath(ctx, (current.x + x) * CELL + 3, (gy + y) * CELL + 3, CELL - 6, CELL - 6, 6); ctx.stroke(); }
   }));
-  // aktuálna kocka
+  ctx.restore();
   current.m.forEach((row, y) => row.forEach((v, x) => {
     if (v) drawCell(ctx, current.x + x, current.y + y, SHAPES[current.type].color, CELL);
   }));
@@ -618,9 +739,9 @@ function draw() {
 
 function drawNext() {
   nctx.clearRect(0, 0, 120, 120);
-  const s = SHAPES[nextType], size = 24, w = s.m[0].length, h = s.m.length;
+  const sh = SHAPES[nextType], size = 24, w = sh.m[0].length, h = sh.m.length;
   const ox = (120 / size - w) / 2, oy = (120 / size - h) / 2;
-  s.m.forEach((row, y) => row.forEach((v, x) => { if (v) drawCell(nctx, ox + x, oy + y, s.color, size); }));
+  sh.m.forEach((row, y) => row.forEach((v, x) => { if (v) drawCell(nctx, ox + x, oy + y, sh.color, size); }));
 }
 
 /* =========================================================
@@ -669,7 +790,11 @@ document.addEventListener("visibilitychange", () => {
 /* Klávesnica */
 document.addEventListener("keydown", e => {
   if (!$("game").classList.contains("on")) return;
-  if (e.target.tagName === "INPUT" || $("admin").style.display === "block") return;
+  if (e.target.tagName === "INPUT" || $("admin").style.display === "block" || $("side").classList.contains("open")) return;
+  // Enter alebo medzerník spustí hru z úvodnej obrazovky / po Game Over
+  if (!running && $("overlay").style.display === "flex" && overlayMode !== "pause" && (e.key === "Enter" || e.key === " ")) {
+    e.preventDefault(); newGame(); return;
+  }
   const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "rotate", ArrowDown: "down", " ": "drop" };
   if (map[e.key]) { e.preventDefault(); act(map[e.key]); }
   if (e.key === "p" || e.key === "P") togglePause();

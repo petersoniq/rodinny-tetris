@@ -60,18 +60,35 @@
   #touch { display: none; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; margin-top: 8px; }
   #touch button { padding: 12px 0; }
   @media (pointer: coarse) { #touch { display: grid; } }
+
+  /* ===== PRIHLÁSENIE (záložky) A ADMIN ===== */
+  .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .tab { flex: 1; background: var(--bg); color: var(--muted); border: 2px solid var(--line); }
+  .tab.on { background: var(--accent); color: #14161c; border-color: var(--accent); }
+  #admin { position: fixed; inset: 0; background: rgba(11,12,16,.94); display: none; overflow: auto; padding: 16px; z-index: 10; }
+  #admin .panel { max-width: 820px; margin: 0 auto; }
+  .adm td { text-align: left; vertical-align: middle; }
+  .adm td:last-child { text-align: left; }
+  .sm { padding: 4px 8px; font-size: .78rem; margin: 2px 2px 2px 0; }
+  .danger { background: #ff4d5e; color: #fff; }
+  .ghost { background: var(--line); color: var(--text); }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
-<!-- ===== 1. PRIHLÁSENIE ===== -->
+<!-- ===== 1. PRIHLÁSENIE / REGISTRÁCIA ===== -->
 <div id="login" class="panel">
   <h1>Rodinný Tetris</h1>
-  <p>Zadaj svoje meno (napr. Ocino, Mamina, Kubko)</p>
-  <input id="nameInput" maxlength="16" placeholder="Tvoje meno" autocomplete="off">
-  <button id="loginBtn">Hrať</button>
+  <div class="tabs">
+    <button id="tabLogin" class="tab on" type="button">Prihlásenie</button>
+    <button id="tabReg" class="tab" type="button">Registrácia</button>
+  </div>
+  <input id="nameInput" maxlength="16" placeholder="Meno (napr. Ocino)" autocomplete="username">
+  <input id="passInput" type="password" placeholder="Heslo (min. 6 znakov)" autocomplete="current-password">
+  <input id="codeInput" placeholder="Rodinný kód" autocomplete="off" style="display:none">
+  <button id="loginBtn">Prihlásiť</button>
   <div id="loginMsg" role="status"></div>
-  <div id="knownNames"></div>
 </div>
 
 <!-- ===== 2. HRA ===== -->
@@ -98,6 +115,7 @@
       <h2>Hráč</h2>
       <div id="player"></div>
       <div class="help">Najvyššie skóre: <span id="best">0</span></div>
+      <button id="adminBtn" class="sm" style="display:none;margin-top:8px">Správa používateľov</button>
     </div>
     <div class="panel">
       <h2>Skóre</h2>
@@ -109,13 +127,30 @@
       <canvas id="next" width="120" height="120"></canvas>
     </div>
     <div class="panel">
+      <h2>Moje skóre</h2>
+      <div class="help" id="myStats"></div>
+      <table id="myScores"></table>
+    </div>
+    <div class="panel">
       <h2>Rodinný rebríček</h2>
       <table id="leaderboard"></table>
     </div>
     <div class="panel help">
       ← → pohyb<br>↑ otočenie<br>↓ zrýchlenie<br>Medzerník = pád na dno<br>P = pauza
-      <br><br><button id="logoutBtn" style="padding:6px 12px;font-size:.85rem">Zmeniť hráča</button>
+      <br><br><button id="logoutBtn" style="padding:6px 12px;font-size:.85rem">Odhlásiť sa</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN: SPRÁVA POUŽÍVATEĽOV ===== -->
+<div id="admin">
+  <div class="panel">
+    <h1>Správa používateľov</h1>
+    <div class="help" style="margin-bottom:10px">Rodinný kód pre registráciu:
+      <input id="codeAdmin" style="width:120px;margin:0 6px"><button class="sm" id="saveCode">Uložiť</button></div>
+    <table class="adm" id="userTable"></table>
+    <p><button id="closeAdmin">Zavrieť</button></p>
+    <div id="adminMsg" class="help" role="status"></div>
   </div>
 </div>
 
@@ -140,98 +175,190 @@ const SHAPES = {
 const TYPES = Object.keys(SHAPES);
 
 /* =========================================================
-   ÚLOŽISKO: mená a skóre v localStorage
-   Formát: { "Ocino": 1200, "Mamina": 900 }
+   DATABÁZA (Supabase): prihlásenie, skóre, rebríček, admin
+   Kľúč nižšie je verejný (publishable) – bezpečnosť zabezpečujú
+   pravidlá RLS a funkcie v databáze, nie utajenie kľúča.
    ========================================================= */
-function loadScores() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
-  catch (e) { return {}; }
-}
-function saveScores(scores) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); }
-  catch (e) { /* súkromný režim môže ukladanie zakázať */ }
-}
+const SUPABASE_URL = "https://qfsedzymsjzlxuauyzro.supabase.co";
+const SUPABASE_KEY = "sb_publishable_bD9M4-8lhH7wlfLIMXQfVA_rgmduqKj";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* =========================================================
-   PRIHLÁSENIE
-   ========================================================= */
 const $ = id => document.getElementById(id);
-let player = "";
+let player = null;          // { id, username, is_admin }
+let mode = "login";         // "login" alebo "register"
 
-function showKnownNames() {
-  const names = Object.keys(loadScores());
-  $("knownNames").textContent = names.length ? "Už hrali: " + names.join(", ") : "";
+/* Meno -> interný pseudo e-mail (bez diakritiky, malé písmená) */
+function emailFor(name) {
+  const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                   .toLowerCase().replace(/[^a-z0-9]/g, "");
+  return slug ? slug + "@tetris.example.com" : "";
+}
+const say = t => { $("loginMsg").textContent = t; };
+
+function setMode(m) {
+  mode = m;
+  $("tabLogin").classList.toggle("on", m === "login");
+  $("tabReg").classList.toggle("on", m === "register");
+  $("codeInput").style.display = m === "register" ? "block" : "none";
+  $("loginBtn").textContent = m === "register" ? "Vytvoriť účet" : "Prihlásiť";
+  $("passInput").autocomplete = m === "register" ? "new-password" : "current-password";
+  say("");
 }
 
-function login() {
-  const name = $("nameInput").value.trim();
-  if (!name) { $("loginMsg").textContent = "Najprv napíš meno."; return; }
-  // Nájdeme meno bez ohľadu na veľkosť písmen (Ocino = ocino)
-  const scores = loadScores();
-  const existing = Object.keys(scores).find(n => n.toLowerCase() === name.toLowerCase());
-  if (existing) {
-    player = existing;
-    $("loginMsg").textContent = "Vitaj späť, " + player + "! Tvoje maximum: " + scores[player];
-  } else {
-    player = name;
-    scores[player] = 0;                 // nový profil s 0 bodmi
-    saveScores(scores);
-    $("loginMsg").textContent = "Vitaj, " + player + "! Vytvorili sme ti nový profil.";
-  }
-  // Krátko ukážeme uvítanie a spustíme hru
-  setTimeout(startSession, 900);
+async function submitAuth() {
+  const name = $("nameInput").value.trim(), pass = $("passInput").value, code = $("codeInput").value.trim();
+  const email = emailFor(name);
+  if (name.length < 2 || !email) return say("Meno musí mať aspoň 2 znaky (písmená alebo číslice).");
+  if (pass.length < 6) return say("Heslo musí mať aspoň 6 znakov.");
+  $("loginBtn").disabled = true; say("Chvíľu strpenia…");
+  try {
+    if (mode === "register") {
+      if (!code) return say("Zadaj rodinný kód.");
+      const { data, error } = await db.auth.signUp({
+        email, password: pass, options: { data: { username: name, family_code: code } }
+      });
+      if (error) return say("Registrácia zlyhala. Skontroluj rodinný kód a či meno nie je už obsadené.");
+      if (!data.session) return say("Účet vznikol, ale treba vypnúť potvrdzovanie e-mailu v Supabase.");
+    } else {
+      const { error } = await db.auth.signInWithPassword({ email, password: pass });
+      if (error) return say("Nesprávne meno alebo heslo.");
+    }
+    await enterGame();
+  } finally { $("loginBtn").disabled = false; }
 }
 
-function startSession() {
+/* Načíta profil prihláseného hráča a spustí hru */
+async function enterGame() {
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return;
+  const { data: prof } = await db.from("profiles").select("id,username,is_admin,is_blocked").eq("id", user.id).single();
+  if (!prof) { await db.auth.signOut(); return say("Profil sa nenašiel."); }
+  if (prof.is_blocked) { await db.auth.signOut(); return say("Tento účet je zablokovaný. Obráť sa na admina."); }
+  player = prof;
   $("login").style.display = "none";
   $("game").style.display = "flex";
-  $("player").textContent = player;
-  updateBest();
-  renderLeaderboard();
+  $("player").textContent = player.username + (player.is_admin ? " ★" : "");
+  $("adminBtn").style.display = player.is_admin ? "inline-block" : "none";
+  $("passInput").value = "";
+  refreshPanels();
   newGame();
 }
 
-function logout() {
+async function logout() {
   running = false; cancelAnimationFrame(rafId);
+  await db.auth.signOut();
+  player = null;
   $("game").style.display = "none";
   $("login").style.display = "block";
-  $("nameInput").value = ""; $("loginMsg").textContent = "";
-  showKnownNames();
+  say(""); $("nameInput").focus();
 }
-
-$("loginBtn").onclick = login;
-$("nameInput").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
-$("logoutBtn").onclick = logout;
-$("restartBtn").onclick = () => newGame();
 
 /* =========================================================
-   REBRÍČEK
+   REBRÍČEK A MOJE SKÓRE
    ========================================================= */
-function renderLeaderboard() {
-  const scores = loadScores();
-  const rows = Object.entries(scores).sort((a, b) => b[1] - a[1]);   // od najväčšieho
-  const table = $("leaderboard");
+function fillTable(table, rows, mark) {
   table.innerHTML = "";
-  rows.forEach(([name, pts], i) => {
+  rows.forEach((r, i) => {
     const tr = document.createElement("tr");
-    if (name === player) tr.className = "me";
-    // textContent chráni pred vložením HTML cez meno
-    const c1 = document.createElement("td"); c1.textContent = (i + 1) + ". " + name;
-    const c2 = document.createElement("td"); c2.textContent = pts;
-    tr.append(c1, c2); table.appendChild(tr);
+    if (mark && mark(r)) tr.className = "me";
+    r.forEach((v, j) => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+    table.appendChild(tr);
   });
 }
-function updateBest() { $("best").textContent = loadScores()[player] || 0; }
 
-/* Po konci hry: ak je skóre lepšie ako osobné maximum, prepíšeme ho */
-function saveIfBest() {
-  const scores = loadScores();
-  if (score > (scores[player] || 0)) {
-    scores[player] = score;
-    saveScores(scores);
-  }
-  updateBest();
-  renderLeaderboard();
+async function refreshPanels() {
+  // Rodinný rebríček (najlepšie skóre každého hráča)
+  const lb = await db.rpc("leaderboard");
+  if (!lb.error) fillTable($("leaderboard"), lb.data.map((r, i) => [(i + 1) + ". " + r.username, r.best]),
+                           r => r[0].slice(r[0].indexOf(" ") + 1) === player.username);
+  // Moje skóre (RLS vráti len moje hry)
+  const my = await db.from("scores").select("score,lines,level,created_at")
+                     .order("created_at", { ascending: false }).limit(200);
+  if (my.error) return;
+  const list = my.data, best = list.reduce((m, r) => Math.max(m, r.score), 0);
+  const avg = list.length ? Math.round(list.reduce((a, r) => a + r.score, 0) / list.length) : 0;
+  $("best").textContent = best;
+  $("myStats").textContent = "Hier: " + list.length + " · Priemer: " + avg;
+  fillTable($("myScores"), list.slice(0, 8).map(r =>
+    [new Date(r.created_at).toLocaleDateString("sk-SK"), r.score]));
+}
+
+/* Po konci hry: uloží skóre do databázy a obnoví tabuľky */
+async function saveIfBest() {
+  if (score <= 0) return;
+  const { error } = await db.rpc("submit_score", { p_score: score, p_lines: lines, p_level: level });
+  if (error) $("overlayText").append(document.createElement("br"), "Skóre sa neuložilo: " + error.message);
+  refreshPanels();
+}
+
+/* =========================================================
+   ADMIN: správa používateľov (funguje len pre admina –
+   kontrola je aj v databáze, tlačidlo je len pohodlie)
+   ========================================================= */
+const adminMsg = t => { $("adminMsg").textContent = t; };
+
+async function openAdmin() {
+  paused = true; $("admin").style.display = "block"; await loadAdmin();
+}
+function closeAdmin() {
+  $("admin").style.display = "none"; paused = false; lastTime = performance.now(); refreshPanels();
+}
+
+function mkBtn(label, cls, fn) {
+  const b = document.createElement("button");
+  b.className = "sm " + cls; b.textContent = label; b.onclick = fn; return b;
+}
+
+async function adminCall(fn, args, okText) {
+  const { error } = await db.rpc(fn, args);
+  adminMsg(error ? "Chyba: " + error.message : okText);
+  await loadAdmin();
+}
+
+async function loadAdmin() {
+  const [u, c] = await Promise.all([db.rpc("admin_users"), db.rpc("admin_get_code")]);
+  if (u.error) return adminMsg("Chyba: " + u.error.message);
+  $("codeAdmin").value = c.data || "";
+  const t = $("userTable"); t.innerHTML = "";
+  u.data.forEach(r => {
+    const tr = document.createElement("tr");
+    const cells = [
+      r.username + (r.is_admin ? " ★" : "") + (r.is_blocked ? " (blokovaný)" : ""),
+      "max " + r.best, r.games + " hier"
+    ];
+    cells.forEach(v => { const td = document.createElement("td"); td.textContent = v; tr.appendChild(td); });
+    const act = document.createElement("td");
+    if (r.id !== player.id) {   // sám seba meniť nemožno
+      act.append(
+        mkBtn(r.is_blocked ? "Odblokovať" : "Blokovať", "ghost", () => adminCall("admin_set_blocked", { p_user: r.id, p_blocked: !r.is_blocked }, "Hotovo.")),
+        mkBtn(r.is_admin ? "Zrušiť admina" : "Urobiť adminom", "ghost", () => adminCall("admin_set_admin", { p_user: r.id, p_admin: !r.is_admin }, "Hotovo.")),
+        mkBtn("Reset skóre", "ghost", () => confirm("Vynulovať skóre hráča " + r.username + "?") && adminCall("admin_reset_scores", { p_user: r.id }, "Skóre vynulované.")),
+        mkBtn("Zmazať", "danger", () => confirm("Natrvalo zmazať účet " + r.username + "?") && adminCall("admin_delete_user", { p_user: r.id }, "Účet zmazaný."))
+      );
+    }
+    tr.appendChild(act); t.appendChild(tr);
+  });
+}
+
+/* =========================================================
+   OVLÁDACIE PRVKY PRIHLÁSENIA A ADMINA
+   ========================================================= */
+$("tabLogin").onclick = () => setMode("login");
+$("tabReg").onclick = () => setMode("register");
+$("loginBtn").onclick = submitAuth;
+["nameInput", "passInput", "codeInput"].forEach(id =>
+  $(id).addEventListener("keydown", e => { if (e.key === "Enter") submitAuth(); }));
+$("logoutBtn").onclick = logout;
+$("restartBtn").onclick = () => newGame();
+$("adminBtn").onclick = openAdmin;
+$("closeAdmin").onclick = closeAdmin;
+$("saveCode").onclick = () => adminCall("admin_set_code", { p_code: $("codeAdmin").value }, "Rodinný kód uložený.");
+
+/* Pri načítaní stránky: ak je hráč už prihlásený, rovno ho pusti do hry */
+async function init() {
+  $("nameInput").focus();
+  const { data: { session } } = await db.auth.getSession();
+  if (session) enterGame();
 }
 
 /* =========================================================
@@ -436,7 +563,7 @@ function act(a) {
 }
 
 document.addEventListener("keydown", e => {
-  if ($("game").style.display !== "flex") return;
+  if ($("game").style.display !== "flex" || e.target.tagName === "INPUT" || $("admin").style.display === "block") return;
   const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "rotate", ArrowDown: "down", " ": "drop" };
   if (map[e.key]) { e.preventDefault(); act(map[e.key]); }
   if (e.key === "p" || e.key === "P") {
@@ -452,9 +579,8 @@ document.addEventListener("keydown", e => {
 document.querySelectorAll("#touch button").forEach(b =>
   b.addEventListener("click", () => act(b.dataset.a)));
 
-/* Štart: zobraz známe mená na prihlasovacej obrazovke */
-showKnownNames();
-$("nameInput").focus();
+/* Štart */
+init();
 </script>
 </body>
 </html>

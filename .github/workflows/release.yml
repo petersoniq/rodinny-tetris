@@ -1,0 +1,46 @@
+# Uložiť v repozitári ako: .github/workflows/release.yml
+# Pri každej zmene v hlavnej vetve (main):
+#   1. nasadí hru na GitHub Pages
+#   2. vytvorí nový release s verziou v1, v2, v3 ...
+name: Nasadenie a release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:        # umožní spustiť ručne cez záložku Actions
+
+permissions:
+  contents: write           # potrebné na vytvorenie release
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .           # nahrá celý repozitár (index.html)
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  release:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Verzia ${{ github.run_number }}
+          generate_release_notes: true   # zoznam zmien sa doplní sám
+          files: index.html              # priloží hru k release

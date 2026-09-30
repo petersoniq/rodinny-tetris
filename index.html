@@ -21,12 +21,13 @@
     --bw: 300px;                       /* šírka hracej plochy */
   }
   * { box-sizing: border-box; }
+  html { background: #0b0e17; }
   html, body { overscroll-behavior: none; }
   body {
     margin: 0; min-height: 100vh; min-height: 100dvh; color: var(--text); color-scheme: dark;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(900px 500px at 15% -5%, #1d2748 0%, transparent 60%),
-                radial-gradient(800px 500px at 100% 100%, #2b2040 0%, transparent 55%), var(--bg);
+    background: radial-gradient(ellipse 85% 36% at 50% 42%, #1a2342 0%, transparent 100%),
+                radial-gradient(ellipse 60% 22% at 80% 72%, #231a38 0%, transparent 100%), var(--bg);
     background-attachment: fixed;
     display: flex; align-items: center; justify-content: center;
     padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
@@ -153,7 +154,7 @@
     #pPlayer { cursor: pointer; }
     #pNext { display: flex; align-items: center; justify-content: center; }
     #pNext canvas { width: 36px; height: 36px; margin: 0; }
-    #main { display: flex; flex-direction: column; flex: 1; }
+    #main { display: flex; flex-direction: column; align-items: stretch; flex: 1; }
     #left { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     body.isAdmin #pPlayer .adminBtn { display: none; }
     body.isAdmin #pHelp .adminBtn { display: inline-block; }
@@ -259,7 +260,7 @@
           <button class="adminBtn sm ghost">👥 Správa používateľov</button>
           <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
         </div>
-        <div class="sub" style="margin-top:8px">Verzia 7</div>
+        <div class="sub" style="margin-top:8px">Verzia 8</div>
       </div>
     </div>
   </div>

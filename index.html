@@ -187,11 +187,11 @@ const $ = id => document.getElementById(id);
 let player = null;          // { id, username, is_admin }
 let mode = "login";         // "login" alebo "register"
 
-/* Meno -> interný pseudo e-mail (bez diakritiky, malé písmená) */
+/* Meno -> interný pseudo e-mail na tvojej doméne ondris.eu (Supabase odmieta example.com) */
 function emailFor(name) {
   const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                    .toLowerCase().replace(/[^a-z0-9]/g, "");
-  return slug ? slug + "@tetris.example.com" : "";
+  return slug ? "tetris." + slug + "@ondris.eu" : "";
 }
 const say = t => { $("loginMsg").textContent = t; };
 

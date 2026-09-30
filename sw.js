@@ -1,7 +1,7 @@
 /* Service worker: aplikácia sa dá nainštalovať a základné súbory sa uložia.
    Stránka sa berie prednostne zo siete (aby prišli nové verzie), pri výpadku z uloženej kópie.
    Požiadavky na databázu (Supabase) sa nikdy neukladajú. */
-const CACHE = "tetris-v5";
+const CACHE = "tetris-v6";
 const SUBORY = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

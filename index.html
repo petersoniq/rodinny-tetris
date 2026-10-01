@@ -144,7 +144,7 @@
   .ucard .help div { padding: 2px 0; }
 
   /* ===== MOBIL: hracia plocha + horná lišta, ostatné až po ťuknutí na hráča ===== */
-  @media (max-width: 700px) {
+  @media (max-width: 700px), (orientation: landscape) and (max-height: 520px) {
     :root { --bw: min(calc(100vw - 28px), 360px, max(150px, calc((100vh - 235px) / 2))); }
     body { align-items: stretch; }
     #game.on { display: flex; flex-direction: column; width: 100%; max-width: 440px; }
@@ -182,8 +182,22 @@
   @supports (height: 100dvh) {
     @media (max-width: 700px) { :root { --bw: min(calc(100vw - 28px), 360px, max(150px, calc((100dvh - 235px) / 2))); } }
   }
+
+  /* Telefón na šírku: horná lišta vľavo, plocha v strede, ovládanie vpravo */
+  @media (orientation: landscape) and (max-height: 520px) {
+    :root { --bw: calc((100vh - 24px) / 2); }
+    #game.on { display: grid; grid-template-columns: minmax(130px, 1fr) var(--bw) minmax(130px, 1fr); grid-template-areas: "hud board touch"; gap: 12px; align-items: center; width: 100%; max-width: none; }
+    #main, #left { display: contents; }
+    #hud { grid-area: hud; display: flex; flex-direction: column; gap: 6px; margin: 0; }
+    #board-wrap { grid-area: board; }
+    #touch { grid-area: touch; grid-template-columns: repeat(3, 1fr); width: 100%; margin: 0; }
+    #touch button { height: 50px; }
+  }
+  @supports (height: 100dvh) {
+    @media (orientation: landscape) and (max-height: 520px) { :root { --bw: calc((100dvh - 24px) / 2); } }
+  }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="vendor/supabase-2.45.4.js"></script>
 </head>
 <body>
 
@@ -276,7 +290,7 @@
           <button class="adminBtn sm ghost">👥 Správa používateľov</button>
           <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
         </div>
-        <div class="sub" style="margin-top:8px">Verzia 9</div>
+        <div class="sub" style="margin-top:8px">Verzia 10</div>
       </div>
     </div>
   </div>
@@ -300,7 +314,6 @@
    NASTAVENIA (tu môžeš meniť pravidlá hry)
    ========================================================= */
 const COLS = 10, ROWS = 20, CELL = 30;          // veľkosť poľa a štvorčeka (px)
-const STORAGE_KEY = "rodinnyTetris_v1";         // kľúč v localStorage
 const POINTS = [0, 100, 300, 500, 800];         // body za 0–4 riadky naraz
 
 /* Tvary kociek: každý je matica, 1 = štvorček. Farby sú pri každom tvare. */
@@ -322,6 +335,11 @@ const TYPES = Object.keys(SHAPES);
    ========================================================= */
 const SUPABASE_URL = "https://qfsedzymsjzlxuauyzro.supabase.co";
 const SUPABASE_KEY = "sb_publishable_bD9M4-8lhH7wlfLIMXQfVA_rgmduqKj";
+if (typeof supabase === "undefined") {          // knižnica sa nenačítala: ukáž zrozumiteľnú správu namiesto prázdnej obrazovky
+  document.getElementById("loginMsg").textContent = "Nepodarilo sa načítať súčasť aplikácie. Skontroluj pripojenie a obnov stránku.";
+  document.getElementById("loginBtn").disabled = true;
+  throw new Error("Knižnica Supabase sa nenačítala");
+}
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = id => document.getElementById(id);
@@ -335,6 +353,10 @@ function emailFor(name) {
   return slug ? "tetris." + slug + "@ondris.eu" : "";
 }
 const say = t => { $("loginMsg").textContent = t; };
+const NET_MSG = "Chýba pripojenie k internetu. Skús to znova.";
+/* Je chyba spôsobená výpadkom siete (a nie nesprávnym heslom či pod.)? */
+const jeSiet = e => !!e && (e.name === "AuthRetryableFetchError" || e.status === 0 ||
+  /failed to fetch|networkerror|load failed|network request/i.test(e.message || ""));
 
 function setMode(m) {
   mode = m;
@@ -358,11 +380,11 @@ async function submitAuth() {
       const { data, error } = await db.auth.signUp({
         email, password: pass, options: { data: { username: name, family_code: code } }
       });
-      if (error) return say("Registrácia zlyhala. Skontroluj rodinný kód a či meno nie je už obsadené.");
+      if (error) return say(jeSiet(error) ? NET_MSG : "Registrácia zlyhala. Skontroluj rodinný kód a či meno nie je už obsadené.");
       if (!data.session) return say("Účet vznikol, ale treba vypnúť potvrdzovanie e-mailu v Supabase.");
     } else {
       const { error } = await db.auth.signInWithPassword({ email, password: pass });
-      if (error) return say("Nesprávne meno alebo heslo.");
+      if (error) return say(jeSiet(error) ? NET_MSG : "Nesprávne meno alebo heslo.");
     }
     await enterGame();
   } finally { $("loginBtn").disabled = false; }
@@ -409,12 +431,14 @@ function sfx(name, n) {
   else if (name === "record") arp([523, 659, 784, 1047], 0.18, "triangle", 0.12, 0.1);
 }
 
-const isMobile = () => window.matchMedia("(max-width: 700px)").matches;
+const MOBIL_Q = "(max-width: 700px), (orientation: landscape) and (max-height: 520px)";   // úzky displej alebo telefón na šírku
+const isMobile = () => window.matchMedia(MOBIL_Q).matches;
 
 async function enterGame() {
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return;
-  const { data: prof } = await db.from("profiles").select("id,username,is_admin,is_blocked").eq("id", user.id).single();
+  const { data: { user }, error: uerr } = await db.auth.getUser();
+  if (!user) { if (jeSiet(uerr)) say(NET_MSG); return; }
+  const { data: prof, error: perr } = await db.from("profiles").select("id,username,is_admin,is_blocked").eq("id", user.id).single();
+  if (perr && perr.code !== "PGRST116") return say(NET_MSG);     // výpadok siete: prihlásenie ostáva zachované
   if (!prof) { await db.auth.signOut(); return say("Profil sa nenašiel."); }
   if (prof.is_blocked) { await db.auth.signOut(); return say("Tento účet je zablokovaný. Obráť sa na admina."); }
   player = prof;
@@ -428,6 +452,7 @@ async function enterGame() {
   showStart();
   fitBoard();
   refreshPanels();
+  flushQueue();
 }
 
 /* Úvodná obrazovka: prázdna plocha a tlačidlo „Spustiť hru" */
@@ -478,8 +503,11 @@ function fitBoard() {
     const num = v => parseFloat(v) || 0, bs = getComputedStyle(document.body);
     const padX = num(bs.paddingLeft) + num(bs.paddingRight), padY = num(bs.paddingTop) + num(bs.paddingBottom);
     const gaps = num(getComputedStyle($("hud")).marginBottom) + num(getComputedStyle($("touch")).marginTop);
-    const availH = window.innerHeight - padY - $("hud").offsetHeight - $("touch").offsetHeight - gaps - 4;
-    const availW = root.clientWidth - padX;
+    const land = window.matchMedia("(orientation: landscape) and (max-height: 520px)").matches;
+    // na šírku je horná lišta a ovládanie po stranách plochy, preto sa výška neznižuje
+    const availH = land ? window.innerHeight - padY - 4
+                        : window.innerHeight - padY - $("hud").offsetHeight - $("touch").offsetHeight - gaps - 4;
+    const availW = land ? root.clientWidth - padX - 2 * 130 - 24 : root.clientWidth - padX;
     root.style.setProperty("--bw", Math.floor(Math.max(150, Math.min(availW, availH / 2, 520))) + "px");
   } else root.style.removeProperty("--bw");
   sizeCanvas($("board"), ctx, 300, 600);
@@ -522,29 +550,81 @@ function setBest(n) {
 }
 
 async function refreshPanels() {
+  const me = player;                                   // ak sa hráč medzitým odhlási, výsledky sa už nezobrazujú
+  if (!me) return;
   // Rodinný rebríček: najlepšie skóre každého hráča
   const lb = await db.rpc("leaderboard");
-  if (!lb.error) fillTable($("leaderboard"), lb.data.map((r, i) => [i + 1, r.username, r.best]), (i, r) => r[1] === player.username);
+  if (player !== me) return;
+  if (!lb.error) fillTable($("leaderboard"), lb.data.map((r, i) => [i + 1, r.username, r.best]), (i, r) => r[1] === me.username);
   // Moje top 5 (najvyššie skóre je zároveň moje maximum)
   const top = await db.from("scores").select("score,created_at")
                       .order("score", { ascending: false }).order("created_at", { ascending: false }).limit(5);
+  if (player !== me) return;
   if (!top.error) {
     fillTable($("myScores"), top.data.map((r, i) => [i + 1, fmtDate(r.created_at), r.score]), i => i === 0);
     setBest(top.data.length ? top.data[0].score : 0);
   }
   const cnt = await db.from("scores").select("id", { count: "exact", head: true });
-  if (!cnt.error) $("myStats").textContent = "Odohraté hry: " + cnt.count;
+  if (player !== me) return;
+  const cakaju = readQueue(queueKey(me)).length;
+  if (!cnt.error) $("myStats").textContent = "Odohraté hry: " + cnt.count + (cakaju ? " · čaká na odoslanie: " + cakaju : "");
 }
 
-/* Po konci hry: skóre sa uloží do databázy a tabuľky sa obnovia */
+/* ===== ČAKAJÚCE SKÓRE: ak sa odoslanie nepodarí (výpadok siete), skóre sa uloží v zariadení a odošle neskôr ===== */
+const queueKey = who => "rodinnyTetris_cakajuce_" + who.id;
+const readQueue = key => { try { return JSON.parse(localStorage.getItem(key)) || []; } catch (e) { return []; } };
+const writeQueue = (key, q) => { try { if (q.length) localStorage.setItem(key, JSON.stringify(q)); else localStorage.removeItem(key); } catch (e) {} };
+const newId = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+  : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); });
+let gameId = null;                 // jedinečné ID rozohranej hry (databáza tak neuloží to isté skóre dvakrát)
+
+/* Odošle jedno skóre. st: "ok" = uložené, "drop" = server ho natrvalo odmietol, "retry" = skúsiť neskôr */
+async function trySend(it) {
+  try {
+    const { error } = await db.rpc("submit_score", { p_score: it.score, p_lines: it.lines, p_level: it.level, p_client_id: it.gid });
+    if (!error) return { st: "ok" };
+    if (error.code === "P0001" && !/Príliš rýchlo/.test(error.message)) return { st: "drop", msg: error.message };
+  } catch (e) {}
+  return { st: "retry" };
+}
+
+let flushing = false, flushTimer = null;
+function planFlush(ms) { clearTimeout(flushTimer); flushTimer = setTimeout(flushQueue, ms); }
+async function flushQueue() {      // odošle čakajúce skóre (po prihlásení, po obnovení pripojenia, po ďalšej hre)
+  const me = player;
+  if (!me || flushing) return;
+  flushing = true;
+  const key = queueKey(me);
+  try {
+    let sent = 0;
+    for (;;) {
+      const q = readQueue(key);
+      if (!q.length || player !== me) break;
+      if (sent) await new Promise(r => setTimeout(r, 5500));      // server povoľuje najviac 1 skóre za 5 s
+      if (player !== me) break;
+      const res = await trySend(q[0]);
+      if (res.st === "retry") { planFlush(30000); break; }      // sieť stále nefunguje: skúsi sa znova o 30 s
+      writeQueue(key, readQueue(key).filter(x => x.gid !== q[0].gid)); sent++;
+    }
+    if (sent && player === me) refreshPanels();
+  } finally { flushing = false; }
+}
+
+/* Po konci hry: skóre sa odošle do databázy; pri výpadku siete sa uloží a odošle neskôr */
 async function saveIfBest() {
-  if (score <= 0) return;
+  const me = player;
+  if (!me || score <= 0) return;
   const record = score > myBest;
-  const { error } = await db.rpc("submit_score", { p_score: score, p_lines: lines, p_level: level });
-  const t = $("overlayText");
-  if (error) t.append(document.createElement("br"), "Skóre sa neuložilo: " + error.message);
-  else if (record) { t.append(document.createElement("br"), "🏆 Nový osobný rekord!"); sfx("record"); vibrate([40, 40, 80]); }
-  refreshPanels();
+  const it = { gid: gameId || newId(), score, lines, level };
+  const res = await trySend(it);
+  const poznamka = txt => { if (player === me && overlayMode === "over") $("overlayText").append(document.createElement("br"), txt); };
+  if (res.st === "retry") {
+    const key = queueKey(me); const q = readQueue(key); q.push(it); writeQueue(key, q);
+    planFlush(6000);                                   // skúsi sa znova o chvíľu
+    poznamka("Skóre sa uložilo v zariadení a odošle sa po pripojení.");
+  } else if (res.st === "drop") poznamka("Skóre sa neuložilo: " + res.msg);
+  else if (record) { poznamka("🏆 Nový osobný rekord!"); sfx("record"); vibrate([40, 40, 80]); }
+  if (player === me) { refreshPanels(); if (res.st !== "retry") flushQueue(); }
 }
 
 /* =========================================================
@@ -666,6 +746,7 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catc
 
 async function init() {
   window.addEventListener("resize", fitBoard);
+  window.addEventListener("online", flushQueue);          // po obnovení pripojenia sa odošle čakajúce skóre
   window.addEventListener("orientationchange", () => setTimeout(fitBoard, 200));
   if (window.visualViewport) window.visualViewport.addEventListener("resize", fitBoard);
   $("nameInput").focus();
@@ -702,7 +783,7 @@ function makePiece(type) {
 }
 
 function newGame() {
-  anim = null;
+  anim = null; gameId = newId();
   grid = emptyGrid(); score = 0; lines = 0; level = 1;
   dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
   nextType = randomType();
@@ -781,7 +862,7 @@ function saveGame() {
   if (!player || !running || !current || anim) return;
   try {
     localStorage.setItem(saveKey(), JSON.stringify({
-      v: 1, grid, cur: { type: current.type, m: current.m, x: current.x, y: current.y },
+      v: 1, gid: gameId, grid, cur: { type: current.type, m: current.m, x: current.x, y: current.y },
       next: nextType, score, lines, level, at: Date.now()
     }));
   } catch (e) {}
@@ -808,6 +889,7 @@ function resumeGame() {
   grid = d.grid; nextType = d.next; score = d.score; lines = d.lines; level = d.level;
   current = { type: d.cur.type, m: d.cur.m, x: d.cur.x, y: d.cur.y };
   anim = null; dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
+  gameId = (typeof d.gid === "string" && /^[0-9a-f-]{36}$/i.test(d.gid)) ? d.gid : newId();
   $("overlay").style.display = "none"; $("newBtn").style.display = "none";
   drawNext(); updateStats();
   cancelAnimationFrame(rafId); rafId = requestAnimationFrame(loop);
@@ -968,12 +1050,15 @@ document.addEventListener("keydown", e => {
   if (!$("game").classList.contains("on")) return;
   if (e.target.tagName === "INPUT" || $("admin").style.display === "block" || $("side").classList.contains("open")) return;
   // Enter alebo medzerník spustí hru z úvodnej obrazovky / po Game Over
-  if (!running && $("overlay").style.display === "flex" && overlayMode !== "pause" && (e.key === "Enter" || e.key === " ")) {
+  if (!running && $("overlay").style.display === "flex" && overlayMode !== "pause" && !e.repeat && (e.key === "Enter" || e.key === " ")) {
     e.preventDefault(); $("restartBtn").click(); return;
   }
   const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "rotate", ArrowDown: "down", " ": "drop" };
-  if (map[e.key]) { e.preventDefault(); act(map[e.key]); }
-  if (e.key === "p" || e.key === "P") togglePause();
+  if (map[e.key]) {                                   // pohyb sa pri držaní opakuje, otočenie a pád nie
+    e.preventDefault();
+    if (!e.repeat || ["left", "right", "down"].includes(map[e.key])) act(map[e.key]);
+  }
+  if ((e.key === "p" || e.key === "P") && !e.repeat) togglePause();
 });
 
 /* Gestá na hracej ploche: ťuk = otočiť, ťahanie = pohyb, rýchly švih dole = pád */

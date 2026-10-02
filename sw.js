@@ -1,8 +1,8 @@
 /* Service worker: aplikácia sa dá nainštalovať a základné súbory sa uložia (funguje aj štart bez siete).
    Stránka sa berie prednostne zo siete (aby prišli nové verzie), pri výpadku z uloženej kópie.
    Požiadavky na databázu (Supabase) sa nikdy neukladajú. */
-const CACHE = "tetris-v11";
-const SUBORY = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "vendor/supabase-2.45.4.js"];
+const CACHE = "tetris-v12";
+const SUBORY = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "vendor/supabase-2.45.4.js", "vendor/qrcode-generator-1.4.4.js"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SUBORY)).then(() => self.skipWaiting()));

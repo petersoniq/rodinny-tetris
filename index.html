@@ -154,6 +154,9 @@
   .swatch { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.18); color: var(--text); font-size: .8rem; }
   .pick.sel, .swatch.sel { outline: 2px solid #fff; outline-offset: 2px; }
   #pPass input { margin-bottom: 8px; }
+  #qrBox { text-align: center; margin: 0 0 12px; }
+  .qrImg { display: inline-block; background: #fff; padding: 10px; border-radius: 12px; width: min(240px, 70vw); margin-bottom: 6px; }
+  .qrImg svg { display: block; width: 100%; height: auto; }
 
   /* ===== ADMIN PANEL ===== */
   #admin { position: fixed; inset: 0; background: rgba(6,8,14,.92); display: none; overflow: auto; padding: 16px; z-index: 40; }
@@ -168,6 +171,8 @@
     body { align-items: stretch; }
     #game.on { display: flex; flex-direction: column; width: 100%; max-width: 440px; }
     #game.glass { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; }
+    /* rozmazanie pozadia na mobile nič nezmení (pozadie je hladký prechod), ale zbytočne zaťažuje grafiku a batériu */
+    .glass, .panel, .card { backdrop-filter: none; -webkit-backdrop-filter: none; }
     .brand { display: none; }
     body { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
     #hud { grid-template-columns: 1.3fr 1.1fr .7fr; gap: 6px; margin: 0 0 6px; }
@@ -217,6 +222,7 @@
   }
 </style>
 <script src="vendor/supabase-2.45.4.js"></script>
+<script src="vendor/qrcode-generator-1.4.4.js"></script>
 </head>
 <body>
 
@@ -295,6 +301,7 @@
         <div class="card" id="pLb">
           <h2>🏆 Rebríček rodiny</h2>
           <div class="scroll"><table id="leaderboard"></table></div>
+          <div class="sub" id="gapLine" style="margin-top:8px"></div>
           <div class="quote">„Malé kroky vedú k veľkým výsledkom."</div>
         </div>
         <div class="card" id="pMy">
@@ -341,7 +348,7 @@
             <button class="adminBtn sm ghost">👥 Správa používateľov</button>
             <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
           </div>
-          <div class="sub" style="margin-top:8px">Verzia 11</div>
+          <div class="sub" style="margin-top:8px">Verzia 12</div>
         </div>
       </div>
     </div>
@@ -355,6 +362,12 @@
     <h1>Správa používateľov</h1>
     <div class="help" style="margin-bottom:10px">Rodinný kód pre registráciu:
       <input id="codeAdmin" style="width:130px;margin:0 6px"><button class="sm" id="saveCode">Uložiť</button></div>
+    <div style="margin-bottom:10px">
+      <button class="sm" id="invShare">📤 Zdieľať pozvánku</button>
+      <button class="sm ghost" id="invCopy">📋 Skopírovať odkaz</button>
+      <button class="sm ghost" id="invQr">▦ QR kód</button>
+    </div>
+    <div id="qrBox" hidden></div>
     <div id="userList"></div>
     <p><button id="closeAdmin">Zavrieť</button></p>
     <div id="adminMsg" class="help" role="status"></div>
@@ -446,6 +459,27 @@ async function submitAuth() {
 let myBest = 0;                    // najlepšie skóre prihláseného hráča
 let savedGame = null;              // rozohraná hra uložená v tomto zariadení
 let lastStats = null;              // štatistiky hráča pre odznaky (z databázy)
+let lbData = [];                   // rebríček (zoradený od najlepšieho)
+
+/* ===== Slovenské tvary a text o vzdialenosti do ďalšieho miesta ===== */
+const fmtN = n => Number(n).toLocaleString("sk-SK");
+const bodov = n => (n === 1 ? "bod" : n >= 2 && n <= 4 ? "body" : "bodov");
+const dniText = n => (n === 1 ? "deň" : n >= 2 && n <= 4 ? "dni" : "dní");
+const lbLabel = r => (r.emoji ? r.emoji + " " : "") + r.username;
+const myRank = () => (player ? lbData.findIndex(r => r.username === player.username) + 1 : 0);
+function gapText() {
+  if (!player) return "";
+  const i = lbData.findIndex(r => r.username === player.username);
+  if (i < 0) return lbData.length ? "Zahraj prvú hru a objav sa v rebríčku. Vedie " + lbLabel(lbData[0]) + " (" + fmtN(lbData[0].best) + " " + bodov(lbData[0].best) + ")." : "Buď prvý v rebríčku rodiny!";
+  if (i === 0) {
+    if (lbData.length < 2) return "🏆 Si prvý v rebríčku rodiny!";
+    const d = lbData[0].best - lbData[1].best;
+    return d === 0 ? "🏆 Si na 1. mieste spolu s hráčom " + lbLabel(lbData[1]) + "." : "🏆 Vedieš! Náskok pred hráčom " + lbLabel(lbData[1]) + ": " + fmtN(d) + " " + bodov(d) + ".";
+  }
+  const nad = lbData[i - 1], chyba = nad.best - lbData[i].best + 1;
+  return "Do " + i + ". miesta (" + lbLabel(nad) + ") ti chýba " + fmtN(chyba) + " " + bodov(chyba) + ".";
+}
+const renderGap = () => { $("gapLine").textContent = gapText(); };
 
 /* ===== NASTAVENIA (zvuk, vibrácie): ukladajú sa v tomto zariadení, predvolene sú vypnuté ===== */
 const SETTINGS_KEY = "rodinnyTetris_nastavenia";
@@ -454,6 +488,19 @@ const nast = Object.assign({ sound: false, vibrate: false },
 const saveNast = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(nast)); } catch (e) {} };
 const canVibrate = "vibrate" in navigator;
 function vibrate(pattern) { if (nast.vibrate && canVibrate) navigator.vibrate(pattern); }
+
+/* Zámka zhasínania displeja: počas hry sa displej nezhasne (pri pauze, konci hry a skrytí aplikácie sa uvoľní) */
+let wakeLock = null, wakeWanted = false;
+async function wakeOn() {
+  wakeWanted = true;
+  if (!("wakeLock" in navigator) || wakeLock) return;
+  try {
+    const l = await navigator.wakeLock.request("screen");
+    if (!wakeWanted) { l.release().catch(() => {}); return; }
+    wakeLock = l; l.addEventListener("release", () => { if (wakeLock === l) wakeLock = null; });
+  } catch (e) {}
+}
+function wakeOff() { wakeWanted = false; if (wakeLock) { const l = wakeLock; wakeLock = null; l.release().catch(() => {}); } }
 
 /* Zvuky sa vytvárajú priamo v prehliadači (žiadne súbory) */
 let actx = null;
@@ -521,10 +568,12 @@ function renderStartText() {
     r.textContent = "Máš rozohranú hru · skóre " + savedGame.score;
     t.append(r);
   }
+  const gp = gapText();                          // vzdialenosť do ďalšieho miesta v rebríčku
+  if (gp) { const g = document.createElement("div"); g.className = "ovsub"; g.textContent = gp; t.append(g); }
 }
 function showStart() {
   cancelAnimationFrame(rafId);
-  running = false; paused = false; current = null; anim = null;
+  running = false; paused = false; current = null; anim = null; wakeOff(); gridRev++;
   grid = emptyGrid(); score = 0; lines = 0; level = 1;
   updateStats(); nctx.clearRect(0, 0, 120, 120); draw();
   savedGame = readSave();
@@ -548,7 +597,7 @@ function sizeCanvas(cv, c, w, h) {
   const css = cv.getBoundingClientRect().width || w;
   const k = Math.max(1, Math.min(4, Math.ceil(css * (window.devicePixelRatio || 1) / w)));
   if (cv.width !== w * k) { cv.width = w * k; cv.height = h * k; }
-  c.setTransform(k, 0, 0, k, 0, 0);                 // kreslíme stále v pôvodných súradniciach
+  c.setTransform(k, 0, 0, k, 0, 0); c.__k = k;                 // kreslíme stále v pôvodných súradniciach
 }
 function fitBoard() {
   if (!$("game").classList.contains("on")) return;
@@ -571,10 +620,10 @@ function fitBoard() {
 
 
 async function logout() {
-  closeSheet();
+  closeSheet(); wakeOff();
   running = false; cancelAnimationFrame(rafId);
   await db.auth.signOut();
-  player = null; lastStats = null;
+  player = null; lastStats = null; lbData = [];
   document.body.classList.remove("isAdmin");
   $("game").classList.remove("on");
   $("login").style.display = "block";
@@ -616,6 +665,7 @@ async function refreshPanels() {
   if (!lb.error) fillTable($("leaderboard"),
     lb.data.map((r, i) => [i + 1, (r.emoji ? r.emoji + " " : "") + r.username, r.best]),
     i => lb.data[i].username === me.username, i => lb.data[i].color);
+  if (!lb.error) { lbData = lb.data; renderGap(); }
   // Moje top 5 (najvyššie skóre je zároveň moje maximum)
   const top = await db.from("scores").select("score,created_at")
                       .order("score", { ascending: false }).order("created_at", { ascending: false }).limit(5);
@@ -630,7 +680,8 @@ async function refreshPanels() {
   if (player !== me) return;
   if (!st.error && st.data && st.data[0]) { lastStats = st.data[0]; renderBadges(); }
   const cakaju = readQueue(queueKey(me)).length;
-  if (!cnt.error) $("myStats").textContent = "Odohraté hry: " + cnt.count + (cakaju ? " · čaká na odoslanie: " + cakaju : "");
+  const serie = lastStats && lastStats.cur_streak > 0 ? " · séria: " + lastStats.cur_streak + " " + dniText(lastStats.cur_streak) : "";
+  if (!cnt.error) $("myStats").textContent = "Odohraté hry: " + cnt.count + serie + (cakaju ? " · čaká na odoslanie: " + cakaju : "");
 }
 
 /* ===== ČAKAJÚCE SKÓRE: ak sa odoslanie nepodarí (výpadok siete), skóre sa uloží v zariadení a odošle neskôr ===== */
@@ -689,11 +740,14 @@ async function saveIfBest() {
   else if (record) { poznamka("🏆 Nový osobný rekord!"); sfx("record"); vibrate([40, 40, 80]); }
   if (player === me) {
     const pred = lastStats ? ODZNAKY.filter(b => b.ziskany(lastStats)).map(b => b.id) : null;
+    const poradiePred = lbData.length ? myRank() : -1;
     await refreshPanels();
     if (pred && lastStats && player === me) {                      // oznam o novo získanom odznaku
       const nove = ODZNAKY.filter(b => b.ziskany(lastStats) && !pred.includes(b.id));
       if (nove.length) { poznamka("🏅 Nový odznak: " + nove.map(b => b.ikona + " " + b.nazov).join(", ")); sfx("level"); vibrate([30, 40, 30]); }
     }
+    const poradiePo = myRank();                                      // oznam o posune v rebríčku
+    if (poradiePred >= 0 && poradiePo && (poradiePred === 0 || poradiePo < poradiePred) && player === me) poznamka("📈 Posun v rebríčku: " + poradiePo + ". miesto");
     if (res.st !== "retry") flushQueue();
   }
 }
@@ -705,10 +759,13 @@ async function saveIfBest() {
 const adminMsg = t => { $("adminMsg").textContent = t; };
 
 async function openAdmin() {
-  paused = true; $("admin").style.display = "block"; await loadAdmin();
+  adminWasPaused = paused; paused = true; wakeOff(); $("admin").style.display = "block"; await loadAdmin();
 }
+let adminWasPaused = false;
 function closeAdmin() {
-  $("admin").style.display = "none"; paused = false; lastTime = performance.now(); refreshPanels();
+  $("admin").style.display = "none"; paused = adminWasPaused;       // hra sa vráti do stavu, v akom bola
+  if (running && !paused) { startLoop(); wakeOn(); }
+  refreshPanels();
 }
 
 function mkBtn(label, cls, fn) {
@@ -741,6 +798,7 @@ async function loadAdmin() {
   const [u, c] = await Promise.all([db.rpc("admin_users"), db.rpc("admin_get_code")]);
   if (u.error) return adminMsg("Chyba: " + u.error.message);
   $("codeAdmin").value = c.data || "";
+  kodNaServeri = c.data || ""; if (!$("qrBox").hidden) renderQr();
   const box = $("userList"); box.innerHTML = "";
   u.data.forEach(r => {
     const card = document.createElement("div"); card.className = "ucard";
@@ -868,7 +926,11 @@ const ODZNAKY = [
   { id: "hry10", ikona: "🎮", nazov: "10 hier", popis: "Odohraj 10 hier",
     ziskany: s => s.games >= 10, kedy: s => s.game10_at, pokrok: s => s.games + "/10" },
   { id: "riadky100", ikona: "📏", nazov: "100 riadkov", popis: "Zmaž spolu 100 riadkov",
-    ziskany: s => s.total_lines >= 100, kedy: s => s.lines100_at, pokrok: s => s.total_lines + "/100" }
+    ziskany: s => s.total_lines >= 100, kedy: s => s.lines100_at, pokrok: s => s.total_lines + "/100" },
+  { id: "serie3", ikona: "🔥", nazov: "Séria 3 dni", popis: "Hraj 3 dni po sebe",
+    ziskany: s => (s.best_streak || 0) >= 3, kedy: s => s.streak3_at, pokrok: s => Math.min(s.cur_streak || 0, 3) + "/3" },
+  { id: "serie7", ikona: "🌟", nazov: "Séria 7 dní", popis: "Hraj 7 dní po sebe",
+    ziskany: s => (s.best_streak || 0) >= 7, kedy: s => s.streak7_at, pokrok: s => Math.min(s.cur_streak || 0, 7) + "/7" }
 ];
 function renderBadges() {
   const box = $("badgeList"); box.innerHTML = "";
@@ -888,6 +950,33 @@ function renderBadges() {
 }
 $("closeAdmin").onclick = closeAdmin;
 $("saveCode").onclick = () => adminCall("admin_set_code", { p_code: $("codeAdmin").value }, "Rodinný kód uložený.");
+
+/* ===== POZVÁNKA: odkaz a QR kód s rodinným kódom (len admin) ===== */
+let kodNaServeri = "";
+const pozvankaUrl = () => location.origin + location.pathname + "?kod=" + encodeURIComponent(kodNaServeri);
+function renderQr() {
+  const box = $("qrBox"); box.innerHTML = "";
+  if (typeof qrcode === "undefined") { box.textContent = "QR knižnica sa nenačítala."; return; }
+  const q = qrcode(0, "M"); q.addData(pozvankaUrl()); q.make();
+  const wrap = document.createElement("div"); wrap.className = "qrImg";
+  wrap.innerHTML = q.createSvgTag({ cellSize: 5, margin: 1, scalable: true });     // SVG vytvára knižnica z čísel, nie z textu
+  const cap = document.createElement("div"); cap.className = "sub";
+  cap.textContent = "Naskenuj telefónom a zaregistruj sa. Rodinný kód je v odkaze.";
+  box.append(wrap, cap);
+}
+const bezKodu = () => { if (!kodNaServeri) { adminMsg("Najprv nastav rodinný kód."); return true; } return false; };
+$("invCopy").onclick = async () => {
+  if (bezKodu()) return;
+  let ok = false; try { await navigator.clipboard.writeText(pozvankaUrl()); ok = true; } catch (e) {}
+  adminMsg(ok ? "Odkaz s pozvánkou je skopírovaný ✓" : "Kopírovanie sa nepodarilo. Odkaz: " + pozvankaUrl());
+};
+$("invShare").onclick = async () => {
+  if (bezKodu()) return;
+  if (!navigator.share) return $("invCopy").click();
+  try { await navigator.share({ title: "Rodinný Tetris", text: "Pridaj sa k nám do rodinného Tetrisu!", url: pozvankaUrl() }); adminMsg("Pozvánka odoslaná ✓"); }
+  catch (e) { /* zdieľanie zrušené */ }
+};
+$("invQr").onclick = () => { if (bezKodu()) return; const skryty = $("qrBox").hidden; $("qrBox").hidden = !skryty; if (skryty) renderQr(); };
 
 /* Pri načítaní stránky: ak je hráč už prihlásený, rovno ho pusti do hry */
 /* Inštalácia ako aplikácia (Android/Chrome ponúkne tlačidlo, iPhone ukáže návod) */
@@ -912,8 +1001,14 @@ async function init() {
   window.addEventListener("orientationchange", () => setTimeout(fitBoard, 200));
   if (window.visualViewport) window.visualViewport.addEventListener("resize", fitBoard);
   $("nameInput").focus();
+  const pozv = new URLSearchParams(location.search).get("kod");          // pozvánka: ?kod=...
+  if (pozv) history.replaceState(null, "", location.pathname + location.hash);   // kód nezostane v adrese
   const { data: { session } } = await db.auth.getSession();
   if (session) enterGame();
+  else if (pozv && pozv.length <= 40) {
+    setMode("register"); $("codeInput").value = pozv;
+    say("Pozvánka: vyber si meno a heslo a zaregistruj sa."); $("nameInput").focus();
+  }
 }
 
 /* =========================================================
@@ -923,6 +1018,9 @@ const ctx = $("board").getContext("2d");
 const nctx = $("next").getContext("2d");
 let grid, current, nextType, score, lines, level, tetrises = 0;
 let dropTimer, lastTime, running, paused, rafId;
+let gridRev = 0, drawnSig = "";     // plocha sa prekreslí len vtedy, keď sa niečo zmenilo (šetrí batériu)
+const stateSig = () => gridRev + "|" + (current ? current.type + current.x + "," + current.y + current.m.map(r => r.join("")).join("/") : "-");
+function startLoop() { drawnSig = ""; cancelAnimationFrame(rafId); lastTime = performance.now(); rafId = requestAnimationFrame(loop); }
 
 const emptyGrid = () => Array.from({ length: ROWS }, () => Array(COLS).fill(null));
 
@@ -945,15 +1043,14 @@ function makePiece(type) {
 }
 
 function newGame() {
-  anim = null; gameId = newId(); tetrises = 0;
+  anim = null; gameId = newId(); tetrises = 0; gridRev++;
   grid = emptyGrid(); score = 0; lines = 0; level = 1;
   dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
   nextType = randomType();
   spawn();
   $("overlay").style.display = "none";
   updateStats();
-  cancelAnimationFrame(rafId);
-  rafId = requestAnimationFrame(loop);
+  startLoop(); wakeOn();
 }
 
 /* Vytvorí novú kocku; ak sa nezmestí, je koniec hry */
@@ -966,7 +1063,7 @@ function spawn() {
 
 function gameOver() {
   running = false;
-  clearSave(); sfx("over"); vibrate([120, 60, 200]);
+  clearSave(); wakeOff(); sfx("over"); vibrate([120, 60, 200]);
   saveIfBest();
   $("overlayText").innerHTML = "Koniec hry<br><span style='color:var(--accent)'>Skóre: " + score + "</span>";
   overlayMode = "over"; $("restartBtn").textContent = "Hrať znova"; $("newBtn").style.display = "none";
@@ -1049,13 +1146,13 @@ function readSave() {
 function resumeGame() {
   const d = savedGame; savedGame = null;
   grid = d.grid; nextType = d.next; score = d.score; lines = d.lines; level = d.level;
-  tetrises = Number.isInteger(d.tet) && d.tet >= 0 ? d.tet : 0;
+  tetrises = Number.isInteger(d.tet) && d.tet >= 0 ? d.tet : 0; gridRev++;
   current = { type: d.cur.type, m: d.cur.m, x: d.cur.x, y: d.cur.y };
   anim = null; dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
   gameId = (typeof d.gid === "string" && /^[0-9a-f-]{36}$/i.test(d.gid)) ? d.gid : newId();
   $("overlay").style.display = "none"; $("newBtn").style.display = "none";
   drawNext(); updateStats();
-  cancelAnimationFrame(rafId); rafId = requestAnimationFrame(loop);
+  startLoop(); wakeOn();
 }
 
 /* Zapíše kocku do poľa. Plné riadky sa najprv krátko rozsvietia (animácia) a až potom zmiznú */
@@ -1064,7 +1161,7 @@ function lockPiece() {
   current.m.forEach((row, y) => row.forEach((v, x) => {
     if (v && current.y + y >= 0) grid[current.y + y][current.x + x] = SHAPES[current.type].color;
   }));
-  current = null;
+  current = null; gridRev++;
   const full = [];
   for (let y = 0; y < ROWS; y++) if (grid[y].every(c => c)) full.push(y);
   if (full.length) {
@@ -1083,6 +1180,7 @@ function finishClear() {
   const n = anim.rows.length, before = level, rows = anim.rows;
   grid = grid.filter((r, i) => !rows.includes(i));
   while (grid.length < ROWS) grid.unshift(Array(COLS).fill(null));
+  gridRev++;
   score += POINTS[n] * level;
   if (n === 4) tetrises++;                        // Tetris = 4 riadky naraz (pre odznak)
   lines += n;
@@ -1114,7 +1212,7 @@ function roundRectPath(c, x, y, w, h, r) {
   c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
 }
-function drawCell(c, x, y, color, size) {
+function paintCell(c, x, y, color, size) {
   const pad = Math.max(1, size * 0.06), px = x * size + pad, py = y * size + pad, w = size - 2 * pad, r = size * 0.22;
   const g = c.createLinearGradient(px, py, px, py + w);
   g.addColorStop(0, lighten(color, 0.3)); g.addColorStop(0.6, color); g.addColorStop(1, color);
@@ -1122,6 +1220,19 @@ function drawCell(c, x, y, color, size) {
   c.lineWidth = 1; c.strokeStyle = "rgba(255,255,255,.28)"; c.stroke();
   roundRectPath(c, px + w * 0.18, py + w * 0.14, w * 0.64, w * 0.16, r * 0.5);   // jemný lesk
   c.fillStyle = "rgba(255,255,255,.22)"; c.fill();
+}
+
+/* Každá farba kocky sa nakreslí len raz do malého obrázka a potom sa len kopíruje (oveľa lacnejšie než gradient pre každú kocku) */
+const sprites = {};
+function drawCell(c, x, y, color, size) {
+  const k = c.__k || 1, key = color + "|" + size + "|" + k;
+  let sp = sprites[key];
+  if (!sp) {
+    sp = document.createElement("canvas"); sp.width = sp.height = Math.round(size * k);
+    const sc = sp.getContext("2d"); sc.scale(k, k); paintCell(sc, 0, 0, color, size);
+    sprites[key] = sp;
+  }
+  c.drawImage(sp, x * size, y * size, size, size);
 }
 
 function draw() {
@@ -1163,17 +1274,16 @@ function drawNext() {
    HERNÁ SLUČKA (čas pádu sa skracuje s úrovňou)
    ========================================================= */
 function loop(now) {
-  if (!running) return;
+  if (!running || paused) return;      // pauza alebo koniec: slučka sa zastaví (šetrí batériu), pokračovanie ju znova spustí
   const dt = now - lastTime; lastTime = now;
-  if (!paused) {
-    if (anim) { if (now - anim.t0 >= anim.dur) finishClear(); }       // animácia mazania riadkov
-    else {
-      dropTimer += dt;
-      const interval = Math.max(90, 800 - (level - 1) * 70);   // ms na 1 riadok
-      if (dropTimer > interval) { dropTimer = 0; softDrop(); }
-    }
+  if (anim) { if (now - anim.t0 >= anim.dur) finishClear(); }       // animácia mazania riadkov
+  else {
+    dropTimer += dt;
+    const interval = Math.max(90, 800 - (level - 1) * 70);   // ms na 1 riadok
+    if (dropTimer > interval) { dropTimer = 0; softDrop(); }
   }
-  draw();
+  const sg = stateSig();
+  if (anim || sg !== drawnSig) { draw(); drawnSig = sg; }          // kreslí sa len pri zmene (alebo počas animácie)
   rafId = requestAnimationFrame(loop);
 }
 
@@ -1199,7 +1309,7 @@ function togglePause() {
   $("overlayText").textContent = "Pauza";
   $("restartBtn").textContent = "Pokračovať"; $("newBtn").style.display = "none";
   $("overlay").style.display = paused ? "flex" : "none";
-  if (paused) saveGame();
+  if (paused) { saveGame(); wakeOff(); } else { startLoop(); wakeOn(); }
   if (!paused) lastTime = performance.now();
 }
 document.addEventListener("visibilitychange", () => {

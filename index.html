@@ -326,11 +326,17 @@
           <div class="picks" id="colorPicks"></div>
           <div class="sub" id="lookMsg" role="status"></div>
         </div>
+        <div class="card" id="pGame">
+          <h2>🎮 Hra</h2>
+          <label class="tog"><span>👻 Tieň kocky (ukáže, kde dopadne)</span><input type="checkbox" id="optGhost"></label>
+          <div class="sub" id="gameMsg" role="status"></div>
+        </div>
         <div class="card" id="pSet">
           <h2>🔊 Zvuk a vibrácie</h2>
           <label class="tog"><span>🔊 Zvuky</span><input type="checkbox" id="optSound"></label>
           <label class="tog"><span>📳 Vibrácie</span><input type="checkbox" id="optVibe"></label>
           <div class="sub" id="vibeNote"></div>
+          <div class="sub">Zvuk a vibrácie platia len v tomto zariadení.</div>
         </div>
         <div class="card" id="pPass">
           <h2>🔑 Zmena hesla</h2>
@@ -348,7 +354,7 @@
             <button class="adminBtn sm ghost">👥 Správa používateľov</button>
             <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
           </div>
-          <div class="sub" style="margin-top:8px">Verzia 12</div>
+          <div class="sub" style="margin-top:8px">Verzia 13</div>
         </div>
       </div>
     </div>
@@ -460,6 +466,8 @@ let myBest = 0;                    // najlepšie skóre prihláseného hráča
 let savedGame = null;              // rozohraná hra uložená v tomto zariadení
 let lastStats = null;              // štatistiky hráča pre odznaky (z databázy)
 let lbData = [];                   // rebríček (zoradený od najlepšieho)
+let ghostOn = true;                // tieň kocky (nastavenie hráča, uložené v jeho účte)
+const GAME_NOTE = "Uložené v tvojom účte, platí na všetkých tvojich zariadeniach.";
 
 /* ===== Slovenské tvary a text o vzdialenosti do ďalšieho miesta ===== */
 const fmtN = n => Number(n).toLocaleString("sk-SK");
@@ -537,7 +545,7 @@ const isMobile = () => window.matchMedia(MOBIL_Q).matches;
 async function enterGame() {
   const { data: { user }, error: uerr } = await db.auth.getUser();
   if (!user) { if (jeSiet(uerr)) say(NET_MSG); return; }
-  const { data: prof, error: perr } = await db.from("profiles").select("id,username,is_admin,is_blocked,emoji,color").eq("id", user.id).single();
+  const { data: prof, error: perr } = await db.from("profiles").select("id,username,is_admin,is_blocked,emoji,color,settings").eq("id", user.id).single();
   if (perr && perr.code !== "PGRST116") return say(NET_MSG);     // výpadok siete: prihlásenie ostáva zachované
   if (!prof) { await db.auth.signOut(); return say("Profil sa nenašiel."); }
   if (prof.is_blocked) { await db.auth.signOut(); return say("Tento účet je zablokovaný. Obráť sa na admina."); }
@@ -545,6 +553,8 @@ async function enterGame() {
   $("login").style.display = "none";
   $("game").classList.add("on");
   applyLook();
+  ghostOn = !(player.settings && player.settings.ghost === false);     // predvolene je tieň zapnutý
+  $("optGhost").checked = ghostOn; $("gameMsg").textContent = GAME_NOTE;
   showPane("results");
   $("lookMsg").textContent = ""; $("pwMsg").textContent = "";
   document.body.classList.toggle("isAdmin", !!player.is_admin);
@@ -623,7 +633,7 @@ async function logout() {
   closeSheet(); wakeOff();
   running = false; cancelAnimationFrame(rafId);
   await db.auth.signOut();
-  player = null; lastStats = null; lbData = [];
+  player = null; lastStats = null; lbData = []; ghostOn = true;
   document.body.classList.remove("isAdmin");
   $("game").classList.remove("on");
   $("login").style.display = "block";
@@ -852,6 +862,20 @@ $("optVibe").checked = nast.vibrate && canVibrate;
 $("optSound").onchange = e => { nast.sound = e.target.checked; saveNast(); if (nast.sound) { unlockAudio(); sfx("rotate"); } };
 $("optVibe").onchange = e => { nast.vibrate = e.target.checked; saveNast(); if (nast.vibrate) vibrate(40); };
 if (!canVibrate) { $("optVibe").disabled = true; $("vibeNote").textContent = "Vibrácie toto zariadenie nepodporuje (napr. iPhone)."; }
+/* ===== NASTAVENIE HRY: tieň kocky (uložené v účte hráča) ===== */
+function setGhost(on) { ghostOn = on; drawnSig = ""; if (grid) draw(); }       // prekreslí sa hneď, aj počas pauzy
+$("optGhost").onchange = async e => {
+  const on = e.target.checked, stare = ghostOn;
+  setGhost(on); $("gameMsg").textContent = "Ukladám…";
+  const { error } = await db.rpc("set_setting", { p_key: "ghost", p_value: on });
+  if (error) {                                         // neúspech: vrátime pôvodné nastavenie
+    setGhost(stare); e.target.checked = stare;
+    $("gameMsg").textContent = jeSiet(error) ? NET_MSG : "Nepodarilo sa uložiť: " + error.message;
+    return;
+  }
+  player.settings = Object.assign({}, player.settings, { ghost: on });
+  $("gameMsg").textContent = "Uložené ✓";
+};
 window.addEventListener("pagehide", saveGame);
 
 /* ===== BOČNÝ PANEL: záložky Výsledky / Nastavenia ===== */
@@ -1251,6 +1275,7 @@ function draw() {
     anim.rows.forEach(y => ctx.fillRect(0, y * CELL, COLS * CELL, CELL));
   }
   if (!current) return;
+  if (ghostOn) {                                                           // tieň sa dá vypnúť v nastaveniach
   let gy = current.y;                                                      // tieň: kde kocka dopadne
   while (!collides(current.m, current.x, gy + 1)) gy++;
   ctx.save(); ctx.globalAlpha = 0.4; ctx.lineWidth = 2; ctx.strokeStyle = SHAPES[current.type].color;
@@ -1258,6 +1283,7 @@ function draw() {
     if (v) { roundRectPath(ctx, (current.x + x) * CELL + 3, (gy + y) * CELL + 3, CELL - 6, CELL - 6, 6); ctx.stroke(); }
   }));
   ctx.restore();
+  }
   current.m.forEach((row, y) => row.forEach((v, x) => {
     if (v) drawCell(ctx, current.x + x, current.y + y, SHAPES[current.type].color, CELL);
   }));

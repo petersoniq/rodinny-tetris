@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e17">
+<meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Tetris">
@@ -103,7 +104,7 @@
   body.sheetOpen #backdrop { display: block; }
 
   table { width: 100%; border-collapse: collapse; font-size: .92rem; }
-  td { padding: 7px 8px; }
+  td { padding: 5px 8px; }
   td:first-child { width: 30px; color: var(--muted); }
   td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
   tr.me td { background: rgba(233,196,106,.16); color: #fff; }
@@ -140,12 +141,13 @@
   #sideTabs { margin: 0; }
   .pane { display: flex; flex-direction: column; gap: 12px; }
   .pane[hidden] { display: none; }
-  .badge { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
-  .badge:last-child { border-bottom: 0; }
-  .badge .ico { font-size: 1.6rem; width: 34px; text-align: center; flex: none; }
-  .badge .txt { flex: 1; min-width: 0; }
-  .badge .nm { font-weight: 700; font-size: .92rem; }
-  .badge .st { font-size: .75rem; color: var(--gold); white-space: nowrap; }
+  .badges { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .badge { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.05); min-width: 0; }
+  .badge .ico { font-size: 1.4rem; grid-row: 1 / 3; }
+  .badge .txt { min-width: 0; grid-column: 2; }
+  .badge .nm { font-weight: 700; font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge .sub { font-size: .66rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge .st { grid-column: 2; font-size: .7rem; color: var(--gold); white-space: nowrap; }
   .badge.zamknuty { opacity: .55; filter: grayscale(.7); }
   .badge.zamknuty .st { color: var(--muted); }
   #lookPrev { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; overflow-wrap: anywhere; }
@@ -157,6 +159,37 @@
   #qrBox { text-align: center; margin: 0 0 12px; }
   .qrImg { display: inline-block; background: #fff; padding: 10px; border-radius: 12px; width: min(240px, 70vw); margin-bottom: 6px; }
   .qrImg svg { display: block; width: 100%; height: auto; }
+
+  /* Pohľady vo výsledkoch: krátke, aby sa nemuselo skrolovať */
+  .pane { gap: 10px; }
+  .chips { display: flex; gap: 6px; }
+  .chip { flex: 1; min-width: 0; padding: 8px 2px; font-size: .74rem; border-radius: 999px; background: rgba(255,255,255,.07); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip.on { background: linear-gradient(180deg, #f3d27f, #dfa845); color: #2a1d00; border-color: transparent; }
+  .view { display: flex; flex-direction: column; gap: 10px; }
+  .view[hidden] { display: none; }
+  .link { background: none; color: var(--gold); border: 0; padding: 6px 0; font-size: .8rem; font-weight: 600; }
+  .link[hidden] { display: none; }
+  .hall { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile { background: rgba(255,255,255,.05); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; min-width: 0; }
+  .tile .tl { font-size: .68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .tv { font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
+  .tile .th { font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gtitle { font-weight: 700; margin-bottom: 4px; overflow-wrap: anywhere; }
+  .bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; margin: 6px 0; }
+  .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #52B788, #E9C46A); }
+  .gnum { font-size: .85rem; }
+  .gline { font-size: .78rem; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+  .feedRow { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .feedRow:last-child { border-bottom: 0; }
+  .fwho { font-weight: 700; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ftime { font-size: .7rem; color: var(--muted); white-space: nowrap; }
+  .ftxt { grid-column: 1 / 3; font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
+  details.adm-sec { margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; background: rgba(255,255,255,.04); }
+  details.adm-sec summary { cursor: pointer; font-weight: 700; font-size: .9rem; }
+  .goalForm { margin-top: 10px; }
+  .goalForm input { margin-bottom: 8px; }
+  .goalForm label { font-size: .75rem; color: var(--muted); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   /* ===== ADMIN PANEL ===== */
   #admin { position: fixed; inset: 0; background: rgba(6,8,14,.92); display: none; overflow: auto; padding: 16px; z-index: 40; }
@@ -296,22 +329,49 @@
         <button class="tab" data-p="settings" type="button">⚙️ Nastavenia</button>
       </div>
 
-      <!-- Časť 1: výsledky -->
+      <!-- Časť 1: výsledky (štyri krátke pohľady, aby sa nemuselo veľa skrolovať) -->
       <div class="pane" id="paneResults">
-        <div class="card" id="pLb">
-          <h2>🏆 Rebríček rodiny</h2>
-          <div class="scroll"><table id="leaderboard"></table></div>
-          <div class="sub" id="gapLine" style="margin-top:8px"></div>
-          <div class="quote">„Malé kroky vedú k veľkým výsledkom."</div>
+        <div class="chips" id="subTabs">
+          <button class="chip on" data-v="board" type="button">🏆 Rebríček</button>
+          <button class="chip" data-v="goals" type="button">🎯 Výzvy</button>
+          <button class="chip" data-v="feed" type="button">📰 Aktivita</button>
+          <button class="chip" data-v="mine" type="button">⭐ Moje</button>
         </div>
-        <div class="card" id="pMy">
-          <h2>⭐ Moje najlepšie skóre</h2>
-          <table id="myScores"></table>
-          <div class="sub" id="myStats" style="margin-top:6px"></div>
+
+        <div class="view" id="viewBoard">
+          <div class="card" id="pLb">
+            <table id="leaderboard"></table>
+            <button class="link" id="lbMore" type="button" hidden></button>
+            <div class="sub" id="gapLine"></div>
+          </div>
+          <div class="card" id="pHall">
+            <h2>🏛️ Sieň slávy</h2>
+            <div class="hall" id="hallGrid"></div>
+            <div class="quote">„Malé kroky vedú k veľkým výsledkom."</div>
+          </div>
         </div>
-        <div class="card" id="pBadges">
-          <h2>🏅 Odznaky</h2>
-          <div id="badgeList"></div>
+
+        <div class="view" id="viewGoals" hidden>
+          <div class="card" id="pGoal"><div id="goalBox"></div></div>
+          <div class="card" id="pBadges">
+            <h2>🏅 Odznaky</h2>
+            <div class="badges" id="badgeList"></div>
+          </div>
+        </div>
+
+        <div class="view" id="viewFeed" hidden>
+          <div class="card" id="pFeed">
+            <div id="feedList"></div>
+            <button class="link" id="feedMore" type="button" hidden>Zobraziť staršie</button>
+          </div>
+        </div>
+
+        <div class="view" id="viewMine" hidden>
+          <div class="card" id="pMy">
+            <h2>⭐ Moje najlepšie skóre</h2>
+            <table id="myScores"></table>
+            <div class="sub" id="myStats" style="margin-top:6px"></div>
+          </div>
         </div>
       </div>
 
@@ -354,7 +414,7 @@
             <button class="adminBtn sm ghost">👥 Správa používateľov</button>
             <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
           </div>
-          <div class="sub" style="margin-top:8px">Verzia 13</div>
+          <div class="sub" style="margin-top:8px">Verzia 14</div>
         </div>
       </div>
     </div>
@@ -374,6 +434,21 @@
       <button class="sm ghost" id="invQr">▦ QR kód</button>
     </div>
     <div id="qrBox" hidden></div>
+    <details class="adm-sec" id="goalSec">
+      <summary>🎯 Rodinný cieľ</summary>
+      <div class="goalForm">
+        <input id="goalTitle" maxlength="60" placeholder="Názov (napr. Október: spolu 5 000 riadkov)">
+        <input id="goalReward" maxlength="80" placeholder="Odmena (napr. Rodinná večera)">
+        <input id="goalTarget" type="number" min="1" max="1000000" inputmode="numeric" placeholder="Cieľ v riadkoch (spolu všetci hráči)">
+        <div class="row2">
+          <label>Od <input id="goalFrom" type="date"></label>
+          <label>Do <input id="goalTo" type="date"></label>
+        </div>
+        <button class="sm ghost" id="goalMonth" type="button">Tento mesiac</button>
+        <button class="sm" id="goalSave" type="button">Uložiť cieľ</button>
+        <button class="sm danger" id="goalClear" type="button">Zrušiť cieľ</button>
+      </div>
+    </details>
     <div id="userList"></div>
     <p><button id="closeAdmin">Zavrieť</button></p>
     <div id="adminMsg" class="help" role="status"></div>
@@ -467,6 +542,10 @@ let savedGame = null;              // rozohraná hra uložená v tomto zariaden�
 let lastStats = null;              // štatistiky hráča pre odznaky (z databázy)
 let lbData = [];                   // rebríček (zoradený od najlepšieho)
 let ghostOn = true;                // tieň kocky (nastavenie hráča, uložené v jeho účte)
+let curView = "board", lbExpanded = false, feedLimit = 8;      // aktuálny pohľad vo výsledkoch, rozbalený rebríček, počet udalostí
+const viewAt = {};                 // kedy sa ktorý pohľad naposledy načítal (načítava sa až pri otvorení)
+const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+const nameSpan = r => { const sp = mk("span", "", (r.emoji ? r.emoji + " " : "") + r.username); if (r.color) sp.style.color = r.color; return sp; };
 const GAME_NOTE = "Uložené v tvojom účte, platí na všetkých tvojich zariadeniach.";
 
 /* ===== Slovenské tvary a text o vzdialenosti do ďalšieho miesta ===== */
@@ -488,6 +567,30 @@ function gapText() {
   return "Do " + i + ". miesta (" + lbLabel(nad) + ") ti chýba " + fmtN(chyba) + " " + bodov(chyba) + ".";
 }
 const renderGap = () => { $("gapLine").textContent = gapText(); };
+
+/* Rebríček: medaily pre prvé tri miesta, najviac 8 riadkov (ostatných sa dá rozbaliť), hráč je vždy vidieť */
+const MEDAL = ["🥇", "🥈", "🥉"];
+function renderLeaderboard() {
+  if (!player) return;
+  const idx = lbData.map((r, i) => i), meI = lbData.findIndex(r => r.username === player.username);
+  let shown = idx;
+  if (!lbExpanded && lbData.length > 8) shown = meI >= 8 ? idx.slice(0, 7).concat(meI) : idx.slice(0, 8);
+  fillTable($("leaderboard"), shown.map(i => [MEDAL[i] || i + 1, lbLabel(lbData[i]), lbData[i].best]),
+    k => lbData[shown[k]].username === player.username, k => lbData[shown[k]].color);
+  $("lbMore").hidden = lbData.length <= 8;
+  $("lbMore").textContent = lbExpanded ? "Zobraziť menej" : "Zobraziť všetkých (" + lbData.length + ")";
+}
+
+/* Čas udalosti: "teraz", "pred 5 min", "pred 3 h", "včera", inak dátum */
+function casText(iso) {
+  const t = new Date(iso), min = Math.floor((Date.now() - t.getTime()) / 60000);
+  if (min < 1) return "teraz";
+  if (min < 60) return "pred " + min + " min";
+  if (min < 24 * 60) return "pred " + Math.floor(min / 60) + " h";
+  const dnes0 = new Date(); dnes0.setHours(0, 0, 0, 0);
+  const dni = Math.round((dnes0 - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000);
+  return dni === 1 ? "včera" : fmtDate(iso);
+}
 
 /* ===== NASTAVENIA (zvuk, vibrácie): ukladajú sa v tomto zariadení, predvolene sú vypnuté ===== */
 const SETTINGS_KEY = "rodinnyTetris_nastavenia";
@@ -555,7 +658,7 @@ async function enterGame() {
   applyLook();
   ghostOn = !(player.settings && player.settings.ghost === false);     // predvolene je tieň zapnutý
   $("optGhost").checked = ghostOn; $("gameMsg").textContent = GAME_NOTE;
-  showPane("results");
+  showPane("results"); resetViews(); showView("board");
   $("lookMsg").textContent = ""; $("pwMsg").textContent = "";
   document.body.classList.toggle("isAdmin", !!player.is_admin);
   $("passInput").value = "";
@@ -599,6 +702,7 @@ function openSheet() {
   if (!isMobile()) return;
   if (running && !paused) togglePause();          // hra sa pri otvorení pozastaví
   $("side").classList.add("open"); document.body.classList.add("sheetOpen");
+  loadView(curView);                               // údaje v otvorenom pohľade sa obnovia, ak sú staršie než 30 s
 }
 function closeSheet() { $("side").classList.remove("open"); document.body.classList.remove("sheetOpen"); }
 
@@ -633,7 +737,7 @@ async function logout() {
   closeSheet(); wakeOff();
   running = false; cancelAnimationFrame(rafId);
   await db.auth.signOut();
-  player = null; lastStats = null; lbData = []; ghostOn = true;
+  player = null; lastStats = null; lbData = []; ghostOn = true; resetViews();
   document.body.classList.remove("isAdmin");
   $("game").classList.remove("on");
   $("login").style.display = "block";
@@ -672,10 +776,7 @@ async function refreshPanels() {
   // Rodinný rebríček: najlepšie skóre každého hráča
   const lb = await db.rpc("leaderboard");
   if (player !== me) return;
-  if (!lb.error) fillTable($("leaderboard"),
-    lb.data.map((r, i) => [i + 1, (r.emoji ? r.emoji + " " : "") + r.username, r.best]),
-    i => lb.data[i].username === me.username, i => lb.data[i].color);
-  if (!lb.error) { lbData = lb.data; renderGap(); }
+  if (!lb.error) { lbData = lb.data; renderLeaderboard(); renderGap(); }
   // Moje top 5 (najvyššie skóre je zároveň moje maximum)
   const top = await db.from("scores").select("score,created_at")
                       .order("score", { ascending: false }).order("created_at", { ascending: false }).limit(5);
@@ -751,7 +852,7 @@ async function saveIfBest() {
   if (player === me) {
     const pred = lastStats ? ODZNAKY.filter(b => b.ziskany(lastStats)).map(b => b.id) : null;
     const poradiePred = lbData.length ? myRank() : -1;
-    await refreshPanels();
+    await refreshPanels(); invalidateViews();               // po hre sa nové údaje načítajú aj do aktuálneho pohľadu
     if (pred && lastStats && player === me) {                      // oznam o novo získanom odznaku
       const nove = ODZNAKY.filter(b => b.ziskany(lastStats) && !pred.includes(b.id));
       if (nove.length) { poznamka("🏅 Nový odznak: " + nove.map(b => b.ikona + " " + b.nazov).join(", ")); sfx("level"); vibrate([30, 40, 30]); }
@@ -769,7 +870,7 @@ async function saveIfBest() {
 const adminMsg = t => { $("adminMsg").textContent = t; };
 
 async function openAdmin() {
-  adminWasPaused = paused; paused = true; wakeOff(); $("admin").style.display = "block"; await loadAdmin();
+  adminWasPaused = paused; paused = true; wakeOff(); $("admin").style.display = "block"; await Promise.all([loadAdmin(), fillGoalForm()]);
 }
 let adminWasPaused = false;
 function closeAdmin() {
@@ -877,6 +978,134 @@ $("optGhost").onchange = async e => {
   $("gameMsg").textContent = "Uložené ✓";
 };
 window.addEventListener("pagehide", saveGame);
+
+/* ===== VÝSLEDKY: štyri krátke pohľady (Rebríček, Výzvy, Aktivita, Moje); každý sa načíta až pri otvorení ===== */
+const VIEWS = [["board", "viewBoard"], ["goals", "viewGoals"], ["feed", "viewFeed"], ["mine", "viewMine"]];
+function showView(name) {
+  curView = name;
+  document.querySelectorAll("#subTabs .chip").forEach(b => b.classList.toggle("on", b.dataset.v === name));
+  VIEWS.forEach(([v, id]) => { $(id).hidden = v !== name; });
+  loadView(name);
+}
+function resetViews() { Object.keys(viewAt).forEach(k => delete viewAt[k]); lbExpanded = false; feedLimit = 8; curView = "board"; }
+function invalidateViews() { Object.keys(viewAt).forEach(k => delete viewAt[k]); if (player) loadView(curView, true); }
+async function loadView(name, force) {
+  const me = player;
+  if (!me) return;
+  if (!force && viewAt[name] && Date.now() - viewAt[name] < 30000) return;
+  viewAt[name] = Date.now();
+  let chyba = false;
+  if (name === "board") {
+    const r = await db.rpc("family_records"); chyba = !!r.error;
+    if (player === me) renderHall(chyba ? null : r.data);
+  } else if (name === "goals") {
+    const r = await db.rpc("family_goal"); chyba = !!r.error;
+    if (player === me) { renderGoal(chyba ? undefined : (r.data && r.data[0]) || null); renderBadges(); }
+  } else if (name === "feed") {
+    const r = await db.rpc("family_feed", { p_limit: feedLimit }); chyba = !!r.error;
+    if (player === me) renderFeed(chyba ? null : r.data);
+  }
+  if (chyba) delete viewAt[name];                  // pri chybe sa pri ďalšom otvorení skúsi znova
+}
+document.querySelectorAll("#subTabs .chip").forEach(b => { b.onclick = () => showView(b.dataset.v); });
+$("lbMore").onclick = () => { lbExpanded = !lbExpanded; renderLeaderboard(); };
+$("feedMore").onclick = () => { feedLimit = 25; loadView("feed", true); };
+
+/* Sieň slávy: štyri rekordy rodiny */
+const HALL = [
+  ["score", "🏆", "Najvyššie skóre", v => fmtN(v) + " " + bodov(v)],
+  ["lines", "📏", "Najviac riadkov v hre", v => fmtN(v)],
+  ["tetrises", "🧱", "Najviac Tetris v hre", v => String(v)],
+  ["streak", "🔥", "Najdlhšia séria", v => v + " " + dniText(v)]
+];
+function renderHall(rows) {
+  const box = $("hallGrid"); box.innerHTML = "";
+  if (!rows) { box.append(mk("div", "sub", "Nepodarilo sa načítať. Skús to znova neskôr.")); return; }
+  HALL.forEach(([kind, ikona, nazov, fmt]) => {
+    const r = rows.find(x => x.kind === kind), tile = mk("div", "tile");
+    tile.append(mk("div", "tl", ikona + " " + nazov), mk("div", "tv", r ? fmt(r.val) : "—"));
+    const th = mk("div", "th");
+    if (r) { th.append(nameSpan(r), " · " + fmtDate(r.at)); } else th.textContent = "Zatiaľ nikto";
+    tile.append(th); box.appendChild(tile);
+  });
+}
+
+/* Rodinný cieľ: spoločný pruh postupu všetkých hráčov */
+function renderGoal(g) {
+  const box = $("goalBox"); box.innerHTML = "";
+  if (g === undefined) { box.append(mk("div", "sub", "Nepodarilo sa načítať. Skús to znova neskôr.")); return; }
+  if (!g) {
+    box.append(mk("div", "gtitle", "🎯 Rodinný cieľ"),
+      mk("div", "sub", "Zatiaľ nie je nastavený žiadny cieľ." + (player && player.is_admin ? " Nastavíš ho v správe používateľov." : "")));
+    return;
+  }
+  const prog = Number(g.progress), cieľ = g.target, pct = Math.min(100, Math.floor(prog / cieľ * 100));
+  const dnes0 = new Date(); dnes0.setHours(0, 0, 0, 0);
+  const koniec = new Date(g.ends_on + "T00:00:00"), start = new Date(g.starts_on + "T00:00:00");
+  const zostava = Math.round((koniec - dnes0) / 86400000);
+  let stav;
+  if (prog >= cieľ) stav = "🎉 Cieľ je splnený!";
+  else if (zostava < 0) stav = "Cieľ už skončil";
+  else if (start > dnes0) stav = "Začína " + fmtDate(g.starts_on);
+  else stav = zostava === 0 ? "Posledný deň" : "Zostáva " + (zostava + 1) + " " + dniText(zostava + 1) + " (do " + fmtDate(g.ends_on) + ")";
+  const bar = mk("div", "bar"), fill = mk("div", "fill"); fill.style.width = pct + "%"; bar.append(fill);
+  box.append(mk("div", "gtitle", "🎯 " + g.title), bar,
+    mk("div", "gnum", fmtN(prog) + " / " + fmtN(cieľ) + " riadkov · " + pct + " %"), mk("div", "gline", stav));
+  if (g.reward) box.append(mk("div", "gline", "🎁 Odmena: " + g.reward));
+  const pr = Array.isArray(g.contributors) ? g.contributors : [];
+  if (pr.length) {
+    const l = mk("div", "gline", "Najviac prispeli: ");
+    pr.forEach((c, i) => { if (i) l.append(", "); l.append(nameSpan(c), " " + fmtN(c.lines)); });
+    box.append(l);
+  }
+}
+
+/* Aktivita rodiny: posledné udalosti (neutrálne formulácie, aby sedeli pre každého) */
+function eventText(e) {
+  const p = e.payload || {};
+  if (e.kind === "record_family") return "🏆 Rekord rodiny · " + fmtN(p.score) + " " + bodov(p.score);
+  if (e.kind === "record_personal") return "⭐ Osobné maximum · " + fmtN(p.score) + " " + bodov(p.score);
+  if (e.kind === "overtake") { const o = p.over || []; return (o.length === 1 ? "📈 Predbehnutý hráč: " : "📈 Predbehnutí hráči: ") + o.join(", ") + " · " + fmtN(p.score) + " " + bodov(p.score); }
+  if (e.kind === "badge") { const b = ODZNAKY.find(x => x.id === p.badge); return b ? "🏅 Odznak · " + b.ikona + " " + b.nazov : null; }
+  if (e.kind === "goal_done") return "🎉 Rodinný cieľ splnený · " + (p.title || "");
+  if (e.kind === "joined") return "👋 Pripojenie do rodiny";
+  return null;
+}
+function renderFeed(rows) {
+  const box = $("feedList"); box.innerHTML = "";
+  $("feedMore").hidden = true;
+  if (!rows) { box.append(mk("div", "sub", "Nepodarilo sa načítať. Skús to znova neskôr.")); return; }
+  const riadky = rows.filter(e => eventText(e) !== null);
+  if (!riadky.length) { box.append(mk("div", "sub", "Zatiaľ žiadna aktivita.")); return; }
+  riadky.forEach(e => {
+    const row = mk("div", "feedRow"), who = mk("div", "fwho"); who.append(nameSpan(e));
+    row.append(who, mk("div", "ftime", casText(e.created_at)), mk("div", "ftxt", eventText(e)));
+    box.appendChild(row);
+  });
+  $("feedMore").hidden = !(rows.length >= feedLimit && feedLimit < 25);
+}
+
+/* ===== ADMIN: rodinný cieľ ===== */
+const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+function goalMonthDates() { const n = new Date(); return [ymd(new Date(n.getFullYear(), n.getMonth(), 1)), ymd(new Date(n.getFullYear(), n.getMonth() + 1, 0))]; }
+async function fillGoalForm() {
+  const r = await db.rpc("family_goal"), g = !r.error && r.data && r.data[0], [a, b] = goalMonthDates();
+  $("goalTitle").value = g ? g.title : ""; $("goalReward").value = g && g.reward ? g.reward : "";
+  $("goalTarget").value = g ? g.target : ""; $("goalFrom").value = g ? g.starts_on : a; $("goalTo").value = g ? g.ends_on : b;
+}
+$("goalMonth").onclick = () => { const [a, b] = goalMonthDates(); $("goalFrom").value = a; $("goalTo").value = b; };
+$("goalSave").onclick = async () => {
+  const { error } = await db.rpc("admin_set_goal", { p_title: $("goalTitle").value, p_reward: $("goalReward").value,
+    p_target: parseInt($("goalTarget").value, 10) || null, p_starts_on: $("goalFrom").value || null, p_ends_on: $("goalTo").value || null });
+  adminMsg(error ? (jeSiet(error) ? NET_MSG : "Chyba: " + error.message) : "Rodinný cieľ je uložený ✓");
+  if (!error) invalidateViews();
+};
+$("goalClear").onclick = async () => {
+  if (!confirm("Zrušiť rodinný cieľ?")) return;
+  const { error } = await db.rpc("admin_clear_goal");
+  adminMsg(error ? (jeSiet(error) ? NET_MSG : "Chyba: " + error.message) : "Rodinný cieľ je zrušený.");
+  if (!error) { invalidateViews(); fillGoalForm(); }
+};
 
 /* ===== BOČNÝ PANEL: záložky Výsledky / Nastavenia ===== */
 function showPane(name) {

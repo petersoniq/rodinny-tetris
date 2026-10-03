@@ -1,0 +1,4 @@
+# Rodinný Tetris je súkromný rodinný projekt: žiadame vyhľadávače, aby ho neindexovali.
+# (Súbor platí len na koreni domény, napr. tetris.ondris.eu; na adrese github.io/rodinny-tetris ho vyhľadávače nečítajú, tam pomáha značka noindex v index.html.)
+User-agent: *
+Disallow: /

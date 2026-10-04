@@ -188,6 +188,16 @@
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   /* ===== ADMIN PANEL ===== */
+  /* História výziev */
+  .hrow { padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .hrow:last-child { border-bottom: 0; }
+  .hhead { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: baseline; }
+  .hico { font-size: .95rem; }
+  .htit { font-weight: 700; font-size: .88rem; overflow-wrap: anywhere; }
+  .hdate { font-size: .7rem; color: var(--muted); white-space: nowrap; }
+  .hdet { font-size: .76rem; color: var(--muted); margin: 2px 0 0 26px; overflow-wrap: anywhere; }
+  .hrow .sm { margin: 6px 0 0 26px; }
+
   /* ===== CELOOBRAZOVKOVÉ SEKCIE: výsledky, nastavenia a správa používateľov ===== */
   .side, #admin {
     position: fixed; inset: 0; display: flex; flex-direction: column; color: var(--text);
@@ -383,6 +393,11 @@
       </div>
       <div class="view" id="viewGoals" hidden>
         <div class="card" id="pGoal"><div id="goalBox"></div></div>
+        <div class="card" id="pGoalHist" hidden>
+          <h2>📜 História výziev</h2>
+          <div id="goalHist"></div>
+          <button class="link" id="histMore" type="button" hidden></button>
+        </div>
         <div class="card" id="pBadges">
           <h2>🏅 Odznaky</h2>
           <div class="badges" id="badgeList"></div>
@@ -451,7 +466,7 @@
             <button class="adminBtn sm ghost">👥 Správa používateľov</button>
             <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
           </div>
-          <div class="sub" style="margin-top:10px">Verzia 15</div>
+          <div class="sub" style="margin-top:10px">Verzia 16</div>
         </div>
       </div>
     </div>
@@ -494,9 +509,18 @@
     </div>
 
     <div class="view" id="admGoal" hidden>
-      <div class="card">
-        <h2>🎯 Rodinný cieľ</h2>
-        <div class="sub" style="margin-bottom:8px">Všetci hráči spolu zmazávajú riadky v zvolenom období.</div>
+      <div class="card" id="admGoalNow">
+        <h2>🎯 Aktuálny cieľ</h2>
+        <div id="goalNow"></div>
+        <div class="acts" id="goalNowActs">
+          <button class="sm ghost" id="goalEdit" type="button">✏️ Upraviť</button>
+          <button class="sm" id="goalNew" type="button">➕ Nový cieľ</button>
+          <button class="sm danger" id="goalDelete" type="button">🗑️ Zmazať</button>
+        </div>
+      </div>
+      <div class="card" id="admGoalForm">
+        <h2 id="goalModeTitle">➕ Nový cieľ</h2>
+        <div class="sub" id="goalModeHint" style="margin-bottom:8px"></div>
         <div class="goalForm">
           <label>Názov<input id="goalTitle" maxlength="60" placeholder="napr. Október: spolu 5 000 riadkov"></label>
           <label>Odmena<input id="goalReward" maxlength="80" placeholder="napr. Rodinná večera"></label>
@@ -506,9 +530,13 @@
             <label>Do<input id="goalTo" type="date"></label>
           </div>
           <button class="sm ghost" id="goalMonth" type="button">Tento mesiac</button>
-          <button class="sm" id="goalSave" type="button">Uložiť cieľ</button>
-          <button class="sm danger" id="goalClear" type="button">Zrušiť cieľ</button>
+          <button class="sm" id="goalSave" type="button">Vytvoriť nový cieľ</button>
+          <button class="sm ghost" id="goalCancel" type="button" hidden>Zrušiť úpravu</button>
         </div>
+      </div>
+      <div class="card" id="admGoalHist">
+        <h2>📜 História výziev</h2>
+        <div id="goalHistAdmin"></div>
       </div>
     </div>
   </div></div>
@@ -603,6 +631,7 @@ let savedGame = null;              // rozohraná hra uložená v tomto zariaden�
 let lastStats = null;              // štatistiky hráča pre odznaky (z databázy)
 let lbData = [];                   // rebríček (zoradený od najlepšieho)
 let ghostOn = true;                // tieň kocky (nastavenie hráča, uložené v jeho účte)
+let goalCur = null, goalEditId = null, histData = null, histExpanded = false;   // aktuálny cieľ, upravovaný cieľ, história výziev
 let curView = "board", lbExpanded = false, feedLimit = 8;      // aktuálny pohľad vo výsledkoch, rozbalený rebríček, počet udalostí
 const viewAt = {};                 // kedy sa ktorý pohľad naposledy načítal (načítava sa až pri otvorení)
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
@@ -949,7 +978,7 @@ async function openAdmin() {
   $("admin").classList.add("open");
   try { history.pushState({ o: "admin" }, ""); } catch (e) {}
   showAdminView("users");
-  await Promise.all([loadAdmin(), fillGoalForm()]);
+  await Promise.all([loadAdmin(), loadAdminGoals()]);
 }
 let adminWasPaused = false;
 function closeAdmin(zPopstate) {
@@ -1088,7 +1117,7 @@ function showView(name) {
   VIEWS.forEach(([v, id]) => { $(id).hidden = v !== name; });
   loadView(name);
 }
-function resetViews() { Object.keys(viewAt).forEach(k => delete viewAt[k]); lbExpanded = false; feedLimit = 8; curView = "board"; }
+function resetViews() { Object.keys(viewAt).forEach(k => delete viewAt[k]); lbExpanded = false; feedLimit = 8; histExpanded = false; curView = "board"; }
 function invalidateViews() { Object.keys(viewAt).forEach(k => delete viewAt[k]); if (player) loadView(curView, true); }
 async function loadView(name, force) {
   const me = player;
@@ -1100,8 +1129,8 @@ async function loadView(name, force) {
     const r = await db.rpc("family_records"); chyba = !!r.error;
     if (player === me) renderHall(chyba ? null : r.data);
   } else if (name === "goals") {
-    const r = await db.rpc("family_goal"); chyba = !!r.error;
-    if (player === me) { renderGoal(chyba ? undefined : (r.data && r.data[0]) || null); renderBadges(); }
+    const [r, h] = await Promise.all([db.rpc("family_goal"), db.rpc("family_goal_history", { p_limit: 30 })]); chyba = !!r.error;
+    if (player === me) { renderGoal(chyba ? undefined : (r.data && r.data[0]) || null); histData = h.error ? null : h.data; renderGoalHistoryCard(); renderBadges(); }
   } else if (name === "feed") {
     const r = await db.rpc("family_feed", { p_limit: feedLimit }); chyba = !!r.error;
     if (player === me) renderFeed(chyba ? null : r.data);
@@ -1140,6 +1169,20 @@ function renderHall(rows) {
 }
 
 /* Rodinný cieľ: spoločný pruh postupu všetkých hráčov */
+/* Stav cieľa (spoločné pre hráča aj admina) */
+function goalStatus(g) {
+  const prog = Number(g.progress), cieľ = g.target, pct = Math.min(100, Math.floor(prog / cieľ * 100));
+  const dnes0 = new Date(); dnes0.setHours(0, 0, 0, 0);
+  const koniec = new Date(g.ends_on + "T00:00:00"), start = new Date(g.starts_on + "T00:00:00");
+  const zostava = Math.round((koniec - dnes0) / 86400000);
+  let stav;
+  if (prog >= cieľ) stav = "🎉 Cieľ je splnený!" + (g.completed_at ? " (" + fmtDate(g.completed_at) + ")" : "");
+  else if (zostava < 0) stav = "Cieľ už skončil";
+  else if (start > dnes0) stav = "Začína " + fmtDate(g.starts_on);
+  else stav = zostava === 0 ? "Posledný deň" : "Zostáva " + (zostava + 1) + " " + dniText(zostava + 1) + " (do " + fmtDate(g.ends_on) + ")";
+  return { prog, cieľ, pct, stav };
+}
+function goalBar(pct) { const bar = mk("div", "bar"), fill = mk("div", "fill"); fill.style.width = pct + "%"; bar.append(fill); return bar; }
 function renderGoal(g) {
   const box = $("goalBox"); box.innerHTML = "";
   if (g === undefined) { box.append(mk("div", "sub", "Nepodarilo sa načítať. Skús to znova neskôr.")); return; }
@@ -1148,17 +1191,8 @@ function renderGoal(g) {
       mk("div", "sub", "Zatiaľ nie je nastavený žiadny cieľ." + (player && player.is_admin ? " Nastavíš ho v správe používateľov." : "")));
     return;
   }
-  const prog = Number(g.progress), cieľ = g.target, pct = Math.min(100, Math.floor(prog / cieľ * 100));
-  const dnes0 = new Date(); dnes0.setHours(0, 0, 0, 0);
-  const koniec = new Date(g.ends_on + "T00:00:00"), start = new Date(g.starts_on + "T00:00:00");
-  const zostava = Math.round((koniec - dnes0) / 86400000);
-  let stav;
-  if (prog >= cieľ) stav = "🎉 Cieľ je splnený!";
-  else if (zostava < 0) stav = "Cieľ už skončil";
-  else if (start > dnes0) stav = "Začína " + fmtDate(g.starts_on);
-  else stav = zostava === 0 ? "Posledný deň" : "Zostáva " + (zostava + 1) + " " + dniText(zostava + 1) + " (do " + fmtDate(g.ends_on) + ")";
-  const bar = mk("div", "bar"), fill = mk("div", "fill"); fill.style.width = pct + "%"; bar.append(fill);
-  box.append(mk("div", "gtitle", "🎯 " + g.title), bar,
+  const { prog, cieľ, pct, stav } = goalStatus(g);
+  box.append(mk("div", "gtitle", "🎯 " + g.title), goalBar(pct),
     mk("div", "gnum", fmtN(prog) + " / " + fmtN(cieľ) + " riadkov · " + pct + " %"), mk("div", "gline", stav));
   if (g.reward) box.append(mk("div", "gline", "🎁 Odmena: " + g.reward));
   const pr = Array.isArray(g.contributors) ? g.contributors : [];
@@ -1168,6 +1202,41 @@ function renderGoal(g) {
     box.append(l);
   }
 }
+
+/* História výziev: splnené (✅) aj nesplnené (⌛) výzvy ostávajú zachované */
+function histRow(g, admin) {
+  const done = !!g.completed_at, row = mk("div", "hrow"), head = mk("div", "hhead");
+  head.append(mk("span", "hico", done ? "✅" : "⌛"), " ", mk("span", "htit", g.title), " ", mk("span", "hdate", fmtDate(done ? g.completed_at : g.ends_on)));      // medzery len pre čitačky a kopírovanie textu
+  const fp = g.final_progress, det = [];
+  det.push(fp === null || fp === undefined ? "Cieľ " + fmtN(g.target) + " riadkov" : fmtN(fp) + " / " + fmtN(g.target) + " riadkov (" + Math.floor(fp / g.target * 100) + " %)");
+  det.push(done ? "splnená" : "nesplnená");
+  det.push(fmtDate(g.starts_on) + (g.ends_on !== g.starts_on ? " – " + fmtDate(g.ends_on) : ""));
+  if (g.reward) det.push("🎁 " + g.reward);
+  row.append(head, mk("div", "hdet", det.join(" · ")));
+  const pr = Array.isArray(g.final_contributors) ? g.final_contributors : [];
+  if (pr.length) {
+    const l = mk("div", "hdet", "Najviac prispeli: ");
+    pr.forEach((c, i) => { if (i) l.append(", "); l.append(nameSpan(c), " " + fmtN(c.lines)); });
+    row.append(l);
+  }
+  if (admin) row.append(mkBtn("🗑️ Zmazať", "danger", () => confirm("Zmazať záznam „" + g.title + "“ z histórie?") && adminGoalCall("admin_goal_delete", { p_id: g.id }, "Záznam z histórie je zmazaný.")));
+  return row;
+}
+function renderGoalHistory(box, rows, admin) {
+  box.innerHTML = "";
+  if (!rows) { box.append(mk("div", "sub", "Nepodarilo sa načítať. Skús to znova neskôr.")); return; }
+  if (!rows.length) { box.append(mk("div", "sub", "Zatiaľ žiadne ukončené výzvy.")); return; }
+  const limit = admin || histExpanded ? rows.length : 5;
+  rows.slice(0, limit).forEach(g => box.appendChild(histRow(g, admin)));
+}
+function renderGoalHistoryCard() {
+  const rows = histData;
+  $("pGoalHist").hidden = !rows || !rows.length;                 // bez histórie sa karta nezobrazí
+  renderGoalHistory($("goalHist"), rows, false);
+  $("histMore").hidden = !(rows && rows.length > 5);
+  $("histMore").textContent = histExpanded ? "Zobraziť menej" : "Zobraziť všetky (" + (rows ? rows.length : 0) + ")";
+}
+$("histMore").onclick = () => { histExpanded = !histExpanded; renderGoalHistoryCard(); };
 
 /* Aktivita rodiny: posledné udalosti (neutrálne formulácie, aby sedeli pre každého) */
 function eventText(e) {
@@ -1194,26 +1263,57 @@ function renderFeed(rows) {
   $("feedMore").hidden = !(rows.length >= feedLimit && feedLimit < 25);
 }
 
-/* ===== ADMIN: rodinný cieľ ===== */
+/* ===== ADMIN: rodinný cieľ (nový cieľ uloží predošlý do histórie; úprava opraví len aktuálny) ===== */
 const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 function goalMonthDates() { const n = new Date(); return [ymd(new Date(n.getFullYear(), n.getMonth(), 1)), ymd(new Date(n.getFullYear(), n.getMonth() + 1, 0))]; }
-async function fillGoalForm() {
-  const r = await db.rpc("family_goal"), g = !r.error && r.data && r.data[0], [a, b] = goalMonthDates();
+
+/* Formulár: g = null -> vytvorenie nového cieľa, g = aktuálny cieľ -> úprava */
+function setGoalMode(g) {
+  goalEditId = g ? g.id : null;
+  const [a, b] = goalMonthDates();
   $("goalTitle").value = g ? g.title : ""; $("goalReward").value = g && g.reward ? g.reward : "";
   $("goalTarget").value = g ? g.target : ""; $("goalFrom").value = g ? g.starts_on : a; $("goalTo").value = g ? g.ends_on : b;
+  $("goalModeTitle").textContent = g ? "✏️ Úprava cieľa" : "➕ Nový cieľ";
+  $("goalModeHint").textContent = g ? "Opravíš údaje aktuálneho cieľa „" + g.title + "“. Nový cieľ tým nevznikne."
+    : goalCur ? "Aktuálny cieľ „" + goalCur.title + "“ sa uloží do histórie a začne nový cieľ." : "Zatiaľ nie je nastavený žiadny cieľ.";
+  $("goalSave").textContent = g ? "Uložiť zmeny" : "Vytvoriť nový cieľ";
+  $("goalCancel").hidden = !g;
+}
+function renderAdminGoalNow(g) {
+  const box = $("goalNow"); box.innerHTML = "";
+  $("goalEdit").hidden = $("goalDelete").hidden = !g;
+  if (g === undefined) { box.append(mk("div", "sub", "Nepodarilo sa načítať.")); return; }
+  if (!g) { box.append(mk("div", "sub", "Zatiaľ nie je nastavený žiadny cieľ. Vytvor ho nižšie.")); return; }
+  const { prog, cieľ, pct, stav } = goalStatus(g);
+  box.append(mk("div", "gtitle", g.title), goalBar(pct), mk("div", "gnum", fmtN(prog) + " / " + fmtN(cieľ) + " riadkov · " + pct + " %"), mk("div", "gline", stav),
+    mk("div", "gline", fmtDate(g.starts_on) + " – " + fmtDate(g.ends_on) + (g.reward ? " · 🎁 " + g.reward : "")));
+}
+async function loadAdminGoals() {
+  const [c, h] = await Promise.all([db.rpc("family_goal"), db.rpc("family_goal_history", { p_limit: 100 })]);
+  goalCur = (!c.error && c.data && c.data[0]) || null;
+  renderAdminGoalNow(c.error ? undefined : goalCur);
+  renderGoalHistory($("goalHistAdmin"), h.error ? null : h.data, true);
+  setGoalMode(null);
+}
+async function adminGoalCall(fn, args, okText) {
+  const { error } = await db.rpc(fn, args);
+  adminMsg(error ? (jeSiet(error) ? NET_MSG : "Chyba: " + error.message) : okText);
+  if (!error) { invalidateViews(); await loadAdminGoals(); }       // pri chybe ostane formulár vyplnený, aby sa dal opraviť
+  return !error;
 }
 $("goalMonth").onclick = () => { const [a, b] = goalMonthDates(); $("goalFrom").value = a; $("goalTo").value = b; };
-$("goalSave").onclick = async () => {
-  const { error } = await db.rpc("admin_set_goal", { p_title: $("goalTitle").value, p_reward: $("goalReward").value,
-    p_target: parseInt($("goalTarget").value, 10) || null, p_starts_on: $("goalFrom").value || null, p_ends_on: $("goalTo").value || null });
-  adminMsg(error ? (jeSiet(error) ? NET_MSG : "Chyba: " + error.message) : "Rodinný cieľ je uložený ✓");
-  if (!error) invalidateViews();
+$("goalEdit").onclick = () => { setGoalMode(goalCur); $("goalTitle").focus(); };
+$("goalNew").onclick = () => { setGoalMode(null); $("goalTitle").focus(); };
+$("goalCancel").onclick = () => setGoalMode(null);
+$("goalDelete").onclick = () => {
+  if (goalCur && confirm("Zmazať aktuálny cieľ „" + goalCur.title + "“? Nezachová sa ani v histórii.")) adminGoalCall("admin_goal_delete", { p_id: goalCur.id }, "Aktuálny cieľ je zmazaný.");
 };
-$("goalClear").onclick = async () => {
-  if (!confirm("Zrušiť rodinný cieľ?")) return;
-  const { error } = await db.rpc("admin_clear_goal");
-  adminMsg(error ? (jeSiet(error) ? NET_MSG : "Chyba: " + error.message) : "Rodinný cieľ je zrušený.");
-  if (!error) { invalidateViews(); fillGoalForm(); }
+$("goalSave").onclick = async () => {
+  const f = { p_title: $("goalTitle").value, p_reward: $("goalReward").value, p_target: parseInt($("goalTarget").value, 10) || null,
+              p_starts_on: $("goalFrom").value || null, p_ends_on: $("goalTo").value || null };
+  if (goalEditId) return adminGoalCall("admin_goal_update", Object.assign({ p_id: goalEditId }, f), "Zmeny cieľa sú uložené ✓");
+  if (goalCur && !confirm("Aktuálny cieľ „" + goalCur.title + "“ sa uloží do histórie a začne nový cieľ. Pokračovať?")) return;
+  adminGoalCall("admin_goal_create", f, "Nový cieľ je vytvorený ✓ (predošlý je v histórii)");
 };
 
 /* ===== BOČNÝ PANEL: záložky Výsledky / Nastavenia ===== */

@@ -188,6 +188,25 @@
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   /* ===== ADMIN PANEL ===== */
+  /* Štatistiky v správe (grafy sú SVG) */
+  .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chart svg { width: 100%; height: auto; display: block; }
+  .chart text { fill: var(--muted); font-size: 10px; font-family: inherit; }
+  .chart text.val { fill: var(--text); font-size: 9px; }
+  .chartnote { font-size: .78rem; color: var(--gold); min-height: 1.4em; margin-top: 6px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .75rem; color: var(--muted); margin-top: 4px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+  .stt { width: 100%; border-collapse: collapse; }
+  .stt th { font-size: .68rem; font-weight: 600; color: var(--muted); text-align: right; padding: 4px; border-bottom: 1px solid var(--line); }
+  .stt th:first-child, .stt td:first-child { text-align: left; width: auto; color: var(--text); }
+  .stt td { padding: 6px 4px; font-size: .8rem; text-align: right; font-weight: 400; border-bottom: 1px solid var(--line); }
+  .stt tr:last-child td { border-bottom: 0; }
+  .stt td:last-child { font-weight: 400; }
+  .up { color: #52B788; } .down { color: #EF6A6A; }
+  .toprow { display: grid; grid-template-columns: 28px 1fr auto; gap: 0 8px; padding: 6px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .toprow:last-child { border-bottom: 0; }
+  .toprow .tsub { grid-column: 2 / 4; font-size: .72rem; color: var(--muted); }
+
   /* História výziev */
   .hrow { padding: 8px 0; border-bottom: 1px solid var(--line); }
   .hrow:last-child { border-bottom: 0; }
@@ -466,7 +485,7 @@
             <button class="adminBtn sm ghost">👥 Správa používateľov</button>
             <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
           </div>
-          <div class="sub" style="margin-top:10px">Verzia 16</div>
+          <div class="sub" style="margin-top:10px">Verzia 17</div>
         </div>
       </div>
     </div>
@@ -484,6 +503,7 @@
       <button class="chip on" data-a="users" type="button">👥 Hráči</button>
       <button class="chip" data-a="invite" type="button">🔗 Pozvánky</button>
       <button class="chip" data-a="goal" type="button">🎯 Cieľ</button>
+      <button class="chip" data-a="stats" type="button">📊 Štatistiky</button>
     </div>
   </div>
 
@@ -538,6 +558,51 @@
         <h2>📜 História výziev</h2>
         <div id="goalHistAdmin"></div>
       </div>
+    </div>
+    <div class="view" id="admStats" hidden>
+      <div class="chips" id="stRange">
+        <button class="chip" data-r="7" type="button">7 dní</button>
+        <button class="chip on" data-r="30" type="button">30 dní</button>
+        <button class="chip" data-r="90" type="button">90 dní</button>
+        <button class="chip" data-r="all" type="button">Všetko</button>
+      </div>
+      <div class="chips" id="stTabs">
+        <button class="chip on" data-t="ov" type="button">📈 Prehľad</button>
+        <button class="chip" data-t="trend" type="button">📉 Vývoj</button>
+        <button class="chip" data-t="when" type="button">🕒 Kedy</button>
+        <button class="chip" data-t="pl" type="button">👥 Hráči</button>
+        <button class="chip" data-t="top" type="button">🏅 Top</button>
+      </div>
+      <div class="sub" id="stInfo"></div>
+
+      <div class="view" id="stOv">
+        <div class="kpis" id="kpis"></div>
+        <div class="card chart"><h2>🎮 Hry v čase</h2><div id="chGames"></div><div class="legend" id="legend"></div><div class="chartnote" id="noteGames">Ťukni na stĺpec pre detail.</div></div>
+      </div>
+      <div class="view" id="stTrend" hidden>
+        <div class="card chart"><h2>⭐ Priemerné skóre</h2><div id="chAvgScore"></div><div class="chartnote" id="noteAvgScore">Ťukni na bod pre detail.</div></div>
+        <div class="card chart"><h2>📏 Priemerný počet riadkov</h2><div id="chAvgLines"></div><div class="chartnote" id="noteAvgLines">Ťukni na bod pre detail.</div></div>
+      </div>
+      <div class="view" id="stWhen" hidden>
+        <div class="card chart"><h2>🗓️ Kedy sa hrá (deň × hodina)</h2><div id="chHeat"></div><div class="chartnote" id="noteHeat">Ťukni na štvorček pre detail.</div></div>
+        <div class="card chart"><h2>🕒 Podľa hodiny</h2><div id="chHours"></div><div class="chartnote" id="noteHours">Ťukni na stĺpec pre detail.</div></div>
+        <div class="card chart"><h2>📅 Podľa dňa v týždni</h2><div id="chWday"></div><div class="chartnote" id="noteWday">Ťukni na stĺpec pre detail.</div></div>
+        <div class="card chart"><h2>🌤️ Časť dňa</h2><div id="chPart"></div></div>
+      </div>
+      <div class="view" id="stPl" hidden>
+        <div class="card chart"><h2>🎮 Počet hier</h2><div id="chPlGames"></div></div>
+        <div class="card chart"><h2>⭐ Priemerné skóre</h2><div id="chPlScore"></div></div>
+        <div class="card chart"><h2>📏 Priemerný počet riadkov</h2><div id="chPlLines"></div></div>
+        <div class="card"><h2>📋 Hráči v číslach</h2><div id="tblPl1"></div></div>
+        <div class="card"><h2>🕓 Aktivita a vývoj</h2><div id="tblPl2"></div><div class="sub" style="margin-top:6px">Vývoj = priemer posledných 5 hier oproti prvým 5 (od 10 hier).</div></div>
+      </div>
+      <div class="view" id="stTop" hidden>
+        <div class="card"><h2>🏆 Najlepšie hry v období</h2><div id="topList"></div></div>
+        <div class="card chart"><h2>📊 Rozdelenie skóre</h2><div id="chHist"></div><div class="chartnote" id="noteHist">Ťukni na stĺpec pre detail.</div></div>
+        <div class="card chart"><h2>🎚️ Dosiahnuté úrovne</h2><div id="chLevels"></div><div class="chartnote" id="noteLevels">Ťukni na stĺpec pre detail.</div></div>
+        <div class="card"><h2>🔔 Udalosti v období</h2><div class="kpis" id="evTiles"></div></div>
+      </div>
+      <div class="sub" id="stFoot">Dĺžka jednotlivých hier sa neukladá, preto tu nie je čas hrania. Časy sú podľa Bratislavy.</div>
     </div>
   </div></div>
 
@@ -988,11 +1053,12 @@ function closeAdmin(zPopstate) {
   if (running && !paused) { startLoop(); wakeOn(); }
   refreshPanels();
 }
-const ADMVIEWS = [["users", "admUsers"], ["invite", "admInvite"], ["goal", "admGoal"]];
+const ADMVIEWS = [["users", "admUsers"], ["invite", "admInvite"], ["goal", "admGoal"], ["stats", "admStats"]];
 function showAdminView(name) {
   document.querySelectorAll("#admTabs .chip").forEach(b => b.classList.toggle("on", b.dataset.a === name));
   ADMVIEWS.forEach(([v, id]) => { $(id).hidden = v !== name; });
   $("admin").querySelector(".sidebody").scrollTop = 0;
+  if (name === "stats") loadStats();                   // štatistiky sa načítajú až po otvorení sekcie
 }
 
 function mkBtn(label, cls, fn) {
@@ -1003,6 +1069,7 @@ function mkBtn(label, cls, fn) {
 async function adminCall(fn, args, okText) {
   const { error } = await db.rpc(fn, args);
   adminMsg(error ? "Chyba: " + error.message : okText);
+  if (!error) stCache = {};                           // po zmene hráčov sa štatistiky načítajú nanovo
   await loadAdmin();
 }
 
@@ -1262,6 +1329,242 @@ function renderFeed(rows) {
   });
   $("feedMore").hidden = !(rows.length >= feedLimit && feedLimit < 25);
 }
+
+/* ===== ADMIN: ŠTATISTIKY (grafy sú obyčajné SVG, bez knižnice; všetky údaje počíta databáza jedným dotazom) ===== */
+const NS = "http://www.w3.org/2000/svg";
+function sv(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function svgBox(box, w, h, label) {
+  box.innerHTML = "";
+  return sv("svg", { viewBox: "0 0 " + w + " " + h, role: "img", "aria-label": label }, box);
+}
+const kratkyDatum = iso => { const [, m, d] = iso.slice(0, 10).split("-"); return Number(d) + "." + Number(m) + "."; };
+const kfmt = v => (v >= 1000 ? String(+(v / 1000).toFixed(1)).replace(".", ",") + " k" : String(v));
+const pcol = p => p.color || FARBY[p.idx % FARBY.length];                   // hráč bez vlastnej farby dostane náhradnú
+const plLabel = (p, n) => { const t = (p.emoji ? p.emoji + " " : "") + p.username; return t.length > n ? t.slice(0, n - 1) + "…" : t; };
+const hodinaText = h => h + ":00–" + (h + 1) + ":00";
+const WDAYS = ["Po", "Ut", "St", "Št", "Pi", "So", "Ne"], WDAYS_LONG = ["pondelok", "utorok", "stredu", "štvrtok", "piatok", "sobotu", "nedeľu"];
+
+/* Pekná os: najviac 5 dielikov (1, 2, 5 × mocnina 10) */
+function niceAxis(m) {
+  if (!(m > 0)) return { max: 4, step: 1 };
+  for (let p = 1; ; p *= 10) for (const k of [1, 2, 5]) {
+    const step = k * p;
+    if (Math.ceil(m / step) <= 5) return { max: Math.ceil(m / step) * step, step };
+  }
+}
+function axisY(svg, L, T, pw, ph, ax) {
+  for (let t = 0; t <= ax.max + 1e-9; t += ax.step) {
+    const y = T + ph - t / ax.max * ph;
+    sv("line", { x1: L, x2: L + pw, y1: y, y2: y, stroke: "rgba(255,255,255,.08)" }, svg);
+    sv("text", { x: L - 4, y: y + 3, "text-anchor": "end" }, svg, kfmt(t));
+  }
+}
+function xLabels(svg, labels, L, pw, y) {                                 // najviac 6 popisov rovnomerne po osi
+  const k = Math.min(labels.length, 6);
+  for (let j = 0; j < k; j++) {
+    const i = k === 1 ? 0 : Math.round(j * (labels.length - 1) / (k - 1)), x = L + (i + 0.5) * pw / labels.length;
+    sv("text", { x: Math.max(L + 10, Math.min(L + pw - 10, x)), y, "text-anchor": "middle" }, svg, labels[i]);
+  }
+}
+const noText = (svg, W, H, t) => sv("text", { x: W / 2, y: H / 2, "text-anchor": "middle" }, svg, t);
+const hrPl = (n, a, b, c) => n + " " + pl(n, a, b, c);
+
+/* Hry v čase: skladané stĺpce podľa hráčov */
+function chartGames(box, note, series, players, gran) {
+  const W = 340, H = 180, L = 30, R = 6, T = 10, B = 22, pw = W - L - R, ph = H - T - B;
+  const svg = svgBox(box, W, H, "Počet hier po " + (gran === "week" ? "týždňoch" : "dňoch"));
+  const maxN = Math.max(0, ...series.map(x => x.n));
+  if (!maxN) { noText(svg, W, H, "V tomto období neboli žiadne hry"); return; }
+  const ax = niceAxis(maxN), slot = pw / series.length, bw = Math.max(2, slot * 0.78);
+  axisY(svg, L, T, pw, ph, ax);
+  series.forEach((x, i) => {
+    const bx = L + i * slot + (slot - bw) / 2; let y = T + ph;
+    x.per.forEach(([idx, n]) => { const h = n / ax.max * ph; y -= h; sv("rect", { x: bx, y, width: bw, height: h, rx: 1.5, fill: pcol(players[idx]) }, svg); });
+    const hit = sv("rect", { x: L + i * slot, y: T, width: slot, height: ph, fill: "transparent", class: "hit" }, svg);
+    hit.addEventListener("click", () => {
+      note.textContent = (gran === "week" ? "týždeň od " : "") + kratkyDatum(x.d) + ": " + hrPl(x.n, "hra", "hry", "hier")
+        + (x.per.length ? " (" + x.per.map(([idx, n]) => players[idx].username + " " + n).join(", ") + ")" : "");
+    });
+  });
+  xLabels(svg, series.map(x => (gran === "week" ? "týž. " : "") + kratkyDatum(x.d)), L, pw, T + ph + 14);
+}
+
+/* Čiarový graf (priemerné skóre / riadky v čase) */
+function chartLine(box, note, series, key, label, fmt) {
+  const W = 340, H = 160, L = 34, R = 10, T = 10, B = 22, pw = W - L - R, ph = H - T - B;
+  const svg = svgBox(box, W, H, label);
+  const pts = series.map((x, i) => ({ i, v: x[key], d: x.d })).filter(q => q.v !== null && q.v !== undefined);
+  if (!pts.length) { noText(svg, W, H, "Zatiaľ bez údajov"); return; }
+  const ax = niceAxis(Math.max(...pts.map(q => q.v))), px = i => L + (i + 0.5) * pw / series.length, py = v => T + ph - v / ax.max * ph;
+  axisY(svg, L, T, pw, ph, ax);
+  if (pts.length > 1) sv("polyline", { points: pts.map(q => px(q.i) + "," + py(q.v)).join(" "), fill: "none", stroke: "#E9C46A", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+  pts.forEach(q => {
+    sv("circle", { cx: px(q.i), cy: py(q.v), r: 3.5, fill: "#E9C46A" }, svg);
+    const hit = sv("circle", { cx: px(q.i), cy: py(q.v), r: 11, fill: "transparent", class: "hit" }, svg);
+    hit.addEventListener("click", () => { note.textContent = kratkyDatum(q.d) + ": " + fmt(q.v); });
+  });
+  xLabels(svg, series.map(x => kratkyDatum(x.d)), L, pw, T + ph + 14);
+}
+
+/* Obyčajný stĺpcový graf (hodiny, dni v týždni, histogram, úrovne) */
+function chartBars(box, note, vals, labels, o) {
+  const W = 340, H = 150, L = 30, R = 6, T = 14, B = 22, pw = W - L - R, ph = H - T - B;
+  const svg = svgBox(box, W, H, o.label);
+  const max = Math.max(0, ...vals);
+  if (!max) { noText(svg, W, H, "Zatiaľ bez údajov"); return; }
+  const ax = niceAxis(max), slot = pw / vals.length, bw = slot * 0.7;
+  axisY(svg, L, T, pw, ph, ax);
+  vals.forEach((v, i) => {
+    const h = v / ax.max * ph, x = L + i * slot + (slot - bw) / 2;
+    sv("rect", { x, y: T + ph - h, width: bw, height: h, rx: 2, fill: o.color || "#E9C46A" }, svg);
+    if (vals.length <= 12 && v > 0) sv("text", { x: x + bw / 2, y: T + ph - h - 3, "text-anchor": "middle", class: "val" }, svg, String(v));
+    const hit = sv("rect", { x: L + i * slot, y: T, width: slot, height: ph, fill: "transparent", class: "hit" }, svg);
+    hit.addEventListener("click", () => { note.textContent = o.noteFn(i, v); });
+    if (i % (o.every || 1) === 0) sv("text", { x: L + (i + 0.5) * slot, y: T + ph + 14, "text-anchor": "middle" }, svg, labels[i]);
+  });
+}
+
+/* Tepelná mapa: dni v týždni × hodiny */
+function chartHeat(box, note, heat) {
+  const W = 340, L = 22, R = 4, T = 4, cw = (W - L - R) / 24, chh = 22, H = T + 7 * chh + 18;
+  const svg = svgBox(box, W, H, "Tepelná mapa hrania podľa dňa v týždni a hodiny");
+  const grid = {}; let max = 0;
+  heat.forEach(([wd, h, n]) => { grid[wd + "_" + h] = n; max = Math.max(max, n); });
+  if (!max) { noText(svg, W, H, "Zatiaľ bez údajov"); return; }
+  for (let wd = 0; wd < 7; wd++) {
+    sv("text", { x: L - 4, y: T + wd * chh + 15, "text-anchor": "end" }, svg, WDAYS[wd]);
+    for (let h = 0; h < 24; h++) {
+      const n = grid[wd + "_" + h] || 0;
+      const c = sv("rect", { x: L + h * cw + 0.5, y: T + wd * chh + 0.5, width: cw - 1, height: chh - 1, rx: 3,
+        fill: n ? "#E9C46A" : "rgba(255,255,255,.05)", "fill-opacity": n ? 0.18 + 0.82 * n / max : 1, class: "hit" }, svg);
+      c.addEventListener("click", () => { note.textContent = WDAYS[wd] + " " + hodinaText(h) + ": " + hrPl(n, "hra", "hry", "hier"); });
+    }
+  }
+  [0, 6, 12, 18, 23].forEach(h => sv("text", { x: L + (h + 0.5) * cw, y: T + 7 * chh + 13, "text-anchor": "middle" }, svg, String(h)));
+}
+
+/* Vodorovné stĺpce (porovnanie hráčov) */
+function chartHBars(box, items, label) {
+  const W = 340, rowH = 26, L = 112, R = 52, H = items.length * rowH + 6;
+  const svg = svgBox(box, W, H, label);
+  const max = Math.max(0, ...items.map(q => q.v));
+  items.forEach((q, i) => {
+    const y = i * rowH + 4, w = max ? q.v / max * (W - L - R) : 0;
+    sv("text", { x: 0, y: y + 13, class: "val" }, svg, q.label);
+    sv("rect", { x: L, y, width: Math.max(w, q.v ? 2 : 0), height: 16, rx: 3, fill: q.color }, svg);
+    sv("text", { x: L + w + 5, y: y + 13, class: "val" }, svg, q.text);
+  });
+}
+
+function kpiTile(label, value, sub) {
+  const t = mk("div", "tile"); t.append(mk("div", "tl", label), " ", mk("div", "tv", value));
+  if (sub) t.append(" ", mk("div", "th", sub));            // medzery len pre čitačky obrazovky a kopírovanie textu
+  return t;
+}
+function statTable(heads, rows) {
+  const t = mk("table", "stt"), tr = t.createTHead().insertRow();
+  heads.forEach(h => tr.appendChild(mk("th", "", h)));
+  const body = t.createTBody();
+  rows.forEach(r => { const row = body.insertRow(); r.forEach(c => { const td = row.insertCell(); if (c instanceof Node) td.appendChild(c); else td.textContent = c; }); });
+  return t;
+}
+const lokalnyCas = iso => iso ? Number(iso.slice(8, 10)) + ". " + Number(iso.slice(5, 7)) + ". " + iso.slice(11, 16) : "—";
+
+function renderStats(d) {
+  const info = $("stInfo");
+  if (d.empty) { info.textContent = "Zatiaľ nie sú žiadne hry."; return; }
+  const t = d.totals, P = d.players, S = d.series, hrs = d.by_hour, wd = d.by_wday;
+  info.textContent = "Obdobie " + fmtDate(d.from) + " – " + fmtDate(d.to) + (d.gran === "week" ? " · stĺpce = týždne" : "");
+
+  // --- Prehľad
+  const k = $("kpis"); k.innerHTML = "";
+  const dennePriemer = t.active_days ? (t.games / t.active_days).toFixed(1).replace(".", ",") : "0";
+  k.append(
+    kpiTile("🎮 Hry v období", fmtN(t.games), "dnes " + d.games_today + " · spolu " + fmtN(d.games_all)),
+    kpiTile("👥 Aktívni hráči", t.active_players + " z " + d.players_total, "dnes hralo " + d.players_today),
+    kpiTile("⭐ Priemerné skóre", fmtN(t.avg_score), "medián " + fmtN(t.median_score) + " · 90 % pod " + fmtN(t.p90_score)),
+    kpiTile("📏 Priemerne riadkov", String(t.avg_lines).replace(".", ","), "spolu " + fmtN(t.lines) + " riadkov"),
+    kpiTile("🏆 Najvyššie skóre", fmtN(t.best), "priemerná úroveň " + String(t.avg_level).replace(".", ",")),
+    kpiTile("🧱 Tetris (4 riadky)", fmtN(t.tetrises), "v období"),
+    kpiTile("📅 Hier na aktívny deň", dennePriemer, "aktívnych dní " + t.active_days),
+    kpiTile("🔥 Najrušnejší deň", d.busiest_day ? kratkyDatum(d.busiest_day.d) : "—", d.busiest_day ? hrPl(d.busiest_day.n, "hra", "hry", "hier") : "")
+  );
+  chartGames($("chGames"), $("noteGames"), S, P, d.gran);
+  $("noteGames").textContent = "Ťukni na stĺpec pre detail.";
+  const lg = $("legend"); lg.innerHTML = "";
+  P.filter(p => p.games > 0).forEach(p => { const sp = mk("span"), i = mk("i"); i.style.background = pcol(p); sp.append(i, plLabel(p, 16)); lg.appendChild(sp); });
+
+  // --- Vývoj
+  chartLine($("chAvgScore"), $("noteAvgScore"), S, "avg_score", "Priemerné skóre v čase", v => fmtN(v) + " " + bodov(v));
+  chartLine($("chAvgLines"), $("noteAvgLines"), S, "avg_lines", "Priemerný počet riadkov v čase", v => String(v).replace(".", ",") + " riadkov");
+
+  // --- Kedy
+  chartHeat($("chHeat"), $("noteHeat"), d.heat);
+  chartBars($("chHours"), $("noteHours"), hrs, hrs.map((_, h) => String(h)), { label: "Počet hier podľa hodiny", every: 3, color: "#5C7CFA", noteFn: (h, v) => hodinaText(h) + ": " + hrPl(v, "hra", "hry", "hier") });
+  chartBars($("chWday"), $("noteWday"), wd, WDAYS, { label: "Počet hier podľa dňa v týždni", color: "#52B788", noteFn: (i, v) => "V " + WDAYS_LONG[i] + ": " + hrPl(v, "hra", "hry", "hier") });
+  const cast = [["🌅 Ráno (5–11)", h => h >= 5 && h <= 11], ["☀️ Popoludnie (12–17)", h => h >= 12 && h <= 17], ["🌆 Večer (18–22)", h => h >= 18 && h <= 22], ["🌙 Noc (23–4)", h => h >= 23 || h <= 4]];
+  const sumaH = hrs.reduce((a, v) => a + v, 0);
+  chartHBars($("chPart"), cast.map(([n, f]) => { const v = hrs.reduce((a, x, h) => a + (f(h) ? x : 0), 0); return { label: n, v, color: "#9D6BCE", text: v + (sumaH ? " (" + Math.round(v / sumaH * 100) + " %)" : "") }; }), "Podiel hier podľa časti dňa");
+
+  // --- Hráči
+  const aktivni = P.filter(p => p.games > 0), sumaHier = aktivni.reduce((a, p) => a + p.games, 0);
+  chartHBars($("chPlGames"), aktivni.map(p => ({ label: plLabel(p, 15), v: p.games, color: pcol(p), text: p.games + " (" + Math.round(p.games / sumaHier * 100) + " %)" })), "Počet hier podľa hráča");
+  chartHBars($("chPlScore"), aktivni.map(p => ({ label: plLabel(p, 15), v: p.avg_score, color: pcol(p), text: fmtN(p.avg_score) })), "Priemerné skóre podľa hráča");
+  chartHBars($("chPlLines"), aktivni.map(p => ({ label: plLabel(p, 15), v: p.avg_lines, color: pcol(p), text: String(p.avg_lines).replace(".", ",") })), "Priemerný počet riadkov podľa hráča");
+  const meno = p => { const sp = nameSpan(p); if (p.blocked) sp.append(" ⛔"); return sp; };
+  $("tblPl1").innerHTML = ""; $("tblPl1").appendChild(statTable(["Hráč", "Hry", "Ø skóre", "Ø riadky", "Najlepšie"],
+    P.map(p => [meno(p), String(p.games), p.games ? fmtN(p.avg_score) : "—", p.games ? String(p.avg_lines).replace(".", ",") : "—", p.games ? fmtN(p.best) : "—"])));
+  const vyvoj = p => {
+    if (p.first5 === null || p.first5 === undefined || !p.first5) return "—";
+    const z = Math.round((p.last5 - p.first5) / p.first5 * 100), sp = mk("span", z > 0 ? "up" : z < 0 ? "down" : "", (z > 0 ? "▲ +" : z < 0 ? "▼ −" : "= ") + Math.abs(z) + " %");
+    return sp;
+  };
+  $("tblPl2").innerHTML = ""; $("tblPl2").appendChild(statTable(["Hráč", "Posledná hra", "Dni", "Séria", "Vývoj"],
+    P.map(p => [meno(p), lokalnyCas(p.last_played), String(p.active_days), p.best_streak + " " + dniText(p.best_streak), vyvoj(p)])));
+
+  // --- Top
+  const top = $("topList"); top.innerHTML = "";
+  if (!d.top.length) top.append(mk("div", "sub", "V tomto období neboli žiadne hry."));
+  d.top.forEach((g, i) => {
+    const r = mk("div", "toprow"), n = mk("span", "", MEDAL[i] || String(i + 1)), who = mk("span", "fwho"); who.append(nameSpan(g));
+    r.append(n, who, mk("b", "", fmtN(g.score)), mk("div", "tsub", hrPl(g.lines, "riadok", "riadky", "riadkov") + " · úroveň " + g.level + (g.tetrises ? " · " + g.tetrises + "× Tetris" : "") + " · " + lokalnyCas(g.at)));
+    top.appendChild(r);
+  });
+  const sh = d.score_hist, w = d.score_width;
+  chartBars($("chHist"), $("noteHist"), sh.map(x => x.n), sh.map(x => kfmt(x.from)), { label: "Rozdelenie skóre", color: "#D96C9D", every: Math.ceil(sh.length / 6), noteFn: (i, v) => fmtN(sh[i].from) + " – " + fmtN(sh[i].from + w - 1) + " bodov: " + hrPl(v, "hra", "hry", "hier") });
+  chartBars($("chLevels"), $("noteLevels"), d.levels.map(x => x.n), d.levels.map(x => String(x.level)), { label: "Dosiahnuté úrovne", color: "#4DD0E1", every: Math.ceil(d.levels.length / 10), noteFn: (i, v) => "Úroveň " + d.levels[i].level + ": " + hrPl(v, "hra", "hry", "hier") });
+  const ev = $("evTiles"); ev.innerHTML = "";
+  EVT.forEach(([kind, ikona, nazov]) => ev.appendChild(kpiTile(ikona + " " + nazov, String(d.events[kind] || 0), "")));
+  ev.appendChild(kpiTile("🎯 Rodinné výzvy", d.goals.completed + " / " + d.goals.total, "splnených / všetkých"));
+}
+const EVT = [["record_family", "🏆", "Rekordy rodiny"], ["record_personal", "⭐", "Osobné maximá"], ["overtake", "📈", "Predbehnutia"], ["badge", "🏅", "Odznaky"], ["goal_done", "🎉", "Splnené výzvy"], ["joined", "👋", "Noví hráči"]];
+
+let stRange = "30", stCache = {};
+async function loadStats(force) {
+  const key = stRange, c = stCache[key];
+  if (!force && c && Date.now() - c.at < 60000) { renderStats(c.data); return; }
+  $("stInfo").textContent = "Načítavam štatistiky…";
+  const { data, error } = await db.rpc("admin_stats", { p_days: key === "all" ? null : parseInt(key, 10) });
+  if (key !== stRange) return;                                          // medzitým sa zmenilo obdobie
+  if (error) { $("stInfo").textContent = jeSiet(error) ? NET_MSG : "Chyba: " + error.message; return; }
+  stCache[key] = { at: Date.now(), data };
+  renderStats(data);
+}
+const STVIEWS = [["ov", "stOv"], ["trend", "stTrend"], ["when", "stWhen"], ["pl", "stPl"], ["top", "stTop"]];
+function showStTab(name) {
+  document.querySelectorAll("#stTabs .chip").forEach(b => b.classList.toggle("on", b.dataset.t === name));
+  STVIEWS.forEach(([v, id]) => { $(id).hidden = v !== name; });
+}
+document.querySelectorAll("#stTabs .chip").forEach(b => { b.onclick = () => showStTab(b.dataset.t); });
+document.querySelectorAll("#stRange .chip").forEach(b => {
+  b.onclick = () => { stRange = b.dataset.r; document.querySelectorAll("#stRange .chip").forEach(x => x.classList.toggle("on", x === b)); loadStats(); };
+});
 
 /* ===== ADMIN: rodinný cieľ (nový cieľ uloží predošlý do histórie; úprava opraví len aktuálny) ===== */
 const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");

@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e17">
+<script src="theme-init.js"></script>
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,19 +17,48 @@
 <style>
   /* ===== FARBY A ZÁKLAD ===== */
   :root {
+    color-scheme: dark;
+    /* ----- tmavá téma (predvolená) ----- */
     --bg: #0b0e17; --text: #eef0f6; --muted: #8e97ad;
-    --gold: #E9C46A; --accent: #E9C46A;
-    --line: rgba(255,255,255,.12); --glass: rgba(255,255,255,.06);
+    --gold: #E9C46A; --accent: #E9C46A;                       /* zlatá pre TEXT na pozadí stránky */
+    --line: rgba(255,255,255,.12); --line2: rgba(255,255,255,.18); --glass: rgba(255,255,255,.06);
+    --fill1: rgba(255,255,255,.05); --fill2: rgba(255,255,255,.07); --fill3: rgba(255,255,255,.10); --fill4: rgba(255,255,255,.14);
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --glow1: #1a2342; --glow2: #231a38;
+    --bar: rgba(11,14,23,.92); --bar2: rgba(11,14,23,.75);
+    --board-bg: rgba(6,8,15,.6); --overlay: rgba(8,10,18,.74);
+    --me-bg: rgba(233,196,106,.16); --me-text: #fff; --focus: #fff;
+    --ctrl-bg: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)); --ctrl-border: rgba(255,255,255,.16);
+    --ctrl-text: #fff; --ctrl-shadow: 0 4px 12px rgba(0,0,0,.35);
+    --up: #52B788; --down: #EF6A6A; --red-ink: #ff8a8a;
+    --grid: rgba(255,255,255,.08); --heat0: rgba(255,255,255,.05); --heat-on: #E9C46A; --chartline: #E9C46A;
     --bw: 300px;                       /* šírka hracej plochy */
   }
+  /* ----- svetlá téma: rovnaké premenné s inými hodnotami ----- */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f3f5fb; --text: #1a2133; --muted: #596379;
+    --gold: #8a5a00; --accent: #8a5a00;
+    --line: rgba(26,33,51,.14); --line2: rgba(26,33,51,.24); --glass: rgba(255,255,255,.78);
+    --fill1: rgba(26,33,51,.04); --fill2: rgba(26,33,51,.06); --fill3: rgba(26,33,51,.09); --fill4: rgba(26,33,51,.18);
+    --shadow: 0 8px 24px rgba(40,55,100,.13);
+    --glow1: #dbe3fa; --glow2: #eadff6;
+    --bar: rgba(255,255,255,.92); --bar2: rgba(255,255,255,.78);
+    --board-bg: #fbfcff; --overlay: rgba(243,245,251,.86);
+    --me-bg: rgba(233,196,106,.32); --me-text: #1a2133; --focus: #1a2133;
+    --ctrl-bg: linear-gradient(180deg, #ffffff, #e9edf6); --ctrl-border: rgba(26,33,51,.16);
+    --ctrl-text: #1a2133; --ctrl-shadow: 0 3px 8px rgba(40,55,100,.16);
+    --up: #237a52; --down: #c23b3b; --red-ink: #c23b3b;
+    --grid: rgba(26,33,51,.10); --heat0: rgba(26,33,51,.06); --heat-on: #c27b00; --chartline: #b87400;
+  }
   * { box-sizing: border-box; }
-  html { background: #0b0e17; }
+  html { background: var(--bg); }
   html, body { overscroll-behavior: none; }
   body {
-    margin: 0; min-height: 100vh; min-height: 100dvh; color: var(--text); color-scheme: dark;
+    margin: 0; min-height: 100vh; min-height: 100dvh; color: var(--text);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(ellipse 85% 36% at 50% 42%, #1a2342 0%, transparent 100%),
-                radial-gradient(ellipse 60% 22% at 80% 72%, #231a38 0%, transparent 100%), var(--bg);
+    background: radial-gradient(ellipse 85% 36% at 50% 42%, var(--glow1) 0%, transparent 100%),
+                radial-gradient(ellipse 60% 22% at 80% 72%, var(--glow2) 0%, transparent 100%), var(--bg);
     background-attachment: fixed;
     display: flex; align-items: center; justify-content: center;
     padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
@@ -37,7 +67,7 @@
   /* Sklenený panel */
   .glass, .panel, .card {
     background: var(--glass); border: 1px solid var(--line); border-radius: 16px;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: var(--shadow);
   }
   .card { padding: 12px 14px; }
   .panel { padding: 14px; }
@@ -55,16 +85,16 @@
     padding: 11px 18px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
   }
   button:hover { filter: brightness(1.07); }
-  button:focus-visible, input:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   input {
     width: 100%; padding: 11px 12px; font-size: 1rem; border-radius: 12px; margin-bottom: 10px;
-    border: 1px solid var(--line); background: rgba(255,255,255,.07); color: var(--text); font-family: inherit;
+    border: 1px solid var(--line); background: var(--fill2); color: var(--text); font-family: inherit;
   }
   .sm { padding: 5px 10px; font-size: .78rem; margin: 2px 3px 2px 0; border-radius: 9px; }
-  .ghost { background: rgba(255,255,255,.1); color: var(--text); border: 1px solid var(--line); }
+  .ghost { background: var(--fill3); color: var(--text); border: 1px solid var(--line); }
   .danger { background: #d64545; color: #fff; }
   .tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-  .tab { flex: 1; background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--line); }
+  .tab { flex: 1; background: var(--fill2); color: var(--muted); border: 1px solid var(--line); }
   .tab.on { background: linear-gradient(180deg, #f3d27f, #dfa845); color: #2a1d00; border-color: transparent; }
 
   /* Prihlásenie */
@@ -87,11 +117,11 @@
   #board-wrap { position: relative; width: var(--bw); margin: 0 auto; }
   canvas#board {
     width: var(--bw); height: auto; aspect-ratio: 1 / 2; display: block; touch-action: none;
-    background: rgba(6,8,15,.6); border: 1px solid var(--line); border-radius: 14px;
+    background: var(--board-bg); border: 1px solid var(--line); border-radius: 14px;
   }
   #overlay {
     position: absolute; inset: 0; display: none; flex-direction: column; gap: 14px; align-items: center; justify-content: center;
-    text-align: center; padding: 16px; background: rgba(8,10,18,.74); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    text-align: center; padding: 16px; background: var(--overlay); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
     border-radius: 14px; font-size: 1.25rem; font-weight: 700;
   }
   .ovsub { font-size: .9rem; font-weight: 500; color: var(--muted); margin-top: 6px; }
@@ -104,16 +134,16 @@
   td { padding: 5px 8px; }
   td:first-child { width: 30px; color: var(--muted); }
   td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
-  tr.me td { background: rgba(233,196,106,.16); color: #fff; }
+  tr.me td { background: var(--me-bg); color: var(--me-text); }
   tr.me td:first-child { border-radius: 10px 0 0 10px; color: var(--gold); }
   tr.me td:last-child { border-radius: 0 10px 10px 0; }
 
   /* Ovládacie tlačidlá (mobil) */
   #touch { display: none; grid-template-columns: repeat(6, 1fr); gap: 8px; width: var(--bw); margin: 12px auto 0; touch-action: manipulation; }
   #touch button {
-    padding: 14px 0; font-size: 1.25rem; user-select: none; -webkit-user-select: none; color: #fff;
-    background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)); border: 1px solid rgba(255,255,255,.16);
-    border-radius: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.35);
+    padding: 14px 0; font-size: 1.25rem; user-select: none; -webkit-user-select: none; color: var(--ctrl-text);
+    background: var(--ctrl-bg); border: 1px solid var(--ctrl-border);
+    border-radius: 14px; box-shadow: var(--ctrl-shadow);
   }
   #touch button[data-a="pause"] { background: linear-gradient(180deg, #f7c35a, #e69a2e); color: #3a2500; border-color: transparent; box-shadow: 0 0 18px rgba(240,140,74,.55); }
   @media (pointer: coarse), (max-width: 700px) { #touch { display: grid; } }
@@ -127,7 +157,7 @@
   /* Prepínače nastavení */
   .tog { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; cursor: pointer; font-size: .95rem; }
   .tog input { -webkit-appearance: none; appearance: none; width: 46px; height: 26px; margin: 0; padding: 0; flex: none; cursor: pointer;
-    border-radius: 13px; background: rgba(255,255,255,.14); border: 1px solid var(--line); position: relative; transition: background .18s; }
+    border-radius: 13px; background: var(--fill4); border: 1px solid var(--line); position: relative; transition: background .18s; }
   .tog input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .18s; }
   .tog input:checked { background: linear-gradient(180deg, #f3d27f, #dfa845); }
   .tog input:checked::after { transform: translateX(20px); }
@@ -138,7 +168,7 @@
   .pane { display: flex; flex-direction: column; gap: 12px; }
   .pane[hidden] { display: none; }
   .badges { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .badge { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.05); min-width: 0; }
+  .badge { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--fill1); min-width: 0; }
   .badge .ico { font-size: 1.4rem; grid-row: 1 / 3; }
   .badge .txt { min-width: 0; grid-column: 2; }
   .badge .nm { font-weight: 700; font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -148,9 +178,9 @@
   .badge.zamknuty .st { color: var(--muted); }
   #lookPrev { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; overflow-wrap: anywhere; }
   .picks { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
-  .pick { width: 38px; height: 38px; padding: 0; font-size: 1.2rem; border-radius: 10px; background: rgba(255,255,255,.08); border: 1px solid var(--line); color: var(--text); }
-  .swatch { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.18); color: var(--text); font-size: .8rem; }
-  .pick.sel, .swatch.sel { outline: 2px solid #fff; outline-offset: 2px; }
+  .pick { width: 38px; height: 38px; padding: 0; font-size: 1.2rem; border-radius: 10px; background: var(--fill2); border: 1px solid var(--line); color: var(--text); }
+  .swatch { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid var(--line2); color: var(--text); font-size: .8rem; }
+  .pick.sel, .swatch.sel { outline: 2px solid var(--focus); outline-offset: 2px; }
   #pPass input { margin-bottom: 8px; }
   #qrBox { text-align: center; margin: 0 0 12px; }
   .qrImg { display: inline-block; background: #fff; padding: 10px; border-radius: 12px; width: min(240px, 70vw); margin-bottom: 6px; }
@@ -159,19 +189,19 @@
   /* Pohľady vo výsledkoch: krátke, aby sa nemuselo skrolovať */
   .pane { gap: 10px; }
   .chips { display: flex; gap: 6px; }
-  .chip { flex: 1; min-width: 0; padding: 8px 2px; font-size: .74rem; border-radius: 999px; background: rgba(255,255,255,.07); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip { flex: 1; min-width: 0; padding: 8px 2px; font-size: .74rem; border-radius: 999px; background: var(--fill2); color: var(--muted); border: 1px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chip.on { background: linear-gradient(180deg, #f3d27f, #dfa845); color: #2a1d00; border-color: transparent; }
   .view { display: flex; flex-direction: column; gap: 10px; }
   .view[hidden] { display: none; }
   .link { background: none; color: var(--gold); border: 0; padding: 6px 0; font-size: .8rem; font-weight: 600; }
   .link[hidden] { display: none; }
   .hall { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .tile { background: rgba(255,255,255,.05); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; min-width: 0; }
+  .tile { background: var(--fill1); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; min-width: 0; }
   .tile .tl { font-size: .68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tile .tv { font-size: 1.1rem; font-weight: 700; line-height: 1.3; }
   .tile .th { font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .gtitle { font-weight: 700; margin-bottom: 4px; overflow-wrap: anywhere; }
-  .bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.1); overflow: hidden; margin: 6px 0; }
+  .bar { height: 10px; border-radius: 999px; background: var(--fill3); overflow: hidden; margin: 6px 0; }
   .fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #52B788, #E9C46A); }
   .gnum { font-size: .85rem; }
   .gline { font-size: .78rem; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
@@ -180,7 +210,7 @@
   .fwho { font-weight: 700; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ftime { font-size: .7rem; color: var(--muted); white-space: nowrap; }
   .ftxt { grid-column: 1 / 3; font-size: .8rem; color: var(--muted); overflow-wrap: anywhere; }
-  details.adm-sec { margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; background: rgba(255,255,255,.04); }
+  details.adm-sec { margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; background: var(--fill1); }
   details.adm-sec summary { cursor: pointer; font-weight: 700; font-size: .9rem; }
   .goalForm { margin-top: 10px; }
   .goalForm input { margin-bottom: 8px; }
@@ -202,10 +232,22 @@
   .stt td { padding: 6px 4px; font-size: .8rem; text-align: right; font-weight: 400; border-bottom: 1px solid var(--line); }
   .stt tr:last-child td { border-bottom: 0; }
   .stt td:last-child { font-weight: 400; }
-  .up { color: #52B788; } .down { color: #EF6A6A; }
+  .up { color: var(--up); } .down { color: var(--down); }
   .toprow { display: grid; grid-template-columns: 28px 1fr auto; gap: 0 8px; padding: 6px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
   .toprow:last-child { border-bottom: 0; }
   .toprow .tsub { grid-column: 2 / 4; font-size: .72rem; color: var(--muted); }
+
+  /* Téma: grafy, farby mien a iPhone */
+  .chart line.gl { stroke: var(--grid); }
+  .chart polyline.ln { stroke: var(--chartline); fill: none; }
+  .chart circle.dot { fill: var(--chartline); }
+  .chart rect.hon { fill: var(--heat-on); }
+  .chart rect.hoff { fill: var(--heat0); }
+  html[data-theme="light"] .pc { color: color-mix(in srgb, var(--pc) 55%, #000) !important; }   /* svetlé farby mien sa v svetlej téme stmavia, aby boli čitateľné */
+  #pTheme .chips { margin-bottom: 0; }
+  html[data-theme="light"][data-ios] body::before {              /* iPhone (nainštalovaná aplikácia) má stavový riadok vždy so svetlým textom: v svetlej téme mu dáme tmavé pozadie */
+    content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #0b0e17; z-index: 100;
+  }
 
   /* História výziev */
   .hrow { padding: 8px 0; border-bottom: 1px solid var(--line); }
@@ -220,7 +262,7 @@
   /* ===== CELOOBRAZOVKOVÉ SEKCIE: výsledky, nastavenia a správa používateľov ===== */
   .side, #admin {
     position: fixed; inset: 0; display: flex; flex-direction: column; color: var(--text);
-    background: radial-gradient(ellipse 85% 36% at 50% 40%, #1a2342 0%, transparent 100%), #0b0e17;
+    background: radial-gradient(ellipse 85% 36% at 50% 40%, var(--glow1) 0%, transparent 100%), var(--bg);
     visibility: hidden; opacity: 0; transform: translateY(14px);
     transition: opacity .18s ease, transform .18s ease, visibility 0s .18s;
   }
@@ -229,11 +271,11 @@
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
   .appbar { display: flex; align-items: center; gap: 12px; flex: none;
     padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
-    border-bottom: 1px solid var(--line); background: rgba(11,14,23,.92); }
+    border-bottom: 1px solid var(--line); background: var(--bar); }
   .appbar .back { width: 42px; height: 42px; padding: 0; font-size: 1.3rem; border-radius: 12px; flex: none; }
   .apptitle { min-width: 0; }
   .apptitle .pname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .subnav { flex: none; padding: 10px max(14px, env(safe-area-inset-right)) 8px max(14px, env(safe-area-inset-left)); border-bottom: 1px solid var(--line); background: rgba(11,14,23,.75); }
+  .subnav { flex: none; padding: 10px max(14px, env(safe-area-inset-right)) 8px max(14px, env(safe-area-inset-left)); border-bottom: 1px solid var(--line); background: var(--bar2); }
   .subnav > * { max-width: 720px; margin-left: auto; margin-right: auto; }
   .subnav .chips { margin-top: 8px; }
   .subnav .tabs { margin-bottom: 0; }
@@ -241,16 +283,16 @@
   .sidebody { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px max(14px, env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)); }
   .sidewrap { max-width: 720px; margin: 0 auto; }
   .statusbar { flex: none; min-height: 2.2em; padding: 8px max(14px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
-    border-top: 1px solid var(--line); background: rgba(11,14,23,.92); font-size: .85rem; color: var(--gold); }
+    border-top: 1px solid var(--line); background: var(--bar); font-size: .85rem; color: var(--gold); }
   .acts { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
   .codeRow { display: flex; gap: 8px; }
   .codeRow input { margin: 0; flex: 1; min-width: 0; }
   #admin .card h2 { font-size: 1rem; }
-  .ucard { border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.05); margin-bottom: 8px; overflow: hidden; }
+  .ucard { border: 1px solid var(--line); border-radius: 14px; background: var(--fill1); margin-bottom: 8px; overflow: hidden; }
   .uhead2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px; cursor: pointer; font-weight: 700; }
   .uwho { min-width: 0; overflow-wrap: anywhere; }
   .badge2 { font-size: .7rem; font-weight: 600; color: var(--gold); margin-left: 6px; }
-  .badge2.red { color: #ff8a8a; }
+  .badge2.red { color: var(--red-ink); }
   .uchev { color: var(--muted); transition: transform .15s; }
   .ucard.open .uchev { transform: rotate(180deg); }
   .ucard > .help { padding: 0 12px 10px; }
@@ -440,6 +482,15 @@
     <!-- Časť 2: nastavenia -->
     <div class="pane" id="paneSettings" hidden>
       <div class="view" id="setLook">
+        <div class="card" id="pTheme">
+          <h2>🌗 Téma aplikácie</h2>
+          <div class="chips" id="themePicks" role="radiogroup" aria-label="Téma aplikácie">
+            <button class="chip on" data-th="dark" type="button" role="radio" aria-checked="true">🌙 Tmavá</button>
+            <button class="chip" data-th="light" type="button" role="radio" aria-checked="false">☀️ Svetlá</button>
+            <button class="chip" data-th="auto" type="button" role="radio" aria-checked="false" title="Podľa nastavenia zariadenia">🖥️ Auto</button>
+          </div>
+          <div class="sub" id="themeMsg" role="status" style="margin-top:8px">Auto sa riadi nastavením zariadenia. Téma platí v tvojom účte na všetkých zariadeniach.</div>
+        </div>
         <div class="card" id="pLook">
           <h2>🎨 Môj vzhľad</h2>
           <div id="lookPrev"></div>
@@ -485,7 +536,7 @@
             <button class="adminBtn sm ghost">👥 Správa používateľov</button>
             <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
           </div>
-          <div class="sub" style="margin-top:10px">Verzia 17</div>
+          <div class="sub" style="margin-top:10px">Verzia 18</div>
         </div>
       </div>
     </div>
@@ -700,7 +751,7 @@ let goalCur = null, goalEditId = null, histData = null, histExpanded = false;   
 let curView = "board", lbExpanded = false, feedLimit = 8;      // aktuálny pohľad vo výsledkoch, rozbalený rebríček, počet udalostí
 const viewAt = {};                 // kedy sa ktorý pohľad naposledy načítal (načítava sa až pri otvorení)
 const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
-const nameSpan = r => { const sp = mk("span", "", (r.emoji ? r.emoji + " " : "") + r.username); if (r.color) sp.style.color = r.color; return sp; };
+const nameSpan = r => { const sp = mk("span", "", (r.emoji ? r.emoji + " " : "") + r.username); colorize(sp, r.color); return sp; };
 const GAME_NOTE = "Uložené v tvojom účte, platí na všetkých tvojich zariadeniach.";
 
 /* ===== Slovenské tvary a text o vzdialenosti do ďalšieho miesta ===== */
@@ -754,6 +805,37 @@ const nast = Object.assign({ sound: false, vibrate: false },
 const saveNast = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(nast)); } catch (e) {} };
 const canVibrate = "vibrate" in navigator;
 function vibrate(pattern) { if (nast.vibrate && canVibrate) navigator.vibrate(pattern); }
+
+/* ===== TÉMA (tmavá / svetlá / podľa zariadenia) =====
+   Farby v celej aplikácii idú cez CSS premenné; téma len prepne atribút data-theme na <html>. Preferencia sa pamätá v zariadení (aby
+   aj prihlasovacia obrazovka vyzerala ako naposledy) a po prihlásení ju prípadne prepíše nastavenie z účtu. */
+const THEME_KEY = "rodinnyTetris_tema", THEME_COLOR = { dark: "#0b0e17", light: "#f3f5fb" };
+const THEME_NOTE = "Auto sa riadi nastavením zariadenia. Téma platí v tvojom účte na všetkých zariadeniach.";
+let themePref = "dark", canvasReady = false;
+const jeSvetla = () => document.documentElement.getAttribute("data-theme") === "light";
+const mqSvetla = window.matchMedia ? window.matchMedia("(prefers-color-scheme: light)") : null;
+const resolveTheme = pref => (pref === "light" || (pref === "auto" && mqSvetla && mqSvetla.matches) ? "light" : "dark");
+function refreshCanvas() { drawnSig = ""; if (grid) { draw(); if (current && nextType) drawNext(); } }      // hracia plocha sa prekreslí farbami novej témy
+function applyTheme(pref) {
+  themePref = ["dark", "light", "auto"].includes(pref) ? pref : "dark";
+  const t = resolveTheme(themePref);
+  document.documentElement.setAttribute("data-theme", t);
+  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute("content", THEME_COLOR[t]);   // farba stavového riadka
+  try { localStorage.setItem(THEME_KEY, themePref); } catch (e) {}
+  document.querySelectorAll("#themePicks .chip").forEach(b => { const on = b.dataset.th === themePref; b.classList.toggle("on", on); b.setAttribute("aria-checked", on ? "true" : "false"); });
+  if (canvasReady) refreshCanvas();
+}
+if (mqSvetla && mqSvetla.addEventListener) mqSvetla.addEventListener("change", () => { if (themePref === "auto") applyTheme("auto"); });   // zmena témy systému
+(function () { let p = "dark"; try { p = localStorage.getItem(THEME_KEY) || "dark"; } catch (e) {} applyTheme(p); })();
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) && navigator.standalone) document.documentElement.setAttribute("data-ios", "1");
+
+/* Farba mena hráča; v svetlej téme ju CSS (trieda pc) stmaví, aby bola čitateľná */
+function colorize(el, color) {
+  el.style.color = color || "";
+  if (color) { el.classList.add("pc"); el.style.setProperty("--pc", color); }
+  else { el.classList.remove("pc"); el.style.removeProperty("--pc"); }
+}
+const darken = (hex, k) => { const n = parseInt(hex.slice(1), 16), m = v => Math.round(v * (1 - k)); return "rgb(" + m(n >> 16) + "," + m((n >> 8) & 255) + "," + m(n & 255) + ")"; };
 
 /* Zámka zhasínania displeja: počas hry sa displej nezhasne (pri pauze, konci hry a skrytí aplikácie sa uvoľní) */
 let wakeLock = null, wakeWanted = false;
@@ -812,6 +894,8 @@ async function enterGame() {
   $("game").classList.add("on");
   applyLook();
   ghostOn = !(player.settings && player.settings.ghost === false);     // predvolene je tieň zapnutý
+  if (player.settings && player.settings.theme) applyTheme(player.settings.theme);        // téma z účtu má prednosť pred zariadením
+  $("themeMsg").textContent = THEME_NOTE;
   $("optGhost").checked = ghostOn; $("gameMsg").textContent = GAME_NOTE;
   showPane("results"); resetViews(); showView("board"); showSetView("look");
   $("lookMsg").textContent = ""; $("pwMsg").textContent = "";
@@ -921,7 +1005,7 @@ function fillTable(table, rows, hi, colorOf) {
     if (hi(i, r)) tr.className = "me";
     r.forEach((v, j) => {
       const td = document.createElement("td"); td.textContent = v;
-      if (j === 1 && colorOf && colorOf(i, r)) td.style.color = colorOf(i, r);      // farba mena hráča
+      if (j === 1 && colorOf && colorOf(i, r)) colorize(td, colorOf(i, r));      // farba mena hráča
       tr.appendChild(td);
     });
     table.appendChild(tr);
@@ -1160,6 +1244,22 @@ $("optVibe").checked = nast.vibrate && canVibrate;
 $("optSound").onchange = e => { nast.sound = e.target.checked; saveNast(); if (nast.sound) { unlockAudio(); sfx("rotate"); } };
 $("optVibe").onchange = e => { nast.vibrate = e.target.checked; saveNast(); if (nast.vibrate) vibrate(40); };
 if (!canVibrate) { $("optVibe").disabled = true; $("vibeNote").textContent = "Vibrácie toto zariadenie nepodporuje (napr. iPhone)."; }
+/* ===== NASTAVENIE: téma aplikácie (použije sa hneď; do účtu sa ukladá, aby platila na všetkých zariadeniach) ===== */
+document.querySelectorAll("#themePicks .chip").forEach(b => {
+  b.onclick = async () => {
+    const pref = b.dataset.th;
+    applyTheme(pref);
+    $("themeMsg").textContent = "Ukladám…";
+    const { error } = await db.rpc("set_setting", { p_key: "theme", p_value: pref });
+    if (error) {                                       // téma ostane použitá, len sa neuložila do účtu
+      $("themeMsg").textContent = "Téma je použitá len v tomto zariadení (do účtu sa neuložila" + (jeSiet(error) ? ": chýba pripojenie)." : ": " + error.message + ").");
+      return;
+    }
+    player.settings = Object.assign({}, player.settings, { theme: pref });
+    $("themeMsg").textContent = "Uložené ✓ (platí v tvojom účte na všetkých zariadeniach)";
+  };
+});
+
 /* ===== NASTAVENIE HRY: tieň kocky (uložené v účte hráča) ===== */
 function setGhost(on) { ghostOn = on; drawnSig = ""; if (grid) draw(); }       // prekreslí sa hneď, aj počas pauzy
 $("optGhost").onchange = async e => {
@@ -1361,7 +1461,7 @@ function niceAxis(m) {
 function axisY(svg, L, T, pw, ph, ax) {
   for (let t = 0; t <= ax.max + 1e-9; t += ax.step) {
     const y = T + ph - t / ax.max * ph;
-    sv("line", { x1: L, x2: L + pw, y1: y, y2: y, stroke: "rgba(255,255,255,.08)" }, svg);
+    sv("line", { x1: L, x2: L + pw, y1: y, y2: y, class: "gl" }, svg);
     sv("text", { x: L - 4, y: y + 3, "text-anchor": "end" }, svg, kfmt(t));
   }
 }
@@ -1403,9 +1503,9 @@ function chartLine(box, note, series, key, label, fmt) {
   if (!pts.length) { noText(svg, W, H, "Zatiaľ bez údajov"); return; }
   const ax = niceAxis(Math.max(...pts.map(q => q.v))), px = i => L + (i + 0.5) * pw / series.length, py = v => T + ph - v / ax.max * ph;
   axisY(svg, L, T, pw, ph, ax);
-  if (pts.length > 1) sv("polyline", { points: pts.map(q => px(q.i) + "," + py(q.v)).join(" "), fill: "none", stroke: "#E9C46A", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
+  if (pts.length > 1) sv("polyline", { points: pts.map(q => px(q.i) + "," + py(q.v)).join(" "), class: "ln", "stroke-width": 2, "stroke-linejoin": "round" }, svg);
   pts.forEach(q => {
-    sv("circle", { cx: px(q.i), cy: py(q.v), r: 3.5, fill: "#E9C46A" }, svg);
+    sv("circle", { cx: px(q.i), cy: py(q.v), r: 3.5, class: "dot" }, svg);
     const hit = sv("circle", { cx: px(q.i), cy: py(q.v), r: 11, fill: "transparent", class: "hit" }, svg);
     hit.addEventListener("click", () => { note.textContent = kratkyDatum(q.d) + ": " + fmt(q.v); });
   });
@@ -1442,7 +1542,7 @@ function chartHeat(box, note, heat) {
     for (let h = 0; h < 24; h++) {
       const n = grid[wd + "_" + h] || 0;
       const c = sv("rect", { x: L + h * cw + 0.5, y: T + wd * chh + 0.5, width: cw - 1, height: chh - 1, rx: 3,
-        fill: n ? "#E9C46A" : "rgba(255,255,255,.05)", "fill-opacity": n ? 0.18 + 0.82 * n / max : 1, class: "hit" }, svg);
+        "fill-opacity": n ? 0.18 + 0.82 * n / max : 1, class: "hit " + (n ? "hon" : "hoff") }, svg);
       c.addEventListener("click", () => { note.textContent = WDAYS[wd] + " " + hodinaText(h) + ": " + hrPl(n, "hra", "hry", "hier"); });
     }
   }
@@ -1634,7 +1734,7 @@ const FARBY = ["#4DD0E1", "#5C7CFA", "#F08C4A", "#E9C46A", "#52B788", "#9D6BCE",
 
 function applyLook() {                         // premietne emoji a farbu do karty hráča, panelu a náhľadu
   const meno = (player.emoji ? player.emoji + " " : "") + player.username + (player.is_admin ? " ★" : "");
-  [$("player"), $("sheetName"), $("lookPrev")].forEach(e => { e.textContent = meno; e.style.color = player.color || ""; });
+  [$("player"), $("sheetName"), $("lookPrev")].forEach(e => { e.textContent = meno; colorize(e, player.color); });
   document.querySelectorAll("#emojiPicks .pick").forEach(b => b.classList.toggle("sel", (b.dataset.v || null) === (player.emoji || null)));
   document.querySelectorAll("#colorPicks .swatch").forEach(b => b.classList.toggle("sel", (b.dataset.v || null) === (player.color || null)));
 }
@@ -1762,6 +1862,7 @@ if (jeIOS && !jeAplikacia) document.querySelectorAll(".iosHint").forEach(x => x.
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 async function init() {
+  canvasReady = true;                                  // odteraz sa pri zmene témy prekresľuje aj hracia plocha
   window.addEventListener("resize", fitBoard);
   window.addEventListener("online", flushQueue);          // po obnovení pripojenia sa odošle čakajúce skóre
   window.addEventListener("orientationchange", () => setTimeout(fitBoard, 200));
@@ -1983,15 +2084,16 @@ function paintCell(c, x, y, color, size) {
   const g = c.createLinearGradient(px, py, px, py + w);
   g.addColorStop(0, lighten(color, 0.3)); g.addColorStop(0.6, color); g.addColorStop(1, color);
   roundRectPath(c, px, py, w, w, r); c.fillStyle = g; c.fill();
-  c.lineWidth = 1; c.strokeStyle = "rgba(255,255,255,.28)"; c.stroke();
+  const svetla = jeSvetla();
+  c.lineWidth = svetla ? 1.3 : 1; c.strokeStyle = svetla ? darken(color, 0.38) : "rgba(255,255,255,.28)"; c.stroke();     // v svetlej téme tmavší obrys kocky
   roundRectPath(c, px + w * 0.18, py + w * 0.14, w * 0.64, w * 0.16, r * 0.5);   // jemný lesk
-  c.fillStyle = "rgba(255,255,255,.22)"; c.fill();
+  c.fillStyle = svetla ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.22)"; c.fill();
 }
 
 /* Každá farba kocky sa nakreslí len raz do malého obrázka a potom sa len kopíruje (oveľa lacnejšie než gradient pre každú kocku) */
 const sprites = {};
 function drawCell(c, x, y, color, size) {
-  const k = c.__k || 1, key = color + "|" + size + "|" + k;
+  const k = c.__k || 1, key = color + "|" + size + "|" + k + "|" + (jeSvetla() ? "s" : "t");     // obrázky kociek sú zvlášť pre každú tému
   let sp = sprites[key];
   if (!sp) {
     sp = document.createElement("canvas"); sp.width = sp.height = Math.round(size * k);
@@ -2003,7 +2105,7 @@ function drawCell(c, x, y, color, size) {
 
 function draw() {
   ctx.clearRect(0, 0, COLS * CELL, ROWS * CELL);
-  ctx.strokeStyle = "rgba(255,255,255,.045)"; ctx.lineWidth = 1;          // jemná mriežka
+  ctx.strokeStyle = jeSvetla() ? "rgba(26,33,51,.08)" : "rgba(255,255,255,.045)"; ctx.lineWidth = 1;          // jemná mriežka
   for (let x = 1; x < COLS; x++) { ctx.beginPath(); ctx.moveTo(x * CELL, 0); ctx.lineTo(x * CELL, ROWS * CELL); ctx.stroke(); }
   for (let y = 1; y < ROWS; y++) { ctx.beginPath(); ctx.moveTo(0, y * CELL); ctx.lineTo(COLS * CELL, y * CELL); ctx.stroke(); }
   const p = anim ? Math.min(1, (performance.now() - anim.t0) / anim.dur) : 0;
@@ -2013,14 +2115,14 @@ function draw() {
     else drawCell(ctx, x, y, c, CELL);
   }));
   if (anim) {                                    // biely záblesk na mazaných riadkoch
-    ctx.fillStyle = "rgba(255,255,255," + (0.75 * Math.sin(Math.PI * p)).toFixed(3) + ")";
+    ctx.fillStyle = (jeSvetla() ? "rgba(224,140,10," : "rgba(255,255,255,") + (0.75 * Math.sin(Math.PI * p)).toFixed(3) + ")";      // záblesk mazaných riadkov
     anim.rows.forEach(y => ctx.fillRect(0, y * CELL, COLS * CELL, CELL));
   }
   if (!current) return;
   if (ghostOn) {                                                           // tieň sa dá vypnúť v nastaveniach
   let gy = current.y;                                                      // tieň: kde kocka dopadne
   while (!collides(current.m, current.x, gy + 1)) gy++;
-  ctx.save(); ctx.globalAlpha = 0.4; ctx.lineWidth = 2; ctx.strokeStyle = SHAPES[current.type].color;
+  ctx.save(); ctx.globalAlpha = jeSvetla() ? 0.8 : 0.4; ctx.lineWidth = 2; ctx.strokeStyle = jeSvetla() ? darken(SHAPES[current.type].color, 0.25) : SHAPES[current.type].color;
   current.m.forEach((row, y) => row.forEach((v, x) => {
     if (v) { roundRectPath(ctx, (current.x + x) * CELL + 3, (gy + y) * CELL + 3, CELL - 6, CELL - 6, 6); ctx.stroke(); }
   }));

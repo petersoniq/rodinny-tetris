@@ -523,7 +523,7 @@
     </div>
     <div id="pScore" class="hudScore">
       <div class="big" id="score">0</div>
-      <div class="sub">Riadky <span id="lines">0</span> · <span class="chip">Úr. <span id="level">1</span></span> <span id="comboHud"></span></div>
+      <div class="sub">Riadky <span id="lines">0</span> · <span class="chip">Úr. <span id="level">1</span></span> <span id="comboHud"></span> <button id="updBadge" class="sm ghost" style="display:none;margin-left:6px" title="Klikni na obnovenie">↻ Nová verzia</button></div>
     </div>
     <div id="pNext">
       <div class="nextSlot"><canvas id="next" width="120" height="120"></canvas></div>
@@ -2452,6 +2452,27 @@ async function showAppVersion() {
   } catch (e) { /* offline alebo nedostupný sw.js: zóstane neutrálne "Verzia…" */ }
 }
 showAppVersion();
+
+/* Kontrola aktualizácií: keď service worker čaká s novou verziou, zobrazí sa štítok */
+async function watchUpdates() {
+  if (!("serviceWorker" in navigator)) return;
+  const reg = await navigator.serviceWorker.ready;
+  if (reg.waiting) showUpdateBadge();                        // nová verzia už čaká
+  reg.addEventListener("updatefound", () => {
+    const w = reg.installing;
+    if (!w) return;
+    w.addEventListener("statechange", () => {
+      if (w.state === "installed" && navigator.serviceWorker.controller) showUpdateBadge();
+    });
+  });
+}
+function showUpdateBadge() {
+  const b = $("updBadge");
+  if (!b) return;
+  b.style.display = "inline-block";
+  b.onclick = () => location.reload();
+}
+watchUpdates();
 
 /* Štart */
 init();

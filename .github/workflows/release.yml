@@ -26,6 +26,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: Nastavenie verzie aplikácie (cache kľúč = číslo tohto nasadenia)
+        run: sed -i "s/const CACHE = \"tetris-v[0-9]*\";/const CACHE = \"tetris-v${{ github.run_number }}\";/" sw.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

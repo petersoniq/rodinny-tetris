@@ -640,7 +640,7 @@
             <button class="adminBtn sm ghost">👥 Správa používateľov</button>
             <button id="logoutBtn" class="ghost sm">Odhlásiť sa</button>
           </div>
-          <div class="sub" style="margin-top:10px">Verzia 20</div>
+          <div class="sub" id="appVersion" style="margin-top:10px">Verzia…</div>
         </div>
       </div>
     </div>
@@ -2393,6 +2393,17 @@ document.querySelectorAll("#touch button").forEach(b => {
   });
   ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, stop));
 });
+
+/* v21: verzia aplikácie sa automaticky prečíta z cache kľúča service workera (tetris-v20 -> "Verzia 20") */
+async function showAppVersion() {
+  try {
+    const r = await fetch("sw.js", { cache: "no-cache" });
+    const t = await r.text();
+    const m = t.match(/tetris-v(\d+)/);
+    if (m) $("appVersion").textContent = "Verzia " + m[1];
+  } catch (e) { /* offline alebo nedostupný sw.js: zóstane neutrálne "Verzia…" */ }
+}
+showAppVersion();
 
 /* Štart */
 init();

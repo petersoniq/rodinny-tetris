@@ -103,6 +103,68 @@
   .inst { margin-top: 12px; font-size: .85rem; color: var(--muted); }
   .installBtn, .iosHint { display: none; }
 
+  /* Prihlasovacia karta - moderny skleny dizajn (obe temy) */
+  #login { position: relative; overflow: hidden; }
+  .login-inner { position: relative; z-index: 1; }
+  #login .logo {
+    font-size: 2rem; margin-bottom: 4px;
+    background: linear-gradient(180deg, #f7d98a 0%, #dfa845 70%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 3px 14px rgba(233,196,106,.45));
+  }
+  :root[data-theme="light"] #login .logo {
+    background: linear-gradient(180deg, #d69a3a 0%, #8a5a00 75%);
+    filter: drop-shadow(0 2px 10px rgba(200,140,20,.25));
+  }
+  #login .tag { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  #login .tag::before, #login .tag::after { content: ""; height: 1px; width: 34px; background: var(--line2); border-radius: 1px; flex: none; }
+
+  /* Dekorativne tetromina v karte */
+  .login-bg { position: absolute; inset: 0; pointer-events: none; }
+  .login-bg::before {
+    content: ""; position: absolute; top: -45%; left: 50%; transform: translateX(-50%);
+    width: 130%; aspect-ratio: 1; border-radius: 50%;
+    background: radial-gradient(circle, var(--me-bg) 0%, transparent 65%);
+  }
+  .tp { position: absolute; width: 13px; height: 13px; border-radius: 4px; opacity: .17;
+        background: var(--c); animation: tpDrift 11s ease-in-out infinite; }
+  :root[data-theme="light"] .tp { opacity: .13; }
+  .tp[data-s="O"] { box-shadow: 13px 0 0 var(--c), 0 13px 0 var(--c), 13px 13px 0 var(--c); }
+  .tp[data-s="T"] { box-shadow: 13px 0 0 var(--c), 26px 0 0 var(--c), 13px 13px 0 var(--c); }
+  .tp[data-s="L"] { box-shadow: 0 13px 0 var(--c), 0 26px 0 var(--c), 13px 26px 0 var(--c); }
+  .tp[data-s="I"] { box-shadow: 13px 0 0 var(--c), 26px 0 0 var(--c), 39px 0 0 var(--c); }
+  .tp[data-s="S"] { box-shadow: 13px 13px 0 var(--c), 0 26px 0 var(--c), 13px 26px 0 var(--c); }
+  @keyframes tpDrift {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(16px) rotate(180deg); }
+  }
+
+  /* Tabovy prepinac v stylu nastaveni */
+  #login .tabs { padding: 4px; margin-bottom: 16px; background: var(--fill1); border: 1px solid var(--line); border-radius: 14px; gap: 4px; }
+  #login .tab { border: 0; background: transparent; border-radius: 10px; padding: 9px 0; font-weight: 600; color: var(--muted); transition: background .2s, color .2s; }
+  #login .tab.on { color: #2a1d00; }
+
+  /* Vstupy so zlatym zameranim */
+  #login input { transition: border-color .2s, box-shadow .2s, background .2s; }
+  #login input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px var(--me-bg); background: var(--fill3); }
+  #loginBtn { width: 100%; padding: 13px 18px; font-size: 1.05rem; margin-top: 4px;
+    box-shadow: 0 6px 18px rgba(240,140,74,.38);
+    transition: transform .16s ease, box-shadow .16s ease, filter .16s ease; }
+  #loginBtn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 9px 22px rgba(240,140,74,.5); }
+  #loginBtn:active:not(:disabled) { transform: translateY(0); }
+  #loginBtn:disabled { opacity: .55; cursor: default; }
+
+  /* Vstupna animacia prvkov karty */
+  .login-inner > * { animation: loginIn .5s ease both; }
+  .login-inner > *:nth-child(1) { animation-delay: .02s }
+  .login-inner > *:nth-child(2) { animation-delay: .08s }
+  .login-inner > *:nth-child(3) { animation-delay: .14s }
+  .login-inner > *:nth-child(4) { animation-delay: .20s }
+  .login-inner > *:nth-child(5) { animation-delay: .26s }
+  .login-inner > *:nth-child(6) { animation-delay: .30s }
+  .login-inner > *:nth-child(7) { animation-delay: .34s }
+  @keyframes loginIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
   /* Hra: rám, horná lišta, hlavná časť */
   #game { display: none; width: min(440px, 100%); }
   #game.on { display: block; }
@@ -355,6 +417,15 @@
 
 <!-- ===== 1. PRIHLÁSENIE / REGISTRÁCIA ===== -->
 <div id="login" class="glass">
+  <div class="login-bg" aria-hidden="true">
+    <span class="tp" data-s="I" style="--c:#5BC0EB; top:7%;  left:8%;  animation-duration:13s"></span>
+    <span class="tp" data-s="O" style="--c:#E9C46A; top:16%; right:10%; animation-duration:10s; animation-delay:-2s"></span>
+    <span class="tp" data-s="T" style="--c:#B388EB; bottom:20%; left:12%; animation-duration:12s; animation-delay:-5s"></span>
+    <span class="tp" data-s="L" style="--c:#EF6A6A; bottom:8%;  right:16%; animation-duration:14s; animation-delay:-7s"></span>
+    <span class="tp" data-s="S" style="--c:#52B788; top:44%; right:6%;  animation-duration:11s; animation-delay:-3s"></span>
+  </div>
+  <div class="login-inner">
+
   <div class="logo">TETRIS</div>
   <div class="tag">PLAY TOGETHER</div>
   <div class="tabs">
@@ -367,6 +438,8 @@
   <button id="loginBtn">Prihlásiť</button>
   <div id="loginMsg" role="status"></div>
   <div class="inst"><button class="installBtn sm">Nainštalovať aplikáciu</button><span class="iosHint">iPhone: ťukni na Zdieľať a potom Pridať na plochu.</span></div>
+
+  </div>
 </div>
 
 <!-- ===== 2. HRA ===== -->

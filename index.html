@@ -200,20 +200,20 @@
   #game { display: none; width: min(440px, 100%); }
   #game.on { display: block; }
   /* ===== Zjednotená horná lišta ===== */
-  #hud { display: flex; align-items: center; gap: 12px; margin: 12px 0 16px; padding: 10px 14px;
+  #hud { display: flex; align-items: center; gap: 10px; margin: 10px 0 12px; padding: 7px 12px;
          background: linear-gradient(180deg, var(--fill2), var(--fill1)); border: 1px solid var(--line);
-         border-radius: 18px; box-shadow: var(--shadow); }
+         border-radius: 14px; box-shadow: var(--shadow); }
   #main { display: block; }
   #hud > * { min-width: 0; }
-  #pPlayer { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1.1; text-align: left; }
-  #hudAva { flex: none; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4);
+  #pPlayer { display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1.1; text-align: left; }
+  #hudAva { flex: none; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4);
             background: var(--fill3); border: 1px solid var(--line); }
   .hudWho { min-width: 0; display: flex; flex-direction: column; }
-  .pname { font-weight: 700; font-size: 1.05rem; overflow-wrap: anywhere; line-height: 1.25; display: block; }
+  .pname { font-weight: 700; font-size: .95rem; overflow-wrap: anywhere; line-height: 1.2; display: block; }
   .chev { color: var(--muted); }
   .hudScore { flex: 1.2; text-align: center; }
-  .big { font-size: 2rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums;
+  .big { font-size: 1.6rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums;
          background: linear-gradient(180deg, #f7d98a 0%, #dfa845 70%);
          -webkit-background-clip: text; background-clip: text; color: transparent; }
   :root[data-theme="light"] .hudScore .big { background: linear-gradient(180deg, #d69a3a 0%, #8a5a00 75%); -webkit-background-clip: text; background-clip: text; }
@@ -225,9 +225,10 @@
   .hudWho .pname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hudBest { white-space: nowrap; }
   .hudBest #best { font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
-  .nextSlot { width: 64px; height: 64px; border-radius: 16px; background: var(--fill1); border: 1px solid var(--line);
+  .nextSlot { width: 48px; height: 48px; border-radius: 13px; background: var(--fill1); border: 1px solid var(--line);
               display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 8px rgba(0,0,0,.18); }
-  #pNext canvas { display: block; width: 56px; height: 56px; }
+  #pNext canvas { display: block; width: 40px; height: 40px; }
+  .hudScore .sub, .hudBest { white-space: nowrap; }
 
   /* Prostredie hry: tetromina v pozadí + žiara za plochou podľa úrovne */
   #game { position: relative; overflow: hidden; }
@@ -820,10 +821,11 @@ const POINTS = [0, 100, 300, 500, 800];         // body za 0–4 riadky naraz
 
 /* v20: combo (po sebe idúce mazania) a back-to-back Tetris */
 let combo = 0, b2b = false;
-function showCombo(c, bonus, isB2B) {
+function showCombo(c, bonus, isB2B, n) {
   const b = $("comboBadge");
-  b.textContent = isB2B ? "B2B TETRIS! +" + bonus : "COMBO ×" + c + " +" + bonus;
-  b.classList.toggle("b2b", isB2B);
+  const nazov = n === 4 ? (isB2B ? "B2B TETRIS!" : "TETRIS!") : n === 3 ? "TROJITNÉ!" : n === 2 ? "DVOJITNÉ!" : "COMBO ×" + c;
+  b.textContent = nazov + " +" + bonus;
+  b.classList.toggle("b2b", isB2B || n === 4);
   b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
   sfx("combo", c);
 }
@@ -2247,10 +2249,11 @@ function finishClear() {
   const comboBonus = combo > 1 ? 50 * combo * level : 0;
   const isB2B = n === 4 && b2b;                   // v20: dva Tetrisy po sebe = back-to-back
   const b2bBonus = isB2B ? Math.round(POINTS[4] * level * 0.5) : 0;
-  score += POINTS[n] * level + comboBonus + b2bBonus;
+  const multiBonus = n > 1 ? (n - 1) * 100 * level : 0;   // v27: bonus za viac riadkov naraz (dvojité/trojité/Tetris)
+  score += POINTS[n] * level + comboBonus + b2bBonus + multiBonus;
   if (n === 4) tetrises++;                        // Tetris = 4 riadky naraz (pre odznak)
   b2b = n === 4;
-  if (comboBonus || b2bBonus) showCombo(combo, comboBonus + b2bBonus, isB2B);
+  if (comboBonus || b2bBonus || multiBonus) showCombo(combo, comboBonus + b2bBonus + multiBonus, isB2B, n);
   updateComboHud();
   lines += n;
   level = Math.floor(lines / 10) + 1;             // každých 10 riadkov = vyššia úroveň

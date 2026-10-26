@@ -165,6 +165,31 @@
   .login-inner > *:nth-child(7) { animation-delay: .34s }
   @keyframes loginIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
+  /* ===== v20: combo, moderny HUD a graf ===== */
+  #comboBadge { position: absolute; left: 50%; top: 16%; transform: translate(-50%,-50%); z-index: 5; pointer-events: none;
+    display: none; padding: 8px 16px; border-radius: 14px; font-weight: 800; font-size: 1rem; letter-spacing: .04em; white-space: nowrap;
+    background: var(--me-bg); color: var(--gold); border: 1px solid var(--gold);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); box-shadow: 0 6px 22px rgba(0,0,0,.35); }
+  #comboBadge.b2b { color: #fff; background: linear-gradient(180deg,#f7c35a,#e69a2e); border-color: transparent; }
+  #comboBadge.pop { display: block; animation: comboPop 1.2s ease forwards; }
+  @keyframes comboPop {
+    0% { opacity: 0; transform: translate(-50%,-30%) scale(.6); }
+    15% { opacity: 1; transform: translate(-50%,-50%) scale(1.08); }
+    30% { transform: translate(-50%,-50%) scale(1); }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%,-90%) scale(1); }
+  }
+  #hud .card { background: linear-gradient(180deg, var(--fill2), var(--fill1)); transition: transform .18s ease, box-shadow .18s ease; }
+  #hud .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.18); }
+  #hud .lbl { color: var(--gold); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: .64rem; }
+  #comboHud { color: var(--gold); font-weight: 700; }
+  canvas#board { box-shadow: inset 0 2px 14px rgba(0,0,0,.25); }
+  :root[data-theme="light"] canvas#board { box-shadow: inset 0 2px 10px rgba(40,55,100,.10); }
+  #chMyScore svg { width: 100%; height: auto; display: block; }
+  #chMyScore polyline { stroke: var(--chartline); fill: none; stroke-width: 2; stroke-linejoin: round; }
+  #chMyScore circle { fill: var(--chartline); }
+  #chMyScore line.gl { stroke: var(--grid); }
+
   /* Hra: rám, horná lišta, hlavná časť */
   #game { display: none; width: min(440px, 100%); }
   #game.on { display: block; }
@@ -456,7 +481,7 @@
     <div class="card" id="pScore">
       <div class="lbl">Skóre</div>
       <div class="big" id="score">0</div>
-      <div class="sub">Riadky <span id="lines">0</span> · Úr. <span id="level">1</span></div>
+      <div class="sub">Riadky <span id="lines">0</span> · Úr. <span id="level">1</span> <span id="comboHud"></span></div>
     </div>
     <div class="card" id="pNext">
       <div class="lbl">Ďalšia</div>
@@ -467,6 +492,7 @@
   <div id="main">
     <div id="left">
       <div id="board-wrap">
+        <div id="comboBadge" aria-hidden="true"></div>
         <canvas id="board" width="300" height="600"></canvas>
         <div id="overlay">
           <div id="overlayText"></div>
@@ -548,6 +574,11 @@
           <h2>⭐ Moje najlepšie skóre</h2>
           <table id="myScores"></table>
           <div class="sub" id="myStats" style="margin-top:6px"></div>
+        </div>
+        <div class="card" id="pMyChart" style="margin-top:12px">
+          <h2>📈 Vývoj môjho skóre</h2>
+          <div id="chMyScore"></div>
+          <div class="chartnote" id="noteMyScore"></div>
         </div>
       </div>
     </div>
@@ -739,6 +770,19 @@
    ========================================================= */
 const COLS = 10, ROWS = 20, CELL = 30;          // veľkosť poľa a štvorčeka (px)
 const POINTS = [0, 100, 300, 500, 800];         // body za 0–4 riadky naraz
+
+/* v20: combo (po sebe idúce mazania) a back-to-back Tetris */
+let combo = 0, b2b = false;
+function showCombo(c, bonus, isB2B) {
+  const b = $("comboBadge");
+  b.textContent = isB2B ? "B2B TETRIS! +" + bonus : "COMBO ×" + c + " +" + bonus;
+  b.classList.toggle("b2b", isB2B);
+  b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+  sfx("combo", c);
+}
+function updateComboHud() {
+  $("comboHud").textContent = combo > 1 ? "· Combo ×" + combo : "";
+}
 
 /* Tvary kociek: každý je matica, 1 = štvorček. Farby sú pri každom tvare. */
 const SHAPES = {
@@ -950,6 +994,7 @@ function sfx(name, n) {
   else if (name === "level") arp([523, 659, 784, 1047, 1319], 0.12, "square", 0.05, 0.07);
   else if (name === "over") arp([392, 330, 262, 196], 0.22, "triangle", 0.12, 0.2);
   else if (name === "record") arp([523, 659, 784, 1047], 0.18, "triangle", 0.12, 0.1);
+  else if (name === "combo") arp([523, 659, 784, 1047].slice(0, Math.min(4, 1 + (n || 1))), 0.1, "square", 0.05, 0.05);
 }
 
 const MOBIL_Q = "(max-width: 700px), (orientation: landscape) and (max-height: 520px)";   // úzky displej alebo telefón na šírku
@@ -999,7 +1044,7 @@ function renderStartText() {
 function showStart() {
   cancelAnimationFrame(rafId);
   running = false; paused = false; current = null; anim = null; wakeOff(); gridRev++;
-  grid = emptyGrid(); score = 0; lines = 0; level = 1;
+  grid = emptyGrid(); score = 0; lines = 0; level = 1; combo = 0; b2b = false; updateComboHud();
   updateStats(); nctx.clearRect(0, 0, 120, 120); draw();
   savedGame = readSave();
   overlayMode = "start";
@@ -1109,6 +1154,10 @@ async function refreshPanels() {
     fillTable($("myScores"), top.data.map((r, i) => [i + 1, fmtDate(r.created_at), r.score]), i => i === 0);
     setBest(top.data.length ? top.data[0].score : 0);
   }
+  // v20: graf vývoja skóre – posledných 30 hier v poradí
+  const hist = await db.from("scores").select("score,created_at").order("created_at", { ascending: true }).limit(30);
+  if (player !== me) return;
+  if (!hist.error) drawMyScore(hist.data);
   const cnt = await db.from("scores").select("id", { count: "exact", head: true });
   if (player !== me) return;
   const st = await db.rpc("my_stats");                  // štatistiky pre odznaky
@@ -1549,6 +1598,26 @@ const noText = (svg, W, H, t) => sv("text", { x: W / 2, y: H / 2, "text-anchor":
 const hrPl = (n, a, b, c) => n + " " + pl(n, a, b, c);
 
 /* Hry v čase: skladané stĺpce podľa hráčov */
+/* v20: spojnicový graf vývoja môjho skóre (posledných N hier) */
+function drawMyScore(rows) {
+  const box = $("chMyScore"), note = $("noteMyScore");
+  if (rows.length < 2) { box.innerHTML = ""; note.textContent = rows.length ? "Odohraj aspoň 2 hry a graf sa zobrazí." : "Zatiaľ žiadne hry."; return; }
+  const W = 320, H = 140, P = 22, max = Math.max(...rows.map(r => r.score)) || 1;
+  const px = i => P + i * (W - 2 * P) / (rows.length - 1);
+  const py = v => H - P - v * (H - 2 * P) / max;
+  const sv = (t, a) => { const e = document.createElementNS("http://www.w3.org/2000/svg", t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const svg = sv("svg", { viewBox: "0 0 " + W + " " + H });
+  [0, .5, 1].forEach(f => svg.appendChild(sv("line", { x1: P, x2: W - P, y1: py(max * f), y2: py(max * f), class: "gl" })));
+  svg.appendChild(sv("polyline", { points: rows.map((r, i) => px(i) + "," + py(r.score)).join(" ") }));
+  rows.forEach((r, i) => {
+    const d = sv("circle", { cx: px(i), cy: py(r.score), r: 2.5 });
+    d.addEventListener("click", () => note.textContent = fmtDate(r.created_at) + ": " + r.score);
+    svg.appendChild(d);
+  });
+  box.innerHTML = ""; box.appendChild(svg);
+  note.textContent = "Posledných " + rows.length + " hier · Ťukni na bod pre detail.";
+}
+
 function chartGames(box, note, series, players, gran) {
   const W = 340, H = 180, L = 30, R = 6, T = 10, B = 22, pw = W - L - R, ph = H - T - B;
   const svg = svgBox(box, W, H, "Počet hier po " + (gran === "week" ? "týždňoch" : "dňoch"));
@@ -1984,7 +2053,7 @@ function makePiece(type) {
 
 function newGame() {
   anim = null; gameId = newId(); tetrises = 0; gridRev++;
-  grid = emptyGrid(); score = 0; lines = 0; level = 1;
+  grid = emptyGrid(); score = 0; lines = 0; level = 1; combo = 0; b2b = false; updateComboHud();
   dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
   nextType = randomType();
   spawn();
@@ -2110,6 +2179,7 @@ function lockPiece() {
     vibrate([[25], [25, 40, 25], [25, 40, 25, 40, 25], [70, 40, 70, 40, 120]][full.length - 1]);
   } else {
     sfx("drop"); vibrate(12);
+    combo = 0; b2b = false; updateComboHud();      // v20: bez mazania sa combo preruší
     spawn();
   }
   updateStats();
@@ -2121,8 +2191,15 @@ function finishClear() {
   grid = grid.filter((r, i) => !rows.includes(i));
   while (grid.length < ROWS) grid.unshift(Array(COLS).fill(null));
   gridRev++;
-  score += POINTS[n] * level;
+  combo++;                                        // v20: combo rastie s každým po sebe idúcim mazaním
+  const comboBonus = combo > 1 ? 50 * combo * level : 0;
+  const isB2B = n === 4 && b2b;                   // v20: dva Tetrisy po sebe = back-to-back
+  const b2bBonus = isB2B ? Math.round(POINTS[4] * level * 0.5) : 0;
+  score += POINTS[n] * level + comboBonus + b2bBonus;
   if (n === 4) tetrises++;                        // Tetris = 4 riadky naraz (pre odznak)
+  b2b = n === 4;
+  if (comboBonus || b2bBonus) showCombo(combo, comboBonus + b2bBonus, isB2B);
+  updateComboHud();
   lines += n;
   level = Math.floor(lines / 10) + 1;             // každých 10 riadkov = vyššia úroveň
   anim = null; dropTimer = 0;

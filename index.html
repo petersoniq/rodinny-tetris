@@ -225,9 +225,10 @@
   .hudWho .pname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hudBest { white-space: nowrap; }
   .hudBest #best { font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
-  .nextSlot { width: 42px; height: 42px; border-radius: 12px; background: var(--fill1); border: 1px solid var(--line);
-              display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 8px rgba(0,0,0,.18); }
+  .nextSlot { width: auto; height: 42px; border-radius: 12px; background: var(--fill1); border: 1px solid var(--line); padding: 0 4px;
+              display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: inset 0 2px 8px rgba(0,0,0,.18); }
   #pNext canvas { display: block; width: 34px; height: 34px; }
+  #next2, #next3 { width: 20px; height: 20px; opacity: .72; }
   .hudBest { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hudMeta { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 4px; }
   #pMeta { grid-column: 1 / -1; justify-self: center; }
@@ -459,8 +460,9 @@
     .chev { display: none; }
     .nextLbl { font-size: .56rem; }
     #hudAva { width: 28px; height: 28px; font-size: .9rem; border-radius: 9px; }
-    .nextSlot { width: 36px; height: 36px; border-radius: 10px; }
+    .nextSlot { width: auto; height: 36px; border-radius: 10px; padding: 0 3px; gap: 3px; }
     #pNext canvas { width: 28px; height: 28px; }
+    #next2, #next3 { width: 16px; height: 16px; }
     #main { display: flex; flex-direction: column; align-items: stretch; flex: 1; }
     #left { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     #touch { width: 100%; margin-top: 6px; gap: 8px; }
@@ -542,7 +544,7 @@
     </div>
     <div id="pNext">
       <div class="lbl nextLbl">Ďalšia</div>
-      <div class="nextSlot"><canvas id="next" width="120" height="120"></canvas></div>
+      <div class="nextSlot"><canvas id="next" width="120" height="120"></canvas><canvas id="next2" width="60" height="60"></canvas><canvas id="next3" width="60" height="60"></canvas></div>
     </div>
     <div id="pMeta" class="sub hudMeta"><span class="chip">Riadky <span id="lines">0</span></span> <span class="chip">Úr. <span id="level">1</span></span> <span id="comboHud" class="chip"></span> <button id="updBadge" class="sm ghost" style="display:none" title="Klikni na obnovenie">↻ Nová verzia</button></div>
   </div>
@@ -2089,7 +2091,8 @@ async function init() {
    ========================================================= */
 const ctx = $("board").getContext("2d");
 const nctx = $("next").getContext("2d");
-let grid, current, nextType, score, lines, level, tetrises = 0;
+const n2ctx = $("next2").getContext("2d"), n3ctx = $("next3").getContext("2d");
+let grid, current, nextType, nextExtra = [], score, lines, level, tetrises = 0;   // nextExtra = 2. a 3. nasledujúca kocka
 let dropTimer, lastTime, running, paused, rafId;
 let gridRev = 0, drawnSig = "";     // plocha sa prekreslí len vtedy, keď sa niečo zmenilo (šetrí batériu)
 const stateSig = () => gridRev + "|" + (current ? current.type + current.x + "," + current.y + current.m.map(r => r.join("")).join("/") : "-");
@@ -2119,7 +2122,7 @@ function newGame() {
   anim = null; gameId = newId(); tetrises = 0; gridRev++;
   grid = emptyGrid(); score = 0; lines = 0; level = 1; combo = 0; b2b = false; updateComboHud();
   dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
-  nextType = randomType();
+  nextType = randomType(); nextExtra = [randomType(), randomType()];
   spawn();
   $("overlay").style.display = "none";
   updateStats();
@@ -2129,7 +2132,7 @@ function newGame() {
 /* Vytvorí novú kocku; ak sa nezmestí, je koniec hry */
 function spawn() {
   current = makePiece(nextType);
-  nextType = randomType();
+  nextType = nextExtra.length ? nextExtra.shift() : randomType(); nextExtra.push(randomType());
   drawNext();
   if (collides(current.m, current.x, current.y)) gameOver(); else saveGame();
 }
@@ -2218,7 +2221,7 @@ function readSave() {
 }
 function resumeGame() {
   const d = savedGame; savedGame = null;
-  grid = d.grid; nextType = d.next; score = d.score; lines = d.lines; level = d.level;
+  grid = d.grid; nextType = d.next; nextExtra = [randomType(), randomType()]; score = d.score; lines = d.lines; level = d.level;
   tetrises = Number.isInteger(d.tet) && d.tet >= 0 ? d.tet : 0; gridRev++;
   current = { type: d.cur.type, m: d.cur.m, x: d.cur.x, y: d.cur.y };
   anim = null; dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
@@ -2357,6 +2360,13 @@ function drawNext() {
   const sh = SHAPES[nextType], size = 24, w = sh.m[0].length, h = sh.m.length;
   const ox = (120 / size - w) / 2, oy = (120 / size - h) / 2;
   sh.m.forEach((row, y) => row.forEach((v, x) => { if (v) drawCell(nctx, ox + x, oy + y, sh.color, size); }));
+  [[n2ctx, nextExtra[0]], [n3ctx, nextExtra[1]]].forEach(([c, typ]) => {   // náhľad 2. a 3. kocky
+    c.clearRect(0, 0, 60, 60);
+    if (!typ) return;
+    const s = SHAPES[typ], s2 = 12, w2 = s.m[0].length, h2 = s.m.length;
+    const ox2 = (60 / s2 - w2) / 2, oy2 = (60 / s2 - h2) / 2;
+    s.m.forEach((row, y) => row.forEach((v, x) => { if (v) drawCell(c, ox2 + x, oy2 + y, s.color, s2); }));
+  });
 }
 
 /* =========================================================
@@ -2491,7 +2501,13 @@ function showUpdateBadge() {
   const b = $("updBadge");
   if (!b) return;
   b.style.display = "inline-block";
-  b.onclick = () => location.reload();
+  b.onclick = async () => {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.waiting) { reg.waiting.postMessage("SKIP_WAITING"); setTimeout(() => location.reload(), 200); return; }
+    } catch (e) {}
+    location.reload();
+  };
 }
 watchUpdates();
 

@@ -24,3 +24,6 @@ self.addEventListener("fetch", e => {
     }).catch(() => caches.match(req).then(r => r || caches.match("index.html")))
   );
 });
+
+/* Nová verzia sa prepne okamžite po kliknutí na "↻ Nová verzia" (nie až po zatvorení kariet) */
+self.addEventListener("message", e => { if (e.data === "SKIP_WAITING") self.skipWaiting(); });

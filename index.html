@@ -200,20 +200,20 @@
   #game { display: none; width: min(440px, 100%); }
   #game.on { display: block; }
   /* ===== Zjednotená horná lišta ===== */
-  #hud { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr) minmax(0,.8fr); align-items: center; gap: 10px; margin: 10px 0 12px; padding: 8px 14px;
+  #hud { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,1fr) minmax(0,.8fr); align-items: center; gap: 10px; margin: 8px 0 10px; padding: 6px 12px;
          background: linear-gradient(180deg, var(--fill2), var(--fill1)); border: 1px solid var(--line);
          border-radius: 14px; box-shadow: var(--shadow); }
   #main { display: block; }
   #hud > * { min-width: 0; }
   #pPlayer { display: flex; align-items: center; gap: 8px; cursor: pointer; text-align: left; min-width: 0; justify-self: start; }
-  #hudAva { flex: none; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4);
+  #hudAva { flex: none; width: 28px; height: 28px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4);
             background: var(--fill3); border: 1px solid var(--line); }
   .hudWho { min-width: 0; display: flex; flex-direction: column; }
   .pname { font-weight: 700; font-size: .95rem; overflow-wrap: anywhere; line-height: 1.2; display: block; }
   .chev { color: var(--muted); }
   .hudScore { text-align: center; justify-self: center; }
-  .big { font-size: 1.6rem; font-weight: 700; line-height: 1.05; font-variant-numeric: tabular-nums;
+  .big { font-size: 1.45rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
          background: linear-gradient(180deg, #f7d98a 0%, #dfa845 70%);
          -webkit-background-clip: text; background-clip: text; color: transparent; }
   :root[data-theme="light"] .hudScore .big { background: linear-gradient(180deg, #d69a3a 0%, #8a5a00 75%); -webkit-background-clip: text; background-clip: text; }
@@ -225,12 +225,12 @@
   .hudWho .pname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hudBest { white-space: nowrap; }
   .hudBest #best { font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
-  .nextSlot { width: 48px; height: 48px; border-radius: 13px; background: var(--fill1); border: 1px solid var(--line);
+  .nextSlot { width: 42px; height: 42px; border-radius: 12px; background: var(--fill1); border: 1px solid var(--line);
               display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 8px rgba(0,0,0,.18); }
-  #pNext canvas { display: block; width: 40px; height: 40px; }
+  #pNext canvas { display: block; width: 34px; height: 34px; }
   .hudBest { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hudMeta { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 4px; }
-  .hudLbl { margin-bottom: 2px; font-size: .62rem; letter-spacing: .18em; text-transform: uppercase; text-align: center; }
+  .hudLbl { margin-bottom: 0; font-size: .62rem; line-height: 1.1; letter-spacing: .18em; text-transform: uppercase; text-align: center; }
   #updBadge { margin: 0; padding: 2px 8px; font-size: .72rem; border-radius: 8px; }
 
   /* Prostredie hry: tetromina v pozadí + žiara za plochou podľa úrovne */
@@ -441,25 +441,25 @@
     .glass, .panel, .card { backdrop-filter: none; -webkit-backdrop-filter: none; }
     .brand { display: none; }
     body { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
-    #hud { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 8px; padding: 8px 12px; border-radius: 14px; }
+    #hud { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 6px; padding: 5px 10px; border-radius: 12px; }
     #pPlayer { flex: 1 1 auto; min-width: 0; justify-self: auto; }
     #pNext { order: 2; justify-self: auto; }
     #pScore { order: 3; flex: 1 1 100%; justify-self: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    #pScore .big { font-size: 1.5rem; }
+    #pScore .big { font-size: 1.25rem; }
     #pScore .hudMeta { margin: 0; justify-content: flex-end; }
     .card { padding: 5px 10px; border-radius: 12px; }
     .game-bg { display: none; }              /* na mobile šetrí batériu */
-    .sub { font-size: .75rem; line-height: 1.35; }
-    .pname { font-size: 1rem; line-height: 1.3; }
+    .sub { font-size: .75rem; line-height: 1.2; }
+    .pname { font-size: .95rem; line-height: 1.2; }
     .big { font-size: 1.2rem; line-height: 1.25; }
     .hudMeta { flex-wrap: wrap; gap: 4px; }
     .hudMeta .chip { flex: none; padding: 2px 9px; }
     #pPlayer .sub { white-space: nowrap; }
     .chev { display: none; }
     .nextLbl { font-size: .56rem; }
-    #hudAva { width: 34px; height: 34px; font-size: 1.05rem; border-radius: 10px; }
-    .nextSlot { width: 44px; height: 44px; border-radius: 12px; }
-    #pNext canvas { width: 36px; height: 36px; }
+    #hudAva { width: 28px; height: 28px; font-size: .9rem; border-radius: 9px; }
+    .nextSlot { width: 36px; height: 36px; border-radius: 10px; }
+    #pNext canvas { width: 28px; height: 28px; }
     #main { display: flex; flex-direction: column; align-items: stretch; flex: 1; }
     #left { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     #touch { width: 100%; margin-top: 6px; gap: 8px; }

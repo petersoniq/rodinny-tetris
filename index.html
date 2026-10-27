@@ -440,10 +440,12 @@
     .glass, .panel, .card { backdrop-filter: none; -webkit-backdrop-filter: none; }
     .brand { display: none; }
     body { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
-    #hud { grid-template-columns: minmax(0,1fr) auto; grid-template-rows: auto auto; gap: 4px 8px; margin: 0 0 6px; padding: 6px 10px; border-radius: 12px; }
-    #pPlayer { grid-column: 1; grid-row: 1; }
-    #pNext { grid-column: 2; grid-row: 1; }
-    #pScore { grid-column: 1 / -1; grid-row: 2; }
+    #hud { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 6px; padding: 6px 10px; border-radius: 12px; }
+    #pPlayer { flex: 1 1 auto; min-width: 0; justify-self: auto; }
+    #pNext { order: 2; justify-self: auto; }
+    #pScore { order: 3; flex: 1 1 100%; justify-self: auto; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    #pScore .big { font-size: 1.35rem; }
+    #pScore .hudMeta { margin: 0; }
     .card { padding: 5px 10px; border-radius: 12px; }
     .game-bg { display: none; }              /* na mobile šetrí batériu */
     .sub { font-size: .7rem; line-height: 1.3; }

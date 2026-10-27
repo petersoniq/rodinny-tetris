@@ -440,22 +440,23 @@
     .glass, .panel, .card { backdrop-filter: none; -webkit-backdrop-filter: none; }
     .brand { display: none; }
     body { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
-    #hud { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 6px; padding: 6px 10px; border-radius: 12px; }
+    #hud { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 8px; padding: 8px 12px; border-radius: 14px; }
     #pPlayer { flex: 1 1 auto; min-width: 0; justify-self: auto; }
     #pNext { order: 2; justify-self: auto; }
-    #pScore { order: 3; flex: 1 1 100%; justify-self: auto; display: flex; align-items: center; justify-content: center; gap: 10px; }
-    #pScore .big { font-size: 1.35rem; }
-    #pScore .hudMeta { margin: 0; }
+    #pScore { order: 3; flex: 1 1 100%; justify-self: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    #pScore .big { font-size: 1.5rem; }
+    #pScore .hudMeta { margin: 0; justify-content: flex-end; }
     .card { padding: 5px 10px; border-radius: 12px; }
     .game-bg { display: none; }              /* na mobile šetrí batériu */
-    .sub { font-size: .7rem; line-height: 1.3; }
-    .pname { font-size: .92rem; line-height: 1.3; }
+    .sub { font-size: .75rem; line-height: 1.35; }
+    .pname { font-size: 1rem; line-height: 1.3; }
     .big { font-size: 1.2rem; line-height: 1.25; }
-    .hudMeta { flex-wrap: wrap; gap: 3px; }
+    .hudMeta { flex-wrap: wrap; gap: 4px; }
+    .hudMeta .chip { flex: none; padding: 2px 9px; }
     #pPlayer .sub { white-space: nowrap; }
     .chev { display: none; }
     .nextLbl { display: none; }
-    #hudAva { width: 30px; height: 30px; font-size: .95rem; border-radius: 9px; }
+    #hudAva { width: 34px; height: 34px; font-size: 1.05rem; border-radius: 10px; }
     .nextSlot { width: 44px; height: 44px; border-radius: 12px; }
     #pNext canvas { width: 36px; height: 36px; }
     #main { display: flex; flex-direction: column; align-items: stretch; flex: 1; }

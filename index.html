@@ -230,7 +230,8 @@
   #pNext canvas { display: block; width: 34px; height: 34px; }
   .hudBest { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hudMeta { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 4px; }
-  .hudLbl { margin-bottom: 0; font-size: .62rem; line-height: 1.1; letter-spacing: .18em; text-transform: uppercase; text-align: center; }
+  #pMeta { grid-column: 1 / -1; justify-self: center; }
+  .hudScore .big { font-size: 1.5rem; }
   #updBadge { margin: 0; padding: 2px 8px; font-size: .72rem; border-radius: 8px; }
 
   /* Prostredie hry: tetromina v pozadí + žiara za plochou podľa úrovne */
@@ -443,10 +444,10 @@
     body { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
     #hud { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 6px; padding: 5px 10px; border-radius: 12px; }
     #pPlayer { flex: 1 1 auto; min-width: 0; justify-self: auto; }
-    #pNext { order: 2; justify-self: auto; }
-    #pScore { order: 3; flex: 1 1 100%; justify-self: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    #pScore .big { font-size: 1.25rem; }
-    #pScore .hudMeta { margin: 0; justify-content: flex-end; }
+    #pNext { order: 3; justify-self: auto; }
+    #pScore { order: 2; flex: 1 1 auto; justify-self: auto; text-align: center; }
+    #pScore .big { font-size: 1.3rem; }
+    #pMeta { order: 4; flex: 1 1 100%; justify-content: center; }
     .card { padding: 5px 10px; border-radius: 12px; }
     .game-bg { display: none; }              /* na mobile šetrí batériu */
     .sub { font-size: .75rem; line-height: 1.2; }
@@ -537,14 +538,13 @@
       </span>
     </div>
     <div id="pScore" class="hudScore">
-      <div class="lbl hudLbl">Skóre</div>
       <div class="big" id="score">0</div>
-      <div class="sub hudMeta"><span class="chip">Riadky <span id="lines">0</span></span> <span class="chip">Úr. <span id="level">1</span></span> <span id="comboHud" class="chip"></span> <button id="updBadge" class="sm ghost" style="display:none" title="Klikni na obnovenie">↻ Nová verzia</button></div>
     </div>
     <div id="pNext">
       <div class="lbl nextLbl">Ďalšia</div>
       <div class="nextSlot"><canvas id="next" width="120" height="120"></canvas></div>
     </div>
+    <div id="pMeta" class="sub hudMeta"><span class="chip">Riadky <span id="lines">0</span></span> <span class="chip">Úr. <span id="level">1</span></span> <span id="comboHud" class="chip"></span> <button id="updBadge" class="sm ghost" style="display:none" title="Klikni na obnovenie">↻ Nová verzia</button></div>
   </div>
 
   <div id="main">

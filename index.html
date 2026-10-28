@@ -488,7 +488,7 @@
     @media (orientation: landscape) and (max-height: 520px) { :root { --bw: calc((100dvh - 24px) / 2); } }
   }
   /* ===== VEĽKÝ DISPLEJ (počítač): veľká horná lišta, karta a plocha využívajú monitor ===== */
-  @media (min-width: 701px) {
+  @media (min-width: 501px) and (pointer: fine) {
     :root { --bw: min(calc((100vh - 280px) / 2), 560px, max(170px, calc((100vw - 420px) / 2))); }
     #game { width: min(100%, calc(var(--bw) + 380px)); }
     #hud { min-width: 0; }

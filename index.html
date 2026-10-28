@@ -487,30 +487,46 @@
   @supports (height: 100dvh) {
     @media (orientation: landscape) and (max-height: 520px) { :root { --bw: calc((100dvh - 24px) / 2); } }
   }
-  /* ===== VEĽKÝ DISPLEJ (počítač): veľká horná lišta, karta a plocha využívajú monitor ===== */
+  /* ===== POČÍTAČ: dve okná vedľa seba – vľavo hra, vpravo všetky informácie ===== */
   @media (min-width: 501px) and (pointer: fine) {
-    :root { --bw: min(calc((100vh - 280px) / 2), 560px, max(170px, calc((100vw - 420px) / 2))); }
-    #game { width: min(100%, calc(var(--bw) + 380px)); }
-    #hud { min-width: 0; }
-    .pname, .hudWho .pname { overflow-wrap: anywhere; }
-    #game.on { display: grid; grid-template-columns: minmax(0, auto) minmax(190px, 1fr); gap: 24px; align-items: start; }
-    #main { grid-column: 1; }
-    #hud { grid-column: 2; display: flex; flex-direction: column; align-items: stretch; gap: 16px; margin: 0; padding: 18px 20px; border-radius: 16px; width: auto; max-width: none; }
-    #pPlayer { justify-self: auto; }
-    #pScore { text-align: center; }
-    #pNext { justify-self: auto; align-items: center; }
-    #hudAva { width: 46px; height: 46px; border-radius: 14px; font-size: 1.2rem; }
-    .pname { font-size: 1.2rem; }
-    .hudBest { font-size: 1rem; }
-    .hudScore .big { font-size: 2.2rem; }
-    #pMeta { display: flex; flex-direction: column; align-items: stretch; gap: 10px; font-size: 1rem; }
+    :root { --bw: min(calc((100vh - 180px) / 2), 540px, max(190px, calc((100vw - 500px) / 2))); }
+
+    /* Karta hry = dve okná vedľa seba */
+    #game { width: min(100%, calc(var(--bw) + 348px)); }
+    #game.on { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: stretch; padding: 0; overflow: hidden; border-radius: 20px; }
+    .brand { display: none; }
+
+    /* ĽAVÉ OKNO: hracia plocha */
+    #main { grid-column: 1; grid-row: 1; display: block; padding: 22px; min-width: 0; }
+    #left { display: block; }
+    #board-wrap { margin: 0 auto; }
+    #touch { display: none !important; }
+
+    /* PRAVÉ OKNO: všetky informácie zvislo od hora dole */
+    #hud { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; align-items: stretch; gap: 0; margin: 0; padding: 0;
+           width: auto; max-width: none; border-radius: 0 20px 20px 0;
+           background: var(--fill1); border: 0; border-left: 1px solid var(--line); }
+    #hud > div { border-top: 1px solid var(--line); padding: 16px 20px; }
+    #hud > div:first-child { border-top: 0; }
+
+    #pPlayer { display: flex; align-items: center; gap: 12px; justify-self: auto; padding: 20px 20px 16px; }
+    #hudAva { width: 52px; height: 52px; border-radius: 15px; font-size: 1.3rem; }
+    .pname { font-size: 1.25rem; }
+    .hudBest { font-size: .95rem; }
+
+    #pScore { text-align: left; justify-self: auto; padding: 14px 20px; }
+    #pScore::before { content: "Skóre"; display: block; margin-bottom: 4px; font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+    .hudScore .big { font-size: 2.4rem; }
+
+    #pNext { justify-self: auto; align-items: stretch; padding: 14px 20px; }
+    .nextLbl { font-size: .72rem; }
+    .nextSlot { height: 68px; padding: 0 8px; gap: 8px; border-radius: 14px; }
+    #pNext canvas { width: 56px; height: 56px; }
+    #next2, #next3 { width: 34px; height: 34px; }
+
+    #pMeta { display: flex; flex-direction: column; align-items: stretch; gap: 10px; font-size: 1rem; padding: 16px 20px 20px; }
     #pMeta .chip { display: block; padding: 10px 16px; font-size: 1.05rem; border-radius: 12px; text-align: center; }
-    #pMeta #updBadge { justify-self: center; }
-    .nextLbl { font-size: .78rem; }
-    .nextSlot { height: 64px; padding: 0 8px; gap: 8px; border-radius: 14px; }
-    #pNext canvas { width: 52px; height: 52px; }
-    #next2, #next3 { width: 30px; height: 30px; }
-    #updBadge { padding: 4px 14px; font-size: .85rem; }
+    #pMeta #updBadge { margin: 4px 0 0; padding: 10px 16px; font-size: .9rem; }
   }
 </style>
 <script src="vendor/supabase-2.45.4.js"></script>

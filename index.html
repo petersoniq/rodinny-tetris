@@ -228,7 +228,7 @@
   .nextSlot { width: auto; height: 42px; border-radius: 12px; background: var(--fill1); border: 1px solid var(--line); padding: 0 4px;
               display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: inset 0 2px 8px rgba(0,0,0,.18); }
   #pNext canvas { display: block; width: 34px; height: 34px; }
-  #next2, #next3 { width: 20px; height: 20px; opacity: .72; }
+  #next2, #next3 { width: 24px; height: 24px; opacity: .88; }
   .hudBest { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hudMeta { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 4px; }
   #pMeta { grid-column: 1 / -1; justify-self: center; }
@@ -447,22 +447,23 @@
     #pPlayer { flex: 1 1 auto; min-width: 0; justify-self: auto; }
     #pNext { order: 3; justify-self: auto; }
     #pScore { order: 2; flex: 1 1 auto; justify-self: auto; text-align: center; }
-    #pScore .big { font-size: 1.3rem; }
-    #pMeta { order: 4; flex: 1 1 100%; justify-content: center; }
+    #pScore .big { font-size: 1.5rem; }
+    #pMeta { order: 4; flex: 1 1 100%; justify-content: center; font-size: .85rem; }
     .card { padding: 5px 10px; border-radius: 12px; }
     .game-bg { display: none; }              /* na mobile šetrí batériu */
     .sub { font-size: .75rem; line-height: 1.2; }
     .pname { font-size: .95rem; line-height: 1.2; }
     .big { font-size: 1.2rem; line-height: 1.25; }
     .hudMeta { flex-wrap: wrap; gap: 4px; }
-    .hudMeta .chip { flex: none; padding: 2px 9px; }
+    .hudMeta .chip { flex: none; padding: 4px 11px; border-radius: 9px; }
+    #updBadge { padding: 4px 11px; font-size: .78rem; }
     #pPlayer .sub { white-space: nowrap; }
     .chev { display: none; }
     .nextLbl { font-size: .56rem; }
     #hudAva { width: 28px; height: 28px; font-size: .9rem; border-radius: 9px; }
     .nextSlot { width: auto; height: 36px; border-radius: 10px; padding: 0 3px; gap: 3px; }
     #pNext canvas { width: 28px; height: 28px; }
-    #next2, #next3 { width: 16px; height: 16px; }
+    #next2, #next3 { width: 20px; height: 20px; }
     #main { display: flex; flex-direction: column; align-items: stretch; flex: 1; }
     #left { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     #touch { width: 100%; margin-top: 6px; gap: 8px; }

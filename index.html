@@ -448,7 +448,7 @@
     #pNext { order: 3; justify-self: auto; }
     #pScore { order: 2; flex: 1 1 auto; justify-self: auto; text-align: center; }
     #pScore .big { font-size: 1.5rem; }
-    #pMeta { order: -1; justify-content: center; font-size: .85rem; margin-bottom: 6px; }
+    #pMeta { order: 4; flex: 1 1 100%; justify-content: center; font-size: .85rem; }
     .card { padding: 5px 10px; border-radius: 12px; }
     .game-bg { display: none; }              /* na mobile šetrí batériu */
     .sub { font-size: .75rem; line-height: 1.2; }
@@ -489,19 +489,21 @@
   }
   /* ===== VEĽKÝ DISPLEJ (počítač): veľká horná lišta, karta a plocha využívajú monitor ===== */
   @media (min-width: 900px) {
-    :root { --bw: min(calc((100vh - 300px) / 2), 560px, calc((100vw - 430px) / 2)); }
-    #game { width: min(100%, calc(var(--bw) + 380px)); }
-    #game.on { gap: 18px; }
-    #hud { gap: 14px; margin: 12px auto 16px; padding: 12px 20px; border-radius: 16px; width: 100%; max-width: calc(var(--bw) + 56px); }
+    :root { --bw: min(calc((100vh - 300px) / 2), 560px, calc((100vw - 460px) / 2)); }
+    #game { width: min(100%, calc(var(--bw) + 400px)); }
+    #game.on { display: grid; grid-template-columns: minmax(0, auto) minmax(190px, 1fr); gap: 24px; align-items: start; }
+    #main { grid-column: 1; }
+    #hud { grid-column: 2; display: flex; flex-direction: column; align-items: stretch; gap: 16px; margin: 0; padding: 18px 20px; border-radius: 16px; width: auto; max-width: none; }
+    #pPlayer { justify-self: auto; }
+    #pScore { text-align: center; }
+    #pNext { justify-self: auto; align-items: center; }
     #hudAva { width: 46px; height: 46px; border-radius: 14px; font-size: 1.2rem; }
     .pname { font-size: 1.2rem; }
     .hudBest { font-size: 1rem; }
     .hudScore .big { font-size: 2.2rem; }
-    #main { display: grid; grid-template-columns: minmax(150px, 1fr) auto minmax(0, 1fr); align-items: start; column-gap: 22px; }
-    #pMeta { display: flex; flex-direction: column; align-items: stretch; gap: 10px; margin-top: 6px; font-size: 1rem; }
+    #pMeta { display: flex; flex-direction: column; align-items: stretch; gap: 10px; font-size: 1rem; }
     #pMeta .chip { display: block; padding: 10px 16px; font-size: 1.05rem; border-radius: 12px; text-align: center; }
-    #pMeta #updBadge { display: none; margin: 6px auto 0; }
-    #pMeta #updBadge:not([style*="none"]) { display: inline-block; }
+    #pMeta #updBadge { justify-self: center; }
     .nextLbl { font-size: .78rem; }
     .nextSlot { height: 64px; padding: 0 8px; gap: 8px; border-radius: 14px; }
     #pNext canvas { width: 52px; height: 52px; }
@@ -568,10 +570,10 @@
       <div class="lbl nextLbl">Ďalšia</div>
       <div class="nextSlot"><canvas id="next" width="120" height="120"></canvas><canvas id="next2" width="60" height="60"></canvas><canvas id="next3" width="60" height="60"></canvas></div>
     </div>
+    <div id="pMeta" class="sub hudMeta"><span class="chip">Riadky <span id="lines">0</span></span> <span class="chip">Úr. <span id="level">1</span></span> <span id="comboHud" class="chip"></span> <button id="updBadge" class="sm ghost" style="display:none" title="Klikni na obnovenie">↻ Nová verzia</button></div>
   </div>
 
   <div id="main">
-    <div id="pMeta" class="sub hudMeta"><span class="chip">Riadky <span id="lines">0</span></span> <span class="chip">Úr. <span id="level">1</span></span> <span id="comboHud" class="chip"></span> <button id="updBadge" class="sm ghost" style="display:none" title="Klikni na obnovenie">↻ Nová verzia</button></div>
     <div id="left">
       <div id="board-wrap">
         <div id="comboBadge" aria-hidden="true"></div>

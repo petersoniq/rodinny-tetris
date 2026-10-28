@@ -489,10 +489,10 @@
   }
   /* ===== VEĽKÝ DISPLEJ (počítač): veľká horná lišta, karta a plocha využívajú monitor ===== */
   @media (min-width: 900px) {
-    :root { --bw: min(calc((100vh - 190px) / 2), 560px); }
-    #game { width: calc(var(--bw) + 96px); }
+    :root { --bw: min(calc((100vh - 300px) / 2), 560px, calc((100vw - 140px) / 2)); }
+    #game { width: min(100%, calc(var(--bw) + 96px)); }
     #game.on { gap: 18px; }
-    #hud { gap: 18px; margin: 12px 0 18px; padding: 14px 24px; border-radius: 16px; }
+    #hud { gap: 14px; margin: 12px auto 16px; padding: 12px 20px; border-radius: 16px; width: 100%; max-width: calc(var(--bw) + 56px); }
     #hudAva { width: 46px; height: 46px; border-radius: 14px; font-size: 1.2rem; }
     .pname { font-size: 1.2rem; }
     .hudBest { font-size: 1rem; }

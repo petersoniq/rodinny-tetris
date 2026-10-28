@@ -488,9 +488,9 @@
     @media (orientation: landscape) and (max-height: 520px) { :root { --bw: calc((100dvh - 24px) / 2); } }
   }
   /* ===== VEĽKÝ DISPLEJ (počítač): veľká horná lišta, karta a plocha využívajú monitor ===== */
-  @media (min-width: 900px) {
-    :root { --bw: min(calc((100vh - 300px) / 2), 560px, calc((100vw - 460px) / 2)); }
-    #game { width: min(100%, calc(var(--bw) + 400px)); }
+  @media (min-width: 760px) {
+    :root { --bw: min(calc((100vh - 280px) / 2), 560px, calc((100vw - 420px) / 2)); }
+    #game { width: min(100%, calc(var(--bw) + 380px)); }
     #game.on { display: grid; grid-template-columns: minmax(0, auto) minmax(190px, 1fr); gap: 24px; align-items: start; }
     #main { grid-column: 1; }
     #hud { grid-column: 2; display: flex; flex-direction: column; align-items: stretch; gap: 16px; margin: 0; padding: 18px 20px; border-radius: 16px; width: auto; max-width: none; }

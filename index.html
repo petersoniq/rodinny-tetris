@@ -486,6 +486,23 @@
   @supports (height: 100dvh) {
     @media (orientation: landscape) and (max-height: 520px) { :root { --bw: calc((100dvh - 24px) / 2); } }
   }
+  /* ===== VEĽKÝ DISPLEJ (počítač): väčšia, čitateľná horná lišta + väčšia hracia plocha ===== */
+  @media (min-width: 900px) {
+    :root { --bw: min(calc((100vh - 220px) / 2), 480px); }
+    #game.on { gap: 18px; }
+    #hud { gap: 16px; margin: 10px 0 16px; padding: 12px 22px; border-radius: 16px; }
+    #hudAva { width: 42px; height: 42px; border-radius: 13px; font-size: 1.15rem; }
+    .pname { font-size: 1.15rem; }
+    .hudBest { font-size: .88rem; }
+    .hudScore .big { font-size: 2rem; }
+    #pMeta { font-size: .9rem; }
+    .hudMeta .chip { padding: 3px 13px; }
+    .nextLbl { font-size: .72rem; }
+    .nextSlot { height: 58px; padding: 0 7px; gap: 7px; border-radius: 14px; }
+    #pNext canvas { width: 48px; height: 48px; }
+    #next2, #next3 { width: 28px; height: 28px; }
+    #updBadge { padding: 3px 12px; font-size: .8rem; }
+  }
 </style>
 <script src="vendor/supabase-2.45.4.js"></script>
 <script src="vendor/qrcode-generator-1.4.4.js"></script>

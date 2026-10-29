@@ -761,6 +761,7 @@
       <button class="chip" data-a="invite" type="button">🔗 Pozvánky</button>
       <button class="chip" data-a="goal" type="button">🎯 Cieľ</button>
       <button class="chip" data-a="stats" type="button">📊 Štatistiky</button>
+      <button class="chip" data-a="bonus" type="button">🎁 Bonifikácie</button>
     </div>
   </div>
 
@@ -861,6 +862,20 @@
       </div>
       <div class="sub" id="stFoot">Dĺžka jednotlivých hier sa neukladá, preto tu nie je čas hrania. Časy sú podľa Bratislavy.</div>
     </div>
+
+    <div class="view" id="admBonus" hidden>
+      <div class="card">
+        <h2>🎁 Bonifikácie a bodovanie</h2>
+        <div class="sub" style="margin-bottom:8px">Hodnoty platia pre celú rodinu. Väčšina sa násobí úrovňou hry – čím vyššia úroveň, tým väčšie body. Predvyplnené sú aktuálne hodnoty.</div>
+        <div class="goalForm" id="bonusForm"></div>
+        <div class="acts">
+          <button class="sm" id="saveBonus" type="button">💾 Uložiť</button>
+          <button class="sm ghost" id="resetBonus" type="button">↩ Pôvodné hodnoty</button>
+        </div>
+        <div class="sub" id="bonusMsg" style="margin-top:8px"></div>
+        <div class="help" style="margin-top:8px">Prvýkrát spusti v Supabase (Dashboard → SQL Editor) súbor supabase-bonifikacie.sql z repozitára – potom budú zmeny platné pre všetkých hráčov. Bez neho sa uložia len na tomto zariadení.</div>
+      </div>
+    </div>
   </div></div>
 
   <div class="statusbar" id="adminMsg" role="status"></div>
@@ -871,7 +886,11 @@
    NASTAVENIA (tu môžeš meniť pravidlá hry)
    ========================================================= */
 const COLS = 10, ROWS = 20, CELL = 30;          // veľkosť poľa a štvorčeka (px)
-const POINTS = [0, 100, 300, 500, 800];         // body za 0–4 riadky naraz
+const POINTS = [0, 100, 300, 500, 800];         // pôvodné body za 0–4 riadky naraz (v45: skutočné hodnoty sú v BONUS)
+const BONUS_DEF = { p1: 100, p2: 300, p3: 500, p4: 800, combo: 50, b2b: 50, multi: 100, hard: 2, soft: 1 };   // v45: bonifikácie – predvolené hodnoty, zmeniteľné v admin záložke 🎁
+let BONUS = Object.assign({}, BONUS_DEF);
+try { Object.assign(BONUS, JSON.parse(localStorage.getItem("tetrisBonus") || "{}")); } catch (e) {}
+const rowPoints = n => [0, BONUS.p1, BONUS.p2, BONUS.p3, BONUS.p4][n] || 0;       // body za riadky podľa aktuálneho nastavenia
 
 /* v20: combo (po sebe idúce mazania) a back-to-back Tetris */
 let combo = 0, b2b = false;
@@ -1121,6 +1140,7 @@ async function enterGame() {
   showPane("results"); resetViews(); showView("board"); showSetView("look");
   $("lookMsg").textContent = ""; $("pwMsg").textContent = "";
   document.body.classList.toggle("isAdmin", !!player.is_admin);
+  syncBonusFromDb();                            // v45: bonifikácie nastavené adminom platia pre všetkých
   $("passInput").value = "";
   myBest = 0;
   showStart();
@@ -1362,12 +1382,13 @@ function closeAdmin(zPopstate) {
   if (running && !paused) { startLoop(); wakeOn(); }
   refreshPanels();
 }
-const ADMVIEWS = [["users", "admUsers"], ["invite", "admInvite"], ["goal", "admGoal"], ["stats", "admStats"]];
+const ADMVIEWS = [["users", "admUsers"], ["invite", "admInvite"], ["goal", "admGoal"], ["stats", "admStats"], ["bonus", "admBonus"]];
 function showAdminView(name) {
   document.querySelectorAll("#admTabs .chip").forEach(b => b.classList.toggle("on", b.dataset.a === name));
   ADMVIEWS.forEach(([v, id]) => { $(id).hidden = v !== name; });
   $("admin").querySelector(".sidebody").scrollTop = 0;
   if (name === "stats") loadStats();                   // štatistiky sa načítajú až po otvorení sekcie
+  if (name === "bonus") fillBonusForm();              // bonifikácie sa načítajú až po otvorení sekcie
 }
 
 function mkBtn(label, cls, fn) {
@@ -1380,6 +1401,62 @@ async function adminCall(fn, args, okText) {
   adminMsg(error ? "Chyba: " + error.message : okText);
   if (!error) stCache = {};                           // po zmene hráčov sa štatistiky načítajú nanovo
   await loadAdmin();
+}
+
+/* ===== v45: ADMIN – Bonifikácie (hodnoty platia pre celú rodinu) ===== */
+const BONUS_FIELDS = [
+  ["p1", "Body za 1 riadok (× úroveň)"],
+  ["p2", "Body za 2 riadky (× úroveň)"],
+  ["p3", "Body za 3 riadky (× úroveň)"],
+  ["p4", "Body za Tetris – 4 riadky (× úroveň)"],
+  ["combo", "Combo bonus za krok (× combo × úroveň)"],
+  ["b2b", "Back-to-back bonus (% z bodov za Tetris)"],
+  ["multi", "Multi-riadok bonus za riadok (× úroveň)"],
+  ["hard", "Hard drop – body za prejdené pole"],
+  ["soft", "Soft drop – body za riadok dolu"]
+];
+function fillBonusForm() {
+  const f = $("bonusForm");
+  if (!f.childNodes.length) BONUS_FIELDS.forEach(([k, lbl]) => {
+    const l = document.createElement("label");
+    l.textContent = lbl;
+    const i = document.createElement("input");
+    i.id = "bn_" + k; i.type = "number"; i.min = "0"; i.step = "any"; i.inputMode = "decimal";
+    l.appendChild(i); f.appendChild(l);
+  });
+  BONUS_FIELDS.forEach(([k]) => { $("bn_" + k).value = BONUS[k]; });
+  $("bonusMsg").textContent = "";
+}
+async function saveBonus() {
+  const msg = $("bonusMsg");
+  const o = {}; let ok = true;
+  BONUS_FIELDS.forEach(([k]) => {
+    const v = parseFloat($("bn_" + k).value);
+    if (isNaN(v) || v < 0) ok = false; else o[k] = v;
+  });
+  if (!ok) { msg.textContent = "Zadaj všade platné nezáporné čísla."; return; }
+  msg.textContent = "Ukladám…";
+  const { error } = await db.rpc("admin_set_bonuses", { p_data: o });
+  Object.assign(BONUS, o);
+  localStorage.setItem("tetrisBonus", JSON.stringify(BONUS));
+  msg.textContent = error
+    ? "Uložené len na tomto zariadení. Pre celú rodinu spusti v Supabase SQL editore súbor supabase-bonifikacie.sql (" + error.message + ")."
+    : "Uložené ✓ – platí pre celú rodinu.";
+}
+function resetBonus() {
+  if (!confirm("Obnoviť pôvodné (výrobne) hodnoty bonifikácií?")) return;
+  Object.assign(BONUS, BONUS_DEF);
+  localStorage.removeItem("tetrisBonus");
+  fillBonusForm();
+  $("bonusMsg").textContent = "Pôvodné hodnoty sú v políčkach – uložia sa po ťuknutí na 💾 Uložiť.";
+}
+async function syncBonusFromDb() {
+  try {
+    const r = await db.rpc("family_bonuses");
+    if (r.error || !r.data) return;
+    Object.assign(BONUS, BONUS_DEF, r.data);
+    localStorage.setItem("tetrisBonus", JSON.stringify(BONUS));
+  } catch (e) {}
 }
 
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString("sk-SK") : "—"; }
@@ -2066,6 +2143,8 @@ function renderBadges() {
 }
 $("closeAdmin").onclick = closeAdmin;
 $("saveCode").onclick = () => adminCall("admin_set_code", { p_code: $("codeAdmin").value }, "Rodinný kód uložený.");
+$("saveBonus").onclick = saveBonus;
+$("resetBonus").onclick = resetBonus;
 
 /* ===== POZVÁNKA: odkaz a QR kód s rodinným kódom (len admin) ===== */
 let kodNaServeri = "";
@@ -2229,7 +2308,7 @@ function softDrop() {
 function hardDrop() {
   let dist = 0;
   while (!collides(current.m, current.x, current.y + 1)) { current.y++; dist++; }
-  score += dist * 2;              // bonus za okamžitý pád
+  score += dist * BONUS.hard;      // v45: bonus za okamžitý pád (nastaviteľný)
   lockPiece();
 }
 
@@ -2301,11 +2380,11 @@ function finishClear() {
   while (grid.length < ROWS) grid.unshift(Array(COLS).fill(null));
   gridRev++;
   combo++;                                        // v20: combo rastie s každým po sebe idúcim mazaním
-  const comboBonus = combo > 1 ? 50 * combo * level : 0;
+  const comboBonus = combo > 1 ? BONUS.combo * combo * level : 0;
   const isB2B = n === 4 && b2b;                   // v20: dva Tetrisy po sebe = back-to-back
-  const b2bBonus = isB2B ? Math.round(POINTS[4] * level * 0.5) : 0;
-  const multiBonus = n > 1 ? (n - 1) * 100 * level : 0;   // v27: bonus za viac riadkov naraz (dvojité/trojité/Tetris)
-  score += POINTS[n] * level + comboBonus + b2bBonus + multiBonus;
+  const b2bBonus = isB2B ? Math.round(rowPoints(4) * level * BONUS.b2b / 100) : 0;
+  const multiBonus = n > 1 ? (n - 1) * BONUS.multi * level : 0;   // v27: bonus za viac riadkov naraz (dvojité/trojité/Tetris)
+  score += rowPoints(n) * level + comboBonus + b2bBonus + multiBonus;
   if (n === 4) tetrises++;                        // Tetris = 4 riadky naraz (pre odznak)
   b2b = n === 4;
   if (comboBonus || b2bBonus || multiBonus) showCombo(combo, comboBonus + b2bBonus + multiBonus, isB2B, n);
@@ -2437,7 +2516,7 @@ function act(a) {
   if (a === "left") move(-1);
   else if (a === "right") move(1);
   else if (a === "rotate") rotate();
-  else if (a === "down") { if (softDrop()) score += 1; updateStats(); dropTimer = 0; }
+  else if (a === "down") { if (softDrop()) score += BONUS.soft; updateStats(); dropTimer = 0; }
   else if (a === "drop") { hardDrop(); }
 }
 

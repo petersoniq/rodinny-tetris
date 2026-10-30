@@ -307,6 +307,10 @@
   .badge .st { grid-column: 2; font-size: .7rem; color: var(--gold); white-space: nowrap; }
   .badge.zamknuty { opacity: .55; filter: grayscale(.7); }
   .badge.zamknuty .st { color: var(--muted); }
+  .badgeSum { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+  .badgeSum .bar { flex: 1; margin: 0; }
+  .badgeSum .num { font-size: .82rem; font-weight: 700; color: var(--gold); white-space: nowrap; }
+  .badgeSec { margin: 12px 0 6px; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
   #lookPrev { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; overflow-wrap: anywhere; }
   .picks { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
   .pick { width: 38px; height: 38px; padding: 0; font-size: 1.2rem; border-radius: 10px; background: var(--fill2); border: 1px solid var(--line); color: var(--text); }
@@ -662,7 +666,7 @@
         </div>
         <div class="card" id="pBadges">
           <h2>🏅 Odznaky</h2>
-          <div class="badges" id="badgeList"></div>
+          <div id="badgeList"></div>
         </div>
       </div>
       <div class="view" id="viewFeed" hidden>
@@ -2114,39 +2118,63 @@ $("pwBtn").onclick = changePassword;
 
 /* ===== ODZNAKY (počítajú sa z databázy, vždy podľa skutočných hier) ===== */
 const ODZNAKY = [
-  { id: "tetris", ikona: "🧱", nazov: "Prvý Tetris", popis: "Zmaž 4 riadky naraz",
-    ziskany: s => s.tetrises > 0, kedy: s => s.first_tetris_at, pokrok: () => "0/1" },
-  { id: "hry10", ikona: "🎮", nazov: "10 hier", popis: "Odohraj 10 hier",
-    ziskany: s => s.games >= 10, kedy: s => s.game10_at, pokrok: s => s.games + "/10" },
-  { id: "riadky100", ikona: "📏", nazov: "100 riadkov", popis: "Zmaž spolu 100 riadkov",
-    ziskany: s => s.total_lines >= 100, kedy: s => s.lines100_at, pokrok: s => s.total_lines + "/100" },
-  { id: "serie3", ikona: "🔥", nazov: "Séria 3 dni", popis: "Hraj 3 dni po sebe",
-    ziskany: s => (s.best_streak || 0) >= 3, kedy: s => s.streak3_at, pokrok: s => Math.min(s.cur_streak || 0, 3) + "/3" },
-  { id: "serie7", ikona: "🌟", nazov: "Séria 7 dní", popis: "Hraj 7 dní po sebe",
-    ziskany: s => (s.best_streak || 0) >= 7, kedy: s => s.streak7_at, pokrok: s => Math.min(s.cur_streak || 0, 7) + "/7" },
-  { id: "serie14", ikona: "⚡", nazov: "Séria 14 dní", popis: "Hraj 14 dní po sebe – dvojtýždňová výdrž",
-    ziskany: s => (s.best_streak || 0) >= 14, pokrok: s => Math.min(s.cur_streak || 0, 14) + "/14" },
-  { id: "tetris10", ikona: "🧱", nazov: "Tetris 10×", popis: "Zmaž 10× 4 riadky naraz",
-    ziskany: s => (s.tetrises || 0) >= 10, pokrok: s => Math.min(s.tetrises || 0, 10) + "/10" },
-  { id: "hry50", ikona: "🎯", nazov: "50 hier", popis: "Odohraj 50 hier",
+  { id: "hry10", ikona: "🎮", nazov: "10 hier", popis: "Odohraj 10 hier", skupina: "Za hranie",
+    ziskany: s => (s.games || 0) >= 10, kedy: s => s.game10_at, pokrok: s => Math.min(s.games || 0, 10) + "/10" },
+  { id: "hry50", ikona: "🎯", nazov: "50 hier", popis: "Odohraj 50 hier", skupina: "Za hranie",
     ziskany: s => (s.games || 0) >= 50, pokrok: s => Math.min(s.games || 0, 50) + "/50" },
-  { id: "riadky1000", ikona: "📐", nazov: "1 000 riadkov", popis: "Zmaž spolu 1 000 riadkov",
-    ziskany: s => (s.total_lines || 0) >= 1000, pokrok: s => fmtN(Math.min(s.total_lines || 0, 1000)) + "/1000" }
+  { id: "hry100", ikona: "💯", nazov: "100 hier", popis: "Odohraj 100 hier", skupina: "Za hranie",
+    ziskany: s => (s.games || 0) >= 100, pokrok: s => Math.min(s.games || 0, 100) + "/100" },
+  { id: "riadky100", ikona: "📏", nazov: "100 riadkov", popis: "Zmaž spolu 100 riadkov", skupina: "Za riadky",
+    ziskany: s => (s.total_lines || 0) >= 100, kedy: s => s.lines100_at, pokrok: s => fmtN(Math.min(s.total_lines || 0, 100)) + "/100" },
+  { id: "riadky1000", ikona: "📐", nazov: "1 000 riadkov", popis: "Zmaž spolu 1 000 riadkov", skupina: "Za riadky",
+    ziskany: s => (s.total_lines || 0) >= 1000, pokrok: s => fmtN(Math.min(s.total_lines || 0, 1000)) + "/1000" },
+  { id: "riadky5000", ikona: "🏗️", nazov: "5 000 riadkov", popis: "Zmaž spolu 5 000 riadkov", skupina: "Za riadky",
+    ziskany: s => (s.total_lines || 0) >= 5000, pokrok: s => fmtN(Math.min(s.total_lines || 0, 5000)) + "/5000" },
+  { id: "tetris", ikona: "🧱", nazov: "Prvý Tetris", popis: "Zmaž 4 riadky naraz", skupina: "Tetris",
+    ziskany: s => (s.tetrises || 0) > 0, kedy: s => s.first_tetris_at, pokrok: () => "0/1" },
+  { id: "tetris10", ikona: "🧨", nazov: "Tetris 10×", popis: "Zmaž 10× 4 riadky naraz", skupina: "Tetris",
+    ziskany: s => (s.tetrises || 0) >= 10, pokrok: s => Math.min(s.tetrises || 0, 10) + "/10" },
+  { id: "tetris50", ikona: "👑", nazov: "Tetris 50×", popis: "Zmaž 50× 4 riadky naraz", skupina: "Tetris",
+    ziskany: s => (s.tetrises || 0) >= 50, pokrok: s => Math.min(s.tetrises || 0, 50) + "/50" },
+  { id: "serie3", ikona: "🔥", nazov: "Séria 3 dni", popis: "Hraj 3 dni po sebe", skupina: "Za výdrž",
+    ziskany: s => (s.best_streak || 0) >= 3, kedy: s => s.streak3_at, pokrok: s => Math.min(s.cur_streak || 0, 3) + "/3" },
+  { id: "serie7", ikona: "🌟", nazov: "Séria 7 dní", popis: "Hraj 7 dní po sebe", skupina: "Za výdrž",
+    ziskany: s => (s.best_streak || 0) >= 7, kedy: s => s.streak7_at, pokrok: s => Math.min(s.cur_streak || 0, 7) + "/7" },
+  { id: "serie14", ikona: "⚡", nazov: "Séria 14 dní", popis: "Hraj 14 dní po sebe – dvojtýždňová výdrž", skupina: "Za výdrž",
+    ziskany: s => (s.best_streak || 0) >= 14, pokrok: s => Math.min(s.cur_streak || 0, 14) + "/14" },
+  { id: "serie30", ikona: "🏆", nazov: "Séria 30 dní", popis: "Hraj celý mesiac po sebe", skupina: "Za výdrž",
+    ziskany: s => (s.best_streak || 0) >= 30, pokrok: s => Math.min(s.cur_streak || 0, 30) + "/30" }
 ];
+const SKUPINY = ["Za hranie", "Za riadky", "Tetris", "Za výdrž"];
 function renderBadges() {
   const box = $("badgeList"); box.innerHTML = "";
   if (!lastStats) return;
-  ODZNAKY.forEach(b => {
-    const ok = b.ziskany(lastStats);
-    const row = document.createElement("div"); row.className = "badge" + (ok ? "" : " zamknuty");
-    const ico = document.createElement("div"); ico.className = "ico"; ico.textContent = b.ikona;
-    const txt = document.createElement("div"); txt.className = "txt";
-    const nm = document.createElement("div"); nm.className = "nm"; nm.textContent = b.nazov;
-    const ds = document.createElement("div"); ds.className = "sub"; ds.textContent = b.popis;
-    txt.append(nm, ds);
-    const st = document.createElement("div"); st.className = "st";
-    st.textContent = ok ? (b.kedy ? "✓ " + fmtDate(b.kedy(lastStats)) : "✓ Získaný") : b.pokrok(lastStats);
-    row.append(ico, txt, st); box.appendChild(row);
+  const ziskane = ODZNAKY.filter(b => b.ziskany(lastStats)).length;      // suhrn: kolko odznakov uz ma
+  const sum = mk("div", "badgeSum");
+  const bar = mk("div", "bar");
+  const fill = mk("div", "fill"); fill.style.width = Math.round(ziskane / ODZNAKY.length * 100) + "%";
+  bar.appendChild(fill);
+  sum.append(mk("span", "num", "🏅 " + ziskane + " / " + ODZNAKY.length), bar);
+  box.appendChild(sum);
+  SKUPINY.forEach(skup => {                                               // prehladne skupiny: hranie, riadky, Tetris, vyzdrz
+    const zoznam = ODZNAKY.filter(b => b.skupina === skup)
+      .sort((a, b) => Number(b.ziskany(lastStats)) - Number(a.ziskany(lastStats)));   // ziskane odznaky na prve miesto
+    if (!zoznam.length) return;
+    box.appendChild(mk("div", "badgeSec", skup));
+    const grid = mk("div", "badges");
+    zoznam.forEach(b => {
+      const ok = b.ziskany(lastStats);
+      const row = document.createElement("div"); row.className = "badge" + (ok ? "" : " zamknuty");
+      const ico = document.createElement("div"); ico.className = "ico"; ico.textContent = b.ikona;
+      const txt = document.createElement("div"); txt.className = "txt";
+      const nm = document.createElement("div"); nm.className = "nm"; nm.textContent = b.nazov;
+      const ds = document.createElement("div"); ds.className = "sub"; ds.textContent = b.popis;
+      txt.append(nm, ds);
+      const st = document.createElement("div"); st.className = "st";
+      st.textContent = ok ? (b.kedy ? "✓ " + fmtDate(b.kedy(lastStats)) : "✓ Získaný") : b.pokrok(lastStats);
+      row.append(ico, txt, st); grid.appendChild(row);
+    });
+    box.appendChild(grid);
   });
 }
 $("closeAdmin").onclick = closeAdmin;

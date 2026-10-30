@@ -2170,14 +2170,14 @@ function applyAccent(c) {
       applyAccent(v || null);
       document.querySelectorAll("#accentPicks .swatch").forEach(x => x.classList.toggle("sel", (x.dataset.v || null) === (v || null)));
       $("lookMsg").textContent = "Ukladám…";
-      const { error } = await db.rpc("set_setting", { p_key: "accent", p_value: v || null });
+      const { error } = await db.rpc("set_setting", { p_key: "accent", p_value: v || "" });   // prazdny retazec = predvolena zlata (DB nula neprjima)
       if (error) {                                   // neúspech: vrátime pôvodnú farbu
         applyAccent(stare);
         document.querySelectorAll("#accentPicks .swatch").forEach(x => x.classList.toggle("sel", (x.dataset.v || null) === stare));
         $("lookMsg").textContent = jeSiet(error) ? NET_MSG : "Nepodarilo sa uložiť: " + error.message;
         return;
       }
-      player.settings = Object.assign({}, player.settings, { accent: v || null });
+      player.settings = Object.assign({}, player.settings, { accent: v || "" });
       $("lookMsg").textContent = "Uložené ✓ (platí v tvojom účte na všetkých zariadeniach)";
     };
     $("accentPicks").appendChild(b);

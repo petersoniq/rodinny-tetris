@@ -660,9 +660,11 @@
       <div class="view" id="viewGoals" hidden>
         <div class="card" id="pGoal"><div id="goalBox"></div></div>
         <div class="card" id="pGoalHist" hidden>
-          <h2>📜 História výziev</h2>
-          <div id="goalHist"></div>
-          <button class="link" id="histMore" type="button" hidden></button>
+          <h2 id="histToggle" style="cursor:pointer">📜 História výziev ▾</h2>
+          <div id="histBody" hidden>
+            <div id="goalHist"></div>
+            <button class="link" id="histMore" type="button" hidden></button>
+          </div>
         </div>
         <div class="card" id="pBadges">
           <h2>🏅 Odznaky</h2>
@@ -715,6 +717,8 @@
         <div class="card" id="pGame">
           <h2>🎮 Hra</h2>
           <label class="tog"><span>👻 Tieň kocky (ukáže, kde dopadne)</span><input type="checkbox" id="optGhost"></label>
+          <label class="tog"><span>👁 Náhľad ďalších kociek (2. a 3.)</span><input type="checkbox" id="optPreview"></label>
+          <label class="tog"><span>🧩 Combo štítok v lište</span><input type="checkbox" id="optCombo"></label>
           <div class="sub" id="gameMsg" role="status"></div>
         </div>
         <div class="card" id="pSet">
@@ -817,8 +821,10 @@
         </div>
       </div>
       <div class="card" id="admGoalHist">
-        <h2>📜 História výziev</h2>
-        <div id="goalHistAdmin"></div>
+        <h2 id="histToggleAdmin" style="cursor:pointer">📜 História výziev ▾</h2>
+        <div id="histBodyAdmin" hidden>
+          <div id="goalHistAdmin"></div>
+        </div>
       </div>
     </div>
     <div class="view" id="admStats" hidden>
@@ -1138,6 +1144,7 @@ async function enterGame() {
   $("game").classList.add("on");
   applyLook();
   ghostOn = !(player.settings && player.settings.ghost === false);     // predvolene je tieň zapnutý
+  applyGameOpts();                        // náhľad kociek a combo štítok podľa nastavenia účtu
   if (player.settings && player.settings.theme) applyTheme(player.settings.theme);        // téma z účtu má prednosť pred zariadením
   $("themeMsg").textContent = THEME_NOTE;
   $("optGhost").checked = ghostOn; $("gameMsg").textContent = GAME_NOTE;
@@ -1579,6 +1586,41 @@ $("optGhost").onchange = async e => {
   }
   player.settings = Object.assign({}, player.settings, { ghost: on });
   $("gameMsg").textContent = "Uložené ✓";
+};
+
+/* ===== História výziev: skrytá, rozbalí sa kliknutím na nadpis ===== */
+[["histToggle", "histBody"], ["histToggleAdmin", "histBodyAdmin"]].forEach(([tg, bd]) => {
+  $(tg).onclick = () => {
+    const b = $(bd); b.hidden = !b.hidden;
+    $(tg).textContent = (b.hidden ? "📜 História výziev ▾" : "📜 História výziev ▴");
+  };
+});
+
+/* ===== Nové herné nastavenia (v účtu – platia na všetkých zariadeniach) ===== */
+function applyGameOpts() {
+  const preview = !(player.settings && player.settings.preview === false);
+  const combo = !(player.settings && player.settings.combo === false);
+  $("optPreview").checked = preview; $("optCombo").checked = combo;
+  $("next2").style.display = $("next3").style.display = preview ? "" : "none";
+  $("comboHud").style.display = combo ? "" : "none";
+}
+async function saveGameOpt(key, on) {
+  $("gameMsg").textContent = "Ukladám…";
+  const { error } = await db.rpc("set_setting", { p_key: key, p_value: on });
+  if (error) { $("gameMsg").textContent = jeSiet(error) ? NET_MSG : "Nepodarilo sa uložiť: " + error.message; return false; }
+  player.settings = Object.assign({}, player.settings, { [key]: on });
+  $("gameMsg").textContent = "Uložené ✓";
+  return true;
+}
+$("optPreview").onchange = async e => {
+  const on = e.target.checked;
+  if (!(await saveGameOpt("preview", on))) { e.target.checked = !on; return; }
+  applyGameOpts();
+};
+$("optCombo").onchange = async e => {
+  const on = e.target.checked;
+  if (!(await saveGameOpt("combo", on))) { e.target.checked = !on; return; }
+  applyGameOpts();
 };
 window.addEventListener("pagehide", saveGame);
 

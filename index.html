@@ -710,6 +710,8 @@
           <div class="picks" id="emojiPicks"></div>
           <div class="sub">Farba mena</div>
           <div class="picks" id="colorPicks"></div>
+          <div class="sub">Zvýrazňovacia farba aplikácie (namiesto zlatej)</div>
+          <div class="picks" id="accentPicks"></div>
           <div class="sub" id="lookMsg" role="status"></div>
         </div>
       </div>
@@ -1146,6 +1148,8 @@ async function enterGame() {
   ghostOn = !(player.settings && player.settings.ghost === false);     // predvolene je tieň zapnutý
   applyGameOpts();                        // náhľad kociek a combo štítok podľa nastavenia účtu
   if (player.settings && player.settings.theme) applyTheme(player.settings.theme);        // téma z účtu má prednosť pred zariadením
+  applyAccent((player.settings && player.settings.accent) || null);        // zvýrazňovacia farba z účtu
+  document.querySelectorAll("#accentPicks .swatch").forEach(x => x.classList.toggle("sel", (x.dataset.v || null) === ((player.settings && player.settings.accent) || null)));
   $("themeMsg").textContent = THEME_NOTE;
   $("optGhost").checked = ghostOn; $("gameMsg").textContent = GAME_NOTE;
   showPane("results"); resetViews(); showView("board"); showSetView("look");
@@ -2097,8 +2101,10 @@ function showPane(name) {
 document.querySelectorAll("#sideTabs .tab").forEach(b => { b.onclick = () => showPane(b.dataset.p); });
 
 /* ===== VZHĽAD HRÁČA: emoji a farba mena (výber z pevného zoznamu, rovnaký zoznam kontroluje aj databáza) ===== */
-const EMOJI = ["🦊", "🐼", "🐯", "🦁", "🐸", "🐵", "🦄", "🐙", "🐧", "🦖", "🐢", "🐝", "🚀", "⚽", "🎮", "⭐", "🔥", "🌈", "🍕", "🍩"];
-const FARBY = ["#4DD0E1", "#5C7CFA", "#F08C4A", "#E9C46A", "#52B788", "#9D6BCE", "#D96C9D", "#EF6A6A"];
+const EMOJI = ["🦊", "🐼", "🐯", "🦁", "🐸", "🐵", "🦄", "🐙", "🐧", "🦖", "🐢", "🐝", "🚀", "⚽", "🎮", "⭐", "🔥", "🌈", "🍕", "🍩",
+  "🐶", "🐱", "🐹", "🐰", "🦉", "🦋", "🐬", "🐳", "🦕", "🍉"];       // v51: ďalšie emoji na výber
+const FARBY = ["#4DD0E1", "#5C7CFA", "#F08C4A", "#E9C46A", "#52B788", "#9D6BCE", "#D96C9D", "#EF6A6A",
+  "#F4A261", "#2A9D8F", "#E76F51", "#6D6875"];       // v51: ďalšie farby mena
 
 function applyLook() {                         // premietne emoji a farbu do karty hráča, panelu a náhľadu
   const meno = (player.emoji ? player.emoji + " " : "") + player.username + (player.is_admin ? " ★" : "");
@@ -2135,6 +2141,46 @@ async function saveLook(zmena) {
     b.style.background = v || "rgba(255,255,255,.15)"; b.textContent = v ? "" : "✕";
     b.setAttribute("aria-label", v ? "Farba " + v : "Bez farby");
     b.onclick = () => saveLook({ color: v || null }); $("colorPicks").appendChild(b);
+  });
+})();
+
+/* ===== v51: ZVÝRAZŇOVACIA FARBA (žltá -> vybraná; v účtu, platí na všetkých zariadeniach) ===== */
+const ACCENTS = [null, "#5BC0EB", "#52B788", "#EF6A6A", "#9D6BCE", "#D96C9D"];   // null = predvolená zlatá
+function applyAccent(c) {
+  let s = $("accentStyle");
+  if (!s) { s = document.createElement("style"); s.id = "accentStyle"; document.head.appendChild(s); }
+  if (!c) { s.textContent = ""; return; }                                     // bez voľby ostáva pôvodná zlatá
+  s.textContent =
+  ":root { --gold: " + c + "; --accent: " + c + "; --chartline: " + c + "; --heat-on: " + c + "; }\n" +
+  ':root[data-theme="light"] { --gold: color-mix(in srgb, ' + c + ' 55%, #000); --accent: color-mix(in srgb, ' + c + ' 55%, #000); }\n' +
+  'button, .tab.on, .chip.on, .tog input:checked, #comboBadge.b2b, #touch button[data-a="pause"] { background: linear-gradient(180deg, color-mix(in srgb, ' + c + ' 70%, #fff), ' + c + '); }\n' +
+  '.big, #login .logo { background: linear-gradient(180deg, color-mix(in srgb, ' + c + ' 80%, #fff) 0%, ' + c + ' 70%); -webkit-background-clip: text; background-clip: text; color: transparent; }\n' +
+  '.fill { background: linear-gradient(90deg, #52B788, ' + c + '); }\n' +
+  '#board-wrap::before { background: radial-gradient(circle, color-mix(in srgb, ' + c + ' 30%, transparent), transparent 70%); }';
+}
+(function buildAccentPicks() {
+  ACCENTS.forEach(v => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "swatch"; b.dataset.v = v || "";
+    b.style.background = v || "#E9C46A"; b.textContent = v ? "" : "✕";
+    b.setAttribute("aria-label", v ? "Zvýraznenie " + v : "Predvolená zlatá");
+    b.title = v ? "" : "Predvolená zlatá";
+    b.onclick = async () => {
+      const stare = (player.settings && player.settings.accent) || null;
+      applyAccent(v || null);
+      document.querySelectorAll("#accentPicks .swatch").forEach(x => x.classList.toggle("sel", (x.dataset.v || null) === (v || null)));
+      $("lookMsg").textContent = "Ukladám…";
+      const { error } = await db.rpc("set_setting", { p_key: "accent", p_value: v || null });
+      if (error) {                                   // neúspech: vrátime pôvodnú farbu
+        applyAccent(stare);
+        document.querySelectorAll("#accentPicks .swatch").forEach(x => x.classList.toggle("sel", (x.dataset.v || null) === stare));
+        $("lookMsg").textContent = jeSiet(error) ? NET_MSG : "Nepodarilo sa uložiť: " + error.message;
+        return;
+      }
+      player.settings = Object.assign({}, player.settings, { accent: v || null });
+      $("lookMsg").textContent = "Uložené ✓ (platí v tvojom účte na všetkých zariadeniach)";
+    };
+    $("accentPicks").appendChild(b);
   });
 })();
 

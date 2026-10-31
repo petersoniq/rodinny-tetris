@@ -452,6 +452,11 @@
   :root[data-feast="halloween"] button:not(.ghost):not(.danger):not(.sm):not(.chip):not(.tab):not(.swatch):not(.pick) { background: linear-gradient(180deg, #ff9a3d, #d1581a); }
   :root[data-feast="halloween"] #player, :root[data-feast="halloween"] #sheetName { color: #F08C4A !important; }
   :root[data-feast="halloween"] #hudAva { background: #F08C4A !important; }
+  /* v67: viac pumpkinových prvkov + halloweenské obrázky po bokoch plochy */
+  :root[data-feast="halloween"] #touch button { background: linear-gradient(180deg, rgba(255,150,80,.30), rgba(255,150,80,.10)); border-color: rgba(255,150,80,.38); }
+  :root[data-feast="halloween"] .glass { border-color: rgba(255,150,80,.28); }
+  :root[data-feast="halloween"] #overlayText > div:first-child { color: #F08C4A; }
+  :root[data-feast="halloween"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
   :root[data-feast="halloween"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
@@ -2896,6 +2901,11 @@ function applyFeast(k) {
       gb.appendChild(s);
     }
   }
+  [["left", 10], ["left", 44], ["left", 78], ["right", 6], ["right", 38], ["right", 72]].forEach(([strana, top]) => {   // v67: motívy po bokoch plochy
+      const s = document.createElement("span"); s.className = "tp feastTp feastSide";
+      s.style.cssText = "--c:#F08C4A;" + strana + ":1%;" + "top:" + top + "%;animation-duration:" + (10 + Math.random() * 8).toFixed(1) + "s;animation-delay:-" + (Math.random() * 6).toFixed(1) + "s";
+      gb.appendChild(s);
+    });
   document.querySelectorAll(".tp").forEach(t => {                      // tetrominá v pozadí -> motívy
     t.textContent = feast === "halloween" ? HAL_POZADIE[Math.floor(Math.random() * HAL_POZADIE.length)] : "";
   });

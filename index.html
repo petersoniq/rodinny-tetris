@@ -81,9 +81,10 @@
              background: linear-gradient(90deg, var(--gold), color-mix(in srgb, var(--gold) 55%, #fff)); }
   .palPrev { display: inline-flex; gap: 2px; vertical-align: middle; margin-right: 6px; }
   .palPrev i { width: 12px; height: 12px; border-radius: 3px; }
-  .swatch.palBtn { border-radius: 12px; width: auto; display: inline-flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 10px; background: var(--fill2); }
+  .swatch.palBtn { border-radius: 12px; width: auto; min-width: 72px; height: auto; flex: none; display: inline-flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 10px 7px; background: var(--fill2); border-width: 1px; }
   .palBtn .palPrev { margin-right: 0; }
-  .palBtn .palLbl { font-size: .68rem; font-weight: 600; color: var(--muted); line-height: 1; }
+  .palBtn .palLbl { font-size: .68rem; font-weight: 600; color: var(--muted); line-height: 1.1; white-space: nowrap; }
+  .palBtn.sel { background: var(--fill4); border-color: var(--gold); }
   .palBtn.sel .palLbl { color: var(--text); }
   .panel { padding: 14px; }
   .glass { padding: 18px; border-radius: 22px; }
@@ -328,7 +329,8 @@
   .badgeSec { margin: 12px 0 6px; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
   .lookRow { margin-top: 2px; }
   .lookLbl { font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--gold); margin-bottom: 2px; }
-  .lookRow .picks { margin: 4px 0 8px; }
+  .lookRow .picks { margin: 4px 0 10px; }
+  .lookRow .pick { width: 34px; height: 34px; font-size: 1.05rem; }
   .picks { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
   .pick { width: 38px; height: 38px; padding: 0; font-size: 1.2rem; border-radius: 10px; background: var(--fill2); border: 1px solid var(--line); color: var(--text); }
   .swatch { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid var(--line2); color: var(--text); font-size: .8rem; }

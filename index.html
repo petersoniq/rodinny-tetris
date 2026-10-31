@@ -2738,8 +2738,9 @@ function paintCell(c, x, y, color, size, glyph) {
   c.lineWidth = svetla ? 1.3 : 1; c.strokeStyle = svetla ? darken(color, 0.38) : "rgba(255,255,255,.28)"; c.stroke();     // v svetlej téme tmavší obrys kocky
   roundRectPath(c, px + w * 0.18, py + w * 0.14, w * 0.64, w * 0.16, r * 0.5);   // jemný lesk
   c.fillStyle = svetla ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.22)"; c.fill();
-  if (glyph) {                                    // v72: motív vnútri kocky – väčší a výraznejší
-    c.font = Math.round(w * 1.1) + "px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.shadowColor = "rgba(0,0,0,.75)"; c.shadowBlur = w * .22;
+  if (glyph) {                                    // v74: motív na tmavej podložke – jasne viditeľný na akejkoľvek farbe
+    roundRectPath(c, px + w * .07, py + w * .07, w * .86, w * .86, r * .6); c.fillStyle = "rgba(0,0,0,.62)"; c.fill();
+    c.font = Math.round(w * .96) + "px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.shadowColor = "rgba(0,0,0,.95)"; c.shadowBlur = w * .2;
     c.fillText(glyph, px + w / 2, py + w / 2 + w * .05); c.shadowBlur = 0;
   }
 }

@@ -1,3 +1,5 @@
+null
+null
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -70,6 +72,18 @@
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: var(--shadow);
   }
   .card { padding: 12px 14px; }
+  /* v53: jemný zdvih karty pri prejdení kurzorom */
+  .card { transition: transform .18s ease, box-shadow .18s ease; }
+  .card:hover { transform: translateY(-2px); }
+  :root .card:hover { box-shadow: 0 16px 38px rgba(0,0,0,.42); }
+  :root[data-theme="light"] .card:hover { box-shadow: 0 12px 28px rgba(40,55,100,.20); }
+  /* v53: priebeh do ďalšej úrovne + náhľad balíčkov farieb kociek */
+  #lvBar { height: 4px; background: var(--fill2); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  #lvBar i { display: block; height: 100%; width: 0%; border-radius: 2px; transition: width .3s;
+             background: linear-gradient(90deg, var(--gold), color-mix(in srgb, var(--gold) 55%, #fff)); }
+  .palPrev { display: inline-flex; gap: 2px; vertical-align: middle; margin-right: 6px; }
+  .palPrev i { width: 10px; height: 10px; border-radius: 3px; }
+  .swatch.palBtn { border-radius: 10px; width: auto; min-width: 34px; display: inline-flex; align-items: center; justify-content: center; background: var(--fill2); }
   .panel { padding: 14px; }
   .glass { padding: 18px; border-radius: 22px; }
   h1 { margin: 0 0 12px; font-size: 1.4rem; }
@@ -587,12 +601,13 @@
     </div>
     <div id="pScore" class="hudScore">
       <div class="big" id="score">0</div>
+      <div id="lvBar"><i id="lvFill"></i></div>
     </div>
     <div id="pNext">
       <div class="lbl nextLbl">Ďalšia</div>
       <div class="nextSlot"><canvas id="next" width="120" height="120"></canvas><canvas id="next2" width="60" height="60"></canvas><canvas id="next3" width="60" height="60"></canvas></div>
     </div>
-    <div id="pMeta" class="sub hudMeta"><span class="chip">Riadky <span id="lines">0</span></span> <span class="chip">Úr. <span id="level">1</span></span> <span id="comboHud" class="chip"></span> <button id="updBadge" class="sm ghost" style="display:none" title="Klikni na obnovenie">↻ Nová verzia</button></div>
+<span class="chip">Úr. <span id="level">1</span><span id="lvLeft"></span></span>
   </div>
 
   <div id="main">
@@ -712,6 +727,8 @@
           <div class="picks" id="colorPicks"></div>
           <div class="sub">Zvýrazňovacia farba aplikácie (namiesto zlatej)</div>
           <div class="picks" id="accentPicks"></div>
+          <div class="sub">Farby kociek (motív hry)</div>
+          <div class="picks" id="palettePicks"></div>
           <div class="sub" id="lookMsg" role="status"></div>
         </div>
       </div>
@@ -929,6 +946,21 @@ const SHAPES = {
   Z: { color: "#D96C9D", m: [[1,1,0],[0,1,1],[0,0,0]] }
 };
 const TYPES = Object.keys(SHAPES);
+/* v53: motívové balíčky farieb kociek (klasická sada = BASE_COLORS) */
+const BASE_COLORS = { I: "#4DD0E1", J: "#5C7CFA", L: "#F08C4A", O: "#E9C46A", S: "#52B788", T: "#9D6BCE", Z: "#D96C9D" };
+const PALETTY = {
+  neon:   { label: "Neónové",   c: { I: "#00F5D4", J: "#4CC9F0", L: "#FF9E00", O: "#FEE440", S: "#00E436", T: "#B5179E", Z: "#F72585" } },
+  pastel: { label: "Pastelové", c: { I: "#8ECAE6", J: "#A2D2FF", L: "#FFD6A5", O: "#FDFFB6", S: "#B7E4C7", T: "#CBC3E3", Z: "#FFC8DD" } },
+  ocean:  { label: "Oceán",     c: { I: "#48CAE4", J: "#0077B6", L: "#4895EF", O: "#BDE0FE", S: "#2A9D8F", T: "#5E548E", Z: "#9381D9" } },
+  fire:   { label: "Ohnivé",    c: { I: "#FFE66D", J: "#F4A261", L: "#E76F51", O: "#F6BD60", S: "#FF9F1C", T: "#C9184A", Z: "#9B2226" } },
+  candy:  { label: "Cukríkové", c: { I: "#9BF6FF", J: "#A0C4FF", L: "#FFCA3A", O: "#FFD6A5", S: "#95D5B2", T: "#BDB2FF", Z: "#FFADAD" } },
+  gem:    { label: "Drahokamy", c: { I: "#7FDBDA", J: "#3D5A80", L: "#5FA8D3", O: "#98D8AA", S: "#2A9D8F", T: "#6A4C93", Z: "#9D4EDD" } }
+};
+function applyPalette(k) {
+  const p = (k && PALETTY[k]) ? PALETTY[k].c : null;
+  TYPES.forEach(t => { SHAPES[t].color = p ? p[t] : BASE_COLORS[t]; });
+  if (canvasReady) refreshCanvas();
+}
 
 /* =========================================================
    DATABÁZA (Supabase): prihlásenie, skóre, rebríček, admin
@@ -1150,6 +1182,8 @@ async function enterGame() {
   if (player.settings && player.settings.theme) applyTheme(player.settings.theme);        // téma z účtu má prednosť pred zariadením
   applyAccent((player.settings && player.settings.accent) || null);        // zvýrazňovacia farba z účtu
   document.querySelectorAll("#accentPicks .swatch").forEach(x => x.classList.toggle("sel", (x.dataset.v || null) === ((player.settings && player.settings.accent) || null)));
+  applyPalette((player.settings && player.settings.palette) || null);          // v53: farby kociek z účtu
+  document.querySelectorAll("#palettePicks .palBtn").forEach(x => x.classList.toggle("sel", (x.dataset.k || "") === ((player.settings && player.settings.palette) || "")));
   $("themeMsg").textContent = THEME_NOTE;
   $("optGhost").checked = ghostOn; $("gameMsg").textContent = GAME_NOTE;
   showPane("results"); resetViews(); showView("board"); showSetView("look");
@@ -2184,6 +2218,34 @@ function applyAccent(c) {
   });
 })();
 
+/* ===== v53: MOTÍVOVÉ BALÍČKY FARIEB KOCIEK (v účtu, platia na všetkých zariadeniach) ===== */
+(function buildPalettePicks() {
+  const items = [{ k: "", label: "Klasické" }].concat(Object.keys(PALETTY).map(k => ({ k, label: PALETTY[k].label })));
+  const mkPrev = c => { const d = document.createElement("span"); d.className = "palPrev";
+    TYPES.forEach(t => { const i = document.createElement("i"); i.style.background = c[t]; d.appendChild(i); }); return d; };
+  items.forEach(it => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "swatch palBtn"; b.dataset.k = it.k;
+    b.setAttribute("aria-label", "Farby kociek: " + it.label); b.title = it.label;
+    if (it.k) b.appendChild(mkPrev(PALETTY[it.k].c)); else b.textContent = "✕";
+    b.onclick = async () => {
+      const stare = (player.settings && player.settings.palette) || "";
+      applyPalette(it.k);
+      document.querySelectorAll("#palettePicks .palBtn").forEach(x => x.classList.toggle("sel", (x.dataset.k || "") === it.k));
+      $("lookMsg").textContent = "Ukladám…";
+      const { error } = await db.rpc("set_setting", { p_key: "palette", p_value: it.k || "" });
+      if (error) {                                   // neúspech: vrátime pôvodné farby
+        applyPalette(stare);
+        document.querySelectorAll("#palettePicks .palBtn").forEach(x => x.classList.toggle("sel", (x.dataset.k || "") === stare));
+        $("lookMsg").textContent = jeSiet(error) ? NET_MSG : "Nepodarilo sa uložiť: " + error.message;
+        return;
+      }
+      player.settings = Object.assign({}, player.settings, { palette: it.k || "" });
+      $("lookMsg").textContent = "Uložené ✓ (platí v tvojom účte na všetkých zariadeniach)";
+    };
+    $("palettePicks").appendChild(b);
+  });
+})();
+
 /* ===== ZMENA VLASTNÉHO HESLA ===== */
 async function changePassword() {
   const o = $("pwOld").value, n = $("pwNew").value, n2 = $("pwNew2").value, msg = t => { $("pwMsg").textContent = t; };
@@ -2475,7 +2537,7 @@ function resumeGame() {
   grid = d.grid; nextType = d.next; nextExtra = [randomType(), randomType()]; score = d.score; lines = d.lines; level = d.level;
   tetrises = Number.isInteger(d.tet) && d.tet >= 0 ? d.tet : 0; gridRev++;
   current = { type: d.cur.type, m: d.cur.m, x: d.cur.x, y: d.cur.y };
-  anim = null; dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
+  anim = null; confetti = []; dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
   gameId = (typeof d.gid === "string" && /^[0-9a-f-]{36}$/i.test(d.gid)) ? d.gid : newId();
   $("overlay").style.display = "none"; $("newBtn").style.display = "none";
   drawNext(); updateStats();
@@ -2504,6 +2566,18 @@ function lockPiece() {
 }
 
 /* Koniec animácie: riadky zmiznú, pripočítajú sa body, príde ďalšia kocka */
+/* v53: Tetris konfety – pri 4 riadkoch naraz sa z mazaných riadkov rozletia farebné štvorčeky */
+let confetti = [];
+function spawnConfetti(rows) {
+  const cols = TYPES.map(t => SHAPES[t].color);
+  rows.forEach(y => { for (let i = 0; i < 26; i++) confetti.push({
+    x: Math.random() * COLS * CELL, y: y * CELL + CELL / 2,
+    vx: (Math.random() - .5) * 3.4, vy: -(1.5 + Math.random() * 3),
+    s: 3 + Math.random() * 4, r: Math.random() * Math.PI, vr: (Math.random() - .5) * .35,
+    c: cols[Math.floor(Math.random() * cols.length)]
+  }); });
+}
+
 function finishClear() {
   const n = anim.rows.length, before = level, rows = anim.rows;
   grid = grid.filter((r, i) => !rows.includes(i));
@@ -2515,7 +2589,7 @@ function finishClear() {
   const b2bBonus = isB2B ? Math.round(rowPoints(4) * level * BONUS.b2b / 100) : 0;
   const multiBonus = n > 1 ? (n - 1) * BONUS.multi * level : 0;   // v27: bonus za viac riadkov naraz (dvojité/trojité/Tetris)
   score += rowPoints(n) * level + comboBonus + b2bBonus + multiBonus;
-  if (n === 4) tetrises++;                        // Tetris = 4 riadky naraz (pre odznak)
+  if (n === 4) { tetrises++; spawnConfetti(rows); }             // v53: Tetris = konfety
   b2b = n === 4;
   if (comboBonus || b2bBonus || multiBonus) showCombo(combo, comboBonus + b2bBonus + multiBonus, isB2B, n);
   updateComboHud();
@@ -2534,6 +2608,8 @@ function updateStats() {
   $("lines").textContent = lines;
   $("level").textContent = level;
   $("board-wrap").style.setProperty("--lvhue", 45 - Math.min(level - 1, 9) * 7);   // žiara za plochou: od zlatej k červenastej
+  $("lvLeft").textContent = " · " + (lines % 10) + "/10";                 // v53: priebeh do ďalšej úrovne
+  $("lvFill").style.width = ((lines % 10) * 10) + "%";
 }
 
 /* =========================================================
@@ -2604,6 +2680,13 @@ function draw() {
   current.m.forEach((row, y) => row.forEach((v, x) => {
     if (v) drawCell(ctx, current.x + x, current.y + y, SHAPES[current.type].color, CELL);
   }));
+  for (let i = confetti.length - 1; i >= 0; i--) {                  // v53: konfety padajú a miznú pod plochou
+    const f = confetti[i]; f.x += f.vx; f.y += f.vy; f.vy += .25; f.r += f.vr;
+    if (f.y > ROWS * CELL + 24) { confetti.splice(i, 1); continue; }
+    ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.r);
+    ctx.globalAlpha = Math.max(0, 1 - f.y / (ROWS * CELL));
+    ctx.fillStyle = f.c; ctx.fillRect(-f.s / 2, -f.s / 2, f.s, f.s); ctx.restore();
+  }
 }
 
 function drawNext() {
@@ -2633,7 +2716,7 @@ function loop(now) {
     if (dropTimer > interval) { dropTimer = 0; softDrop(); }
   }
   const sg = stateSig();
-  if (anim || sg !== drawnSig) { draw(); drawnSig = sg; }          // kreslí sa len pri zmene (alebo počas animácie)
+  if (anim || confetti.length || sg !== drawnSig) { draw(); drawnSig = sg; }          // kreslí sa len pri zmene (alebo počas animácie)
   rafId = requestAnimationFrame(loop);
 }
 
@@ -2767,3 +2850,4 @@ init();
 </script>
 </body>
 </html>
+

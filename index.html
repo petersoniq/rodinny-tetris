@@ -1358,10 +1358,11 @@ function fitBoard() {
     const num = v => parseFloat(v) || 0, bs = getComputedStyle(document.body);
     const padX = num(bs.paddingLeft) + num(bs.paddingRight), padY = num(bs.paddingTop) + num(bs.paddingBottom);
     const gaps = num(getComputedStyle($("hud")).marginBottom) + num(getComputedStyle($("touch")).marginTop);
+    const vh = window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;   // v75: presná výška ( aj s meniacim sa prehliadačom )
     const land = window.matchMedia("(orientation: landscape) and (max-height: 520px)").matches;
     // na šírku je horná lišta a ovládanie po stranách plochy, preto sa výška neznižuje
-    const availH = land ? window.innerHeight - padY - 4
-                        : window.innerHeight - padY - $("hud").offsetHeight - $("touch").offsetHeight - gaps - 4;
+    const availH = land ? vh - padY - 4
+                        : vh - padY - $("hud").offsetHeight - $("touch").offsetHeight - gaps - 4;
     const availW = land ? root.clientWidth - padX - 2 * 130 - 24 : root.clientWidth - padX;
     root.style.setProperty("--bw", Math.floor(Math.max(150, Math.min(availW, availH / 2, 520))) + "px");
   } else root.style.removeProperty("--bw");
@@ -1678,11 +1679,17 @@ $("loginBtn").onclick = submitAuth;
 $("logoutBtn").onclick = logout;
 $("restartBtn").onclick = () => {
   unlockAudio();                                   // zvuk sa smie spustiť až po ťuknutí
+  goFullscreen();                                  // v75: v mobilnom prehliadači sa hra roztiahne na celú obrazovku
   if (overlayMode === "pause") togglePause();
   else if (overlayMode === "start" && savedGame) resumeGame();
   else newGame();
 };
 $("newBtn").onclick = () => { clearSave(); newGame(); };
+function goFullscreen() {                          // v75: natívny fullscreen – v nainštalovanej PWA (standalone) sa nespúšťa
+  const d = document.documentElement;
+  if (!document.fullscreenElement && !window.matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches && d.requestFullscreen)
+    d.requestFullscreen({ navigationUI: "hide" }).catch(() => {});
+}
 document.querySelectorAll(".adminBtn").forEach(b => b.onclick = openAdmin);
 $("pPlayer").onclick = openSheet;
 $("closeSheet").onclick = closeSheet;
@@ -2486,6 +2493,7 @@ async function init() {
   window.addEventListener("online", flushQueue);          // po obnovení pripojenia sa odošle čakajúce skóre
   window.addEventListener("orientationchange", () => setTimeout(fitBoard, 200));
   if (window.visualViewport) window.visualViewport.addEventListener("resize", fitBoard);
+  document.addEventListener("fullscreenchange", fitBoard);   // v75: plocha sa preráta po prepnutí na celú obrazovku
   $("nameInput").focus();
   const pozv = new URLSearchParams(location.search).get("kod");          // pozvánka: ?kod=...
   if (pozv) history.replaceState(null, "", location.pathname + location.hash);   // kód nezostane v adrese

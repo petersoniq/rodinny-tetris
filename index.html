@@ -2901,7 +2901,7 @@ function applyFeast(k) {
       gb.appendChild(s);
     }
   }
-  [["left", 10], ["left", 44], ["left", 78], ["right", 6], ["right", 38], ["right", 72]].forEach(([strana, top]) => {   // v67: motívy po bokoch plochy
+  if (feast === "halloween") [["left", 10], ["left", 44], ["left", 78], ["right", 6], ["right", 38], ["right", 72]].forEach(([strana, top]) => {   // v67: motívy po bokoch plochy
       const s = document.createElement("span"); s.className = "tp feastTp feastSide";
       s.style.cssText = "--c:#F08C4A;" + strana + ":1%;" + "top:" + top + "%;animation-duration:" + (10 + Math.random() * 8).toFixed(1) + "s;animation-delay:-" + (Math.random() * 6).toFixed(1) + "s";
       gb.appendChild(s);

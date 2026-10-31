@@ -2378,7 +2378,7 @@ document.querySelectorAll(".installBtn").forEach(b => b.onclick = async () => {
 const jeIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const jeAplikacia = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
 if (jeIOS && !jeAplikacia) document.querySelectorAll(".iosHint").forEach(x => x.style.display = "inline");
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch(() => {});   // v56: PWA dostane novú verziu hneď, nie až po vypršaní HTTP cache
 
 async function init() {
   canvasReady = true;                                  // odteraz sa pri zmene témy prekresľuje aj hracia plocha
@@ -2821,6 +2821,7 @@ async function watchUpdates() {
   if (!("serviceWorker" in navigator)) return;
   const reg = await navigator.serviceWorker.ready;
   if (reg.waiting) showUpdateBadge();                        // nová verzia už čaká
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });   // v56: pri každom otvorení PWA skontroluj novú verziu
   reg.addEventListener("updatefound", () => {
     const w = reg.installing;
     if (!w) return;

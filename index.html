@@ -330,6 +330,9 @@
   .lookRow { margin-top: 2px; }
   .lookLbl { font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--gold); margin-bottom: 2px; }
   .lookRow .picks { margin: 4px 0 10px; }
+  #accentPicks, #colorPicks { display: grid; grid-template-columns: repeat(3, max-content); gap: 8px; }
+  #palettePicks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  #palettePicks .palBtn { width: 100%; min-width: 0; }
   .lookRow .pick { width: 34px; height: 34px; font-size: 1.05rem; }
   .picks { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
   .pick { width: 38px; height: 38px; padding: 0; font-size: 1.2rem; border-radius: 10px; background: var(--fill2); border: 1px solid var(--line); color: var(--text); }
@@ -964,7 +967,9 @@ const PALETTY = {
   ocean:  { label: "Oceán",     c: { I: "#48CAE4", J: "#0077B6", L: "#4895EF", O: "#BDE0FE", S: "#2A9D8F", T: "#5E548E", Z: "#9381D9" } },
   fire:   { label: "Ohnivé",    c: { I: "#FFE66D", J: "#F4A261", L: "#E76F51", O: "#F6BD60", S: "#FF9F1C", T: "#C9184A", Z: "#9B2226" } },
   candy:  { label: "Cukríkové", c: { I: "#9BF6FF", J: "#A0C4FF", L: "#FFCA3A", O: "#FFD6A5", S: "#95D5B2", T: "#BDB2FF", Z: "#FFADAD" } },
-  gem:    { label: "Drahokamy", c: { I: "#7FDBDA", J: "#3D5A80", L: "#5FA8D3", O: "#98D8AA", S: "#2A9D8F", T: "#6A4C93", Z: "#9D4EDD" } }
+  gem:    { label: "Drahokamy", c: { I: "#7FDBDA", J: "#3D5A80", L: "#5FA8D3", O: "#98D8AA", S: "#2A9D8F", T: "#6A4C93", Z: "#9D4EDD" } },
+  les:    { label: "Lesné",     c: { I: "#A3B18A", J: "#588157", L: "#BC6C25", O: "#DDA15E", S: "#3A5A40", T: "#6B705C", Z: "#8A9A5B" } },
+  slnko:  { label: "Slnečné",   c: { I: "#FFD166", J: "#118AB2", L: "#FF9F1C", O: "#FFE66D", S: "#06D6A0", T: "#EF476F", Z: "#F78C6B" } }
 };
 function applyPalette(k) {
   const p = (k && PALETTY[k]) ? PALETTY[k].c : null;
@@ -2147,8 +2152,7 @@ document.querySelectorAll("#sideTabs .tab").forEach(b => { b.onclick = () => sho
 /* ===== VZHĽAD HRÁČA: emoji a farba mena (výber z pevného zoznamu, rovnaký zoznam kontroluje aj databáza) ===== */
 const EMOJI = ["🦊", "🐼", "🐯", "🦁", "🐸", "🐵", "🦄", "🐙", "🐧", "🦖", "🐢", "🐝", "🚀", "⚽", "🎮", "⭐", "🔥", "🌈", "🍕", "🍩",
   "🐶", "🐱", "🐹", "🐰", "🦉", "🦋", "🐬", "🐳", "🦕", "🍉"];       // v51: ďalšie emoji na výber
-const FARBY = ["#4DD0E1", "#5C7CFA", "#F08C4A", "#E9C46A", "#52B788", "#9D6BCE", "#D96C9D", "#EF6A6A",
-  "#F4A261", "#2A9D8F", "#E76F51", "#6D6875"];       // v51: ďalšie farby mena
+const FARBY = ["#4DD0E1", "#5C7CFA", "#52B788", "#9D6BCE", "#E9C46A", "#F08C4A", "#D96C9D", "#EF6A6A"];       // v60: 8 farieb mena (+ bez farby = 9 moznosti)
 
 function applyLook() {                         // premietne emoji a farbu do karty hráča, panelu a náhľadu
   const meno = (player.emoji ? player.emoji + " " : "") + player.username + (player.is_admin ? " ★" : "");
@@ -2189,7 +2193,7 @@ async function saveLook(zmena) {
 })();
 
 /* ===== v51: ZVÝRAZŇOVACIA FARBA (žltá -> vybraná; v účtu, platí na všetkých zariadeniach) ===== */
-const ACCENTS = [null, "#5BC0EB", "#52B788", "#EF6A6A", "#9D6BCE", "#D96C9D"];   // null = predvolená zlatá
+const ACCENTS = [null, "#5BC0EB", "#52B788", "#EF6A6A", "#9D6BCE", "#D96C9D", "#F4A261", "#2A9D8F", "#6D6875"];   // null = predvolená zlatá; v60: 9 farieb
 function applyAccent(c) {
   let s = $("accentStyle");
   if (!s) { s = document.createElement("style"); s.id = "accentStyle"; document.head.appendChild(s); }

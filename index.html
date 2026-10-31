@@ -2560,6 +2560,7 @@ function rotate() {
 
 /* Zrýchlený pád o 1 riadok; vráti true, ak sa kocka pohla */
 function softDrop() {
+  if (!current) return false;                     // v69: poistka – kocka ešte nie je na ploche
   if (!collides(current.m, current.x, current.y + 1)) {
     current.y++; return true;
   }
@@ -2567,6 +2568,7 @@ function softDrop() {
 }
 
 function hardDrop() {
+  if (!current) return;                           // v69: poistka
   let dist = 0;
   while (!collides(current.m, current.x, current.y + 1)) { current.y++; dist++; }
   score += dist * BONUS.hard;      // v45: bonus za okamžitý pád (nastaviteľný)
@@ -2781,15 +2783,17 @@ function drawNext() {
    ========================================================= */
 function loop(now) {
   if (!running || paused) return;      // pauza alebo koniec: slučka sa zastaví (šetrí batériu), pokračovanie ju znova spustí
-  const dt = now - lastTime; lastTime = now;
-  if (anim) { if (now - anim.t0 >= anim.dur) finishClear(); }       // animácia mazania riadkov
-  else {
-    dropTimer += dt;
-    const interval = Math.max(90, 800 - (level - 1) * 70);   // ms na 1 riadok
-    if (dropTimer > interval) { dropTimer = 0; softDrop(); }
-  }
-  const sg = stateSig();
-  if (anim || confetti.length || sg !== drawnSig) { draw(); drawnSig = sg; }          // kreslí sa len pri zmene (alebo počas animácie)
+  try {                                       // v69: ani jedna prechodná chyba už nezastaví hru ani skóre
+    const dt = now - lastTime; lastTime = now;
+    if (anim) { if (now - anim.t0 >= anim.dur) finishClear(); }       // animácia mazania riadkov
+    else {
+      dropTimer += dt;
+      const interval = Math.max(90, 800 - (level - 1) * 70);   // ms na 1 riadok
+      if (dropTimer > interval) { dropTimer = 0; softDrop(); }
+    }
+    const sg = stateSig();
+    if (anim || confetti.length || sg !== drawnSig) { draw(); drawnSig = sg; }          // kreslí sa len pri zmene (alebo počas animácie)
+  } catch (e) { console.error("Chyba v slučke hry:", e); }
   rafId = requestAnimationFrame(loop);
 }
 

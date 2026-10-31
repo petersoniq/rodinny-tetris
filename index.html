@@ -1206,16 +1206,18 @@ let actx = null;
 function unlockAudio() {          // musí sa zavolať po ťuknutí (napr. Spustiť hru)
   if (!nast.sound) return;
   try {
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (!actx || actx.state === "closed") actx = new (window.AudioContext || window.webkitAudioContext)();   // v70: po uspatí telefónu sa kontext zavrie – treba nový
     if (actx.state === "suspended") actx.resume();
   } catch (e) {}
 }
 function tone(freq, dur, type, vol, when, slideTo) {
-  const t = actx.currentTime + (when || 0), o = actx.createOscillator(), g = actx.createGain();
-  o.type = type || "square"; o.frequency.setValueAtTime(freq, t);
-  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
-  g.gain.setValueAtTime(vol || 0.08, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+  try {                                   // v70: žiadna zvuková chyba už nespadne hru
+    const t = actx.currentTime + (when || 0), o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || "square"; o.frequency.setValueAtTime(freq, t);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+    g.gain.setValueAtTime(vol || 0.08, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+  } catch (e) {}
 }
 function sfx(name, n) {
   if (!nast.sound) return;
@@ -2667,8 +2669,9 @@ function finishClear() {
   lines += n;
   level = Math.floor(lines / 10) + 1;             // každých 10 riadkov = vyššia úroveň
   anim = null; dropTimer = 0;
+  updateStats();                                        // v70: skóre sa zobrazí hneď, aj keby niečo ďalšie zlyhalo
   if (level > before) sfx("level");
-  spawn(); updateStats();
+  spawn();
 }
 
 function updateStats() {

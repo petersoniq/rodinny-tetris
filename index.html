@@ -461,6 +461,30 @@
   :root[data-feast="halloween"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
   :root[data-feast="halloween"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
+  /* ===== v72: 🎄 VIANOČNÁ TÉMA – zelená a zlatá ===== */
+  :root[data-feast="xmas"] { --bg: #04140c; --glow1: #0b2e1c; --glow2: #2a1e07;
+    --gold: #F2C14E; --accent: #F2C14E; --chartline: #F2C14E; --heat-on: #F2C14E;
+    --line: rgba(120,220,160,.22); --line2: rgba(120,220,160,.34); }
+  :root[data-feast="xmas"] .lbl, :root[data-feast="xmas"] .tag { color: #9FE3A8; letter-spacing: .12em; }
+  :root[data-feast="xmas"] #login .logo { background: linear-gradient(180deg, #ffe38a 0%, #c9971f 70%);
+    -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 3px 14px rgba(242,193,78,.55)); }
+  :root[data-feast="xmas"] #comboBadge.b2b { background: linear-gradient(180deg, #ffe38a, #c9971f); border-color: transparent; }
+  :root[data-feast="xmas"] .game-bg .tp { opacity: .45; width: 30px; height: 30px; font-size: 30px; line-height: 30px; }
+  :root[data-feast="xmas"] .login-bg .tp { opacity: .5; }
+  :root[data-feast="xmas"] .tab.on, :root[data-feast="xmas"] .chip.on,
+  :root[data-feast="xmas"] #login .tab.on, :root[data-feast="xmas"] .tog input:checked {
+    background: linear-gradient(180deg, #ffe38a, #b8860b); border-color: transparent; color: #241a00; }
+  :root[data-feast="xmas"] .pick.sel, :root[data-feast="xmas"] .swatch.sel { outline-color: #F2C14E; }
+  :root[data-feast="xmas"] button:not(.ghost):not(.danger):not(.sm):not(.chip):not(.tab):not(.swatch):not(.pick) { background: linear-gradient(180deg, #ffe38a, #b8860b); }
+  :root[data-feast="xmas"] #player, :root[data-feast="xmas"] #sheetName { color: #F2C14E !important; }
+  :root[data-feast="xmas"] .hudScore .big { background: linear-gradient(180deg, #ffe38a 0%, #f2c14e 75%); -webkit-background-clip: text; background-clip: text; }
+  :root[data-feast="xmas"] #hudAva { background: #F2C14E !important; }
+  :root[data-feast="xmas"] #touch button { background: linear-gradient(180deg, rgba(140,220,170,.30), rgba(140,220,170,.10)); border-color: rgba(140,220,170,.38); }
+  :root[data-feast="xmas"] .glass { border-color: rgba(140,220,170,.28); }
+  :root[data-feast="xmas"] #overlayText > div:first-child { color: #F2C14E; }
+  :root[data-feast="xmas"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
+  :root[data-feast="xmas"] .tp { width: 22px; height: 22px; background: none !important;
+    box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
   .appbar { display: flex; align-items: center; gap: 12px; flex: none;
     padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
@@ -833,10 +857,11 @@
 <!-- ===== TAJNÉ TEMATICKÉ PREKVAPENIA (3× rýchle ťuknutie na ⚙️ Nastavenia) ===== -->
 <div id="secret" role="dialog" aria-modal="true" aria-label="Tajné tematické prekvapenia" hidden>
   <div class="card secretCard">
-    <h2>🎃 Tajné tematické prekvapenia</h2>
+    <h2>✨ Tajné tematické prekvapenia</h2>
     <div class="sub">Šššš… našiel si skryté menu! Téma premení celú hru – kedykoľvek sa dá vrátiť späť.</div>
     <div class="secretActs">
       <button id="feastHalloween" type="button">🎃 Halloween</button>
+      <button id="feastXmas" type="button">🎄 Vianoce</button>
       <button id="feastReset" type="button" class="ghost">✨ Pôvodný vzhľad</button>
       <button id="secretClose" type="button" class="ghost">Zavrieť</button>
     </div>
@@ -1183,7 +1208,7 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent) && navigator.standalone) docum
 
 /* Farba mena hráča; v svetlej téme ju CSS (trieda pc) stmaví, aby bola čitateľná */
 function colorize(el, color) {
-  if (feast === "halloween") color = HAL_COLOR;                 // v65: aktívna téma prefarbí mená na farbu dyne
+  if (feast && FEASTY[feast]) color = FEASTY[feast].color;     // v72: aktívna téma prefarbí mená na farbu témy
   el.style.color = color || "";
   if (color) { el.classList.add("pc"); el.style.setProperty("--pc", color); }
   else { el.classList.remove("pc"); el.style.removeProperty("--pc"); }
@@ -2252,7 +2277,7 @@ async function saveLook(zmena) {
 /* ===== v51: ZVÝRAZŇOVACIA FARBA (žltá -> vybraná; v účtu, platí na všetkých zariadeniach) ===== */
 const ACCENTS = [null, "#5BC0EB", "#52B788", "#EF6A6A", "#9D6BCE", "#D96C9D", "#F4A261", "#2A9D8F", "#6D6875"];   // null = predvolená zlatá; v60: 9 farieb
 function applyAccent(c) {
-  if (feast === "halloween") c = HAL_COLOR;                          // v65: aktívna téma má prednosť pred vlastným zvýraznením
+  if (feast && FEASTY[feast]) c = FEASTY[feast].color;                      // v72: aktívna téma má prednosť pred vlastným zvýraznením
   let s = $("accentStyle");
   if (!s) { s = document.createElement("style"); s.id = "accentStyle"; document.head.appendChild(s); }
   if (!c) { s.textContent = ""; return; }                                     // bez voľby ostáva pôvodná zlatá
@@ -2713,9 +2738,9 @@ function paintCell(c, x, y, color, size, glyph) {
   c.lineWidth = svetla ? 1.3 : 1; c.strokeStyle = svetla ? darken(color, 0.38) : "rgba(255,255,255,.28)"; c.stroke();     // v svetlej téme tmavší obrys kocky
   roundRectPath(c, px + w * 0.18, py + w * 0.14, w * 0.64, w * 0.16, r * 0.5);   // jemný lesk
   c.fillStyle = svetla ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.22)"; c.fill();
-  if (glyph) {                                    // v62: halloweenský motív vnútri kocky
-    c.font = Math.round(w * .95) + "px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = w * .12;
-    c.fillText(glyph, px + w / 2, py + w / 2 + w * .04); c.shadowBlur = 0;
+  if (glyph) {                                    // v72: motív vnútri kocky – väčší a výraznejší
+    c.font = Math.round(w * 1.1) + "px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.shadowColor = "rgba(0,0,0,.75)"; c.shadowBlur = w * .22;
+    c.fillText(glyph, px + w / 2, py + w / 2 + w * .05); c.shadowBlur = 0;
   }
 }
 
@@ -2726,7 +2751,7 @@ function drawCell(c, x, y, color, size) {
   let sp = sprites[key];
   if (!sp) {
     sp = document.createElement("canvas"); sp.width = sp.height = Math.round(size * k);
-    const sc = sp.getContext("2d"); sc.scale(k, k); paintCell(sc, 0, 0, color, size, feast === "halloween" ? glyphFor(color) : "");   // v62: motív v kocke
+    const sc = sp.getContext("2d"); sc.scale(k, k); paintCell(sc, 0, 0, color, size, feast && FEASTY[feast] ? glyphFor(color) : "");   // v62: motív v kocke
     sprites[key] = sp;
   }
   c.drawImage(sp, x * size, y * size, size, size);
@@ -2891,37 +2916,50 @@ document.querySelectorAll("#touch button").forEach(b => {
 
 /* ===== v62: TAJNÉ TEMATICKÉ PREKVAPENIA – 3× rýchle ťuknutie na „⚙️ Nastavenia" ===== */
 const FEAST_KEY = "rodinnyTetris_sviatok";
-const HAL_COLOR = "#F08C4A";                                             // v65: pumpkinová oranžová celej témy
+/* v72: prehľadná zbierka tém – každá nová téma = jeden záznam + CSS blok + tlačidlo v tajnom menu */
+const FEASTY = {
+  halloween: { color: "#F08C4A", bg: "#060409",
+    motivy: { I: "💀", J: "🦴", L: "🎃", O: "👻", S: "🕷️", T: "🧟", Z: "🦇" },
+    pozadie: ["🎃", "👻", "💀", "🦇", "🕷️", "🕸️"] },
+  xmas: { color: "#F2C14E", bg: "#04140c",
+    motivy: { I: "❄️", J: "🎁", L: "🎄", O: "⭐", S: "🕯️", T: "🧦", Z: "🔔" },
+    pozadie: ["🎄", "⭐", "❄️", "🎁", "🔔", "🕯️", "🧦"] }
+};
+const HAL_COLOR = FEASTY.halloween.color;                               // v65: pumpkinová oranžová celej témy
 let feast = ""; try { feast = localStorage.getItem(FEAST_KEY) || ""; } catch (e) {}
-const HAL_MOTIVY = { I: "💀", J: "🦴", L: "🎃", O: "👻", S: "🕷️", T: "🧟", Z: "🦇" };      // motívy vnútri kociek
-const HAL_POZADIE = ["🎃", "👻", "💀", "🦇", "🕷️", "🕸️"];                                 // motívy v pozadí
-function glyphFor(color) { const t = TYPES.find(x => SHAPES[x].color === color); return t ? HAL_MOTIVY[t] : ""; }
+function glyphFor(color) {
+  if (!feast || !FEASTY[feast]) return "";
+  const t = TYPES.find(x => SHAPES[x].color === color);
+  return t ? FEASTY[feast].motivy[t] : "";
+}
 function applyFeast(k) {
-  feast = k === "halloween" ? "halloween" : "";
+  feast = FEASTY[k] ? k : "";
   try { localStorage.setItem(FEAST_KEY, feast); } catch (e) {}
   document.documentElement.setAttribute("data-feast", feast || "off");
   document.querySelectorAll(".feastTp").forEach(s => s.remove());       // dekory pridané minulým spustením
-  if (feast === "halloween") {                                         // v63: ďalšie motívy okolo hracej plochy
-    const gb = document.querySelector(".game-bg");
+  if (feast) {                                                          // v63/67: motívy okolo a po bokoch hracej plochy
+    const cfg = FEASTY[feast], gb = document.querySelector(".game-bg");
     for (let i = 0; i < 8; i++) {
       const s = document.createElement("span"); s.className = "tp feastTp";
-      s.style.cssText = "--c:#F08C4A;top:" + (5 + Math.random() * 88).toFixed(1) + "%;left:" + (3 + Math.random() * 92).toFixed(1) +
+      s.style.cssText = "--c:" + cfg.color + ";top:" + (5 + Math.random() * 88).toFixed(1) + "%;left:" + (3 + Math.random() * 92).toFixed(1) +
         "%;animation-duration:" + (9 + Math.random() * 10).toFixed(1) + "s;animation-delay:-" + (Math.random() * 8).toFixed(1) + "s";
       gb.appendChild(s);
     }
-  }
-  if (feast === "halloween") [["left", 10], ["left", 44], ["left", 78], ["right", 6], ["right", 38], ["right", 72]].forEach(([strana, top]) => {   // v67: motívy po bokoch plochy
+    [["left", 10], ["left", 44], ["left", 78], ["right", 6], ["right", 38], ["right", 72]].forEach(([strana, top]) => {   // v67: motívy po bokoch plochy
       const s = document.createElement("span"); s.className = "tp feastTp feastSide";
-      s.style.cssText = "--c:#F08C4A;" + strana + ":1%;" + "top:" + top + "%;animation-duration:" + (10 + Math.random() * 8).toFixed(1) + "s;animation-delay:-" + (Math.random() * 6).toFixed(1) + "s";
+      s.style.cssText = "--c:" + cfg.color + ";" + strana + ":1%;" + "top:" + top + "%;animation-duration:" + (10 + Math.random() * 8).toFixed(1) + "s;animation-delay:-" + (Math.random() * 6).toFixed(1) + "s";
       gb.appendChild(s);
     });
+  }
   document.querySelectorAll(".tp").forEach(t => {                      // tetrominá v pozadí -> motívy
-    t.textContent = feast === "halloween" ? HAL_POZADIE[Math.floor(Math.random() * HAL_POZADIE.length)] : "";
+    t.textContent = (feast && FEASTY[feast]) ? FEASTY[feast].pozadie[Math.floor(Math.random() * FEASTY[feast].pozadie.length)] : "";
   });
   $("feastHalloween").classList.toggle("on", feast === "halloween");
+  $("feastXmas").classList.toggle("on", feast === "xmas");
   applyAccent((player && player.settings && player.settings.accent) || null);   // v65: farbu témy alebo používateľa vyrieši applyAccent
+  if (player) { colorize($("player"), player.color); colorize($("sheetName"), player.color); }   // v72: oprava – po vypnutí témy sa vráti farba mena
   const meta = document.querySelector('meta[name="theme-color"]');   // stavový riadok mobilu v temnej farbe
-  if (meta) meta.setAttribute("content", feast === "halloween" ? "#060409" : (jeSvetla() ? "#f3f5fb" : "#0b0e17"));
+  if (meta) meta.setAttribute("content", (feast && FEASTY[feast]) ? FEASTY[feast].bg : (jeSvetla() ? "#f3f5fb" : "#0b0e17"));
   if (canvasReady) refreshCanvas();                                    // kocky sa prekreslia s motívmi
 }
 (function secretMenu() {
@@ -2932,6 +2970,7 @@ function applyFeast(k) {
     if (taps >= 3) { taps = 0; $("secret").hidden = false; }            // 3 rýchle ťuknutia = tajné menu
   });
   $("feastHalloween").onclick = () => applyFeast("halloween");
+  $("feastXmas").onclick = () => applyFeast("xmas");                        // v72: vianočná téma
   $("feastReset").onclick = () => { applyFeast(""); $("secretMsg").textContent = "✨ Všetko je späť v pôvodnom nastavení."; };
   $("secretClose").onclick = () => { $("secret").hidden = true; $("secretMsg").textContent = ""; };
   applyFeast(feast);                                                     // uložená téma sa obnoví po štarte

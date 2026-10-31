@@ -2747,7 +2747,7 @@ function paintCell(c, x, y, color, size, glyph) {
 /* Každá farba kocky sa nakreslí len raz do malého obrázka a potom sa len kopíruje (oveľa lacnejšie než gradient pre každú kocku) */
 const sprites = {};
 function drawCell(c, x, y, color, size) {
-  const k = c.__k || 1, key = color + "|" + size + "|" + k + "|" + (jeSvetla() ? "s" : "t") + (feast ? "|f" : "");     // obrázky kociek sú zvlášť pre každú tému a sviatok
+  const k = c.__k || 1, key = color + "|" + size + "|" + k + "|" + (jeSvetla() ? "s" : "t") + (feast ? "|" + feast : "");     // v73: kľúč rozlišuje AJ konkrétnu tému – inak si Vianoce brali staré halloweenské obrázky
   let sp = sprites[key];
   if (!sp) {
     sp = document.createElement("canvas"); sp.width = sp.height = Math.round(size * k);

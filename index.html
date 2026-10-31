@@ -428,6 +428,19 @@
   }
   .side { z-index: 30; }
   #admin { z-index: 40; }
+  /* ===== v62: TAJNÉ PREKVAPENIA – menu + Halloween téma ===== */
+  #secret { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+            background: var(--overlay); padding: 18px; }
+  #secret[hidden] { display: none; }
+  .secretCard { max-width: 340px; width: 100%; text-align: center; }
+  .secretActs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0 8px; }
+  :root[data-feast="halloween"] { --bg: #060409; --glow1: #2a1206; --glow2: #180a24;
+    --gold: #F08C4A; --accent: #F08C4A; --chartline: #F08C4A; --heat-on: #F08C4A;
+    --line: rgba(255,150,80,.22); --line2: rgba(255,150,80,.34); }
+  :root[data-feast="halloween"] .lbl, :root[data-feast="halloween"] .tag { color: #FFB36B; letter-spacing: .12em; }
+  :root[data-feast="halloween"] button:not(.ghost):not(.danger) { background: linear-gradient(180deg, #ffb36b, #e2661f); }
+  :root[data-feast="halloween"] .tp { width: 22px; height: 22px; background: none !important;
+    box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
   .appbar { display: flex; align-items: center; gap: 12px; flex: none;
     padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
@@ -797,6 +810,19 @@
   </div></div>
 </div>
 
+<!-- ===== TAJNÉ TEMATICKÉ PREKVAPENIA (3× rýchle ťuknutie na ⚙️ Nastavenia) ===== -->
+<div id="secret" role="dialog" aria-modal="true" aria-label="Tajné tematické prekvapenia" hidden>
+  <div class="card secretCard">
+    <h2>🎃 Tajné tematické prekvapenia</h2>
+    <div class="sub">Šššš… našiel si skryté menu! Téma premení celú hru – kedykoľvek sa dá vrátiť späť.</div>
+    <div class="secretActs">
+      <button id="feastHalloween" type="button">🎃 Halloween</button>
+      <button id="feastReset" type="button" class="ghost">✨ Pôvodný vzhľad</button>
+      <button id="secretClose" type="button" class="ghost">Zavrieť</button>
+    </div>
+    <div class="sub" id="secretMsg" role="status"></div>
+  </div>
+</div>
 <!-- ===== ADMIN: SPRÁVA POUŽÍVATEĽOV (celá obrazovka, rozdelená na sekcie) ===== -->
 <div id="admin" role="dialog" aria-modal="true" aria-label="Správa používateľov">
   <div class="appbar">
@@ -2651,7 +2677,7 @@ function roundRectPath(c, x, y, w, h, r) {
   c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
   c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
 }
-function paintCell(c, x, y, color, size) {
+function paintCell(c, x, y, color, size, glyph) {
   const pad = Math.max(1, size * 0.06), px = x * size + pad, py = y * size + pad, w = size - 2 * pad, r = size * 0.22;
   const g = c.createLinearGradient(px, py, px, py + w);
   g.addColorStop(0, lighten(color, 0.3)); g.addColorStop(0.6, color); g.addColorStop(1, color);
@@ -2660,16 +2686,20 @@ function paintCell(c, x, y, color, size) {
   c.lineWidth = svetla ? 1.3 : 1; c.strokeStyle = svetla ? darken(color, 0.38) : "rgba(255,255,255,.28)"; c.stroke();     // v svetlej téme tmavší obrys kocky
   roundRectPath(c, px + w * 0.18, py + w * 0.14, w * 0.64, w * 0.16, r * 0.5);   // jemný lesk
   c.fillStyle = svetla ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.22)"; c.fill();
+  if (glyph) {                                    // v62: halloweenský motív vnútri kocky
+    c.font = Math.round(w * .84) + "px system-ui"; c.textAlign = "center"; c.textBaseline = "middle";
+    c.fillText(glyph, px + w / 2, py + w / 2 + w * .05);
+  }
 }
 
 /* Každá farba kocky sa nakreslí len raz do malého obrázka a potom sa len kopíruje (oveľa lacnejšie než gradient pre každú kocku) */
 const sprites = {};
 function drawCell(c, x, y, color, size) {
-  const k = c.__k || 1, key = color + "|" + size + "|" + k + "|" + (jeSvetla() ? "s" : "t");     // obrázky kociek sú zvlášť pre každú tému
+  const k = c.__k || 1, key = color + "|" + size + "|" + k + "|" + (jeSvetla() ? "s" : "t") + (feast ? "|f" : "");     // obrázky kociek sú zvlášť pre každú tému a sviatok
   let sp = sprites[key];
   if (!sp) {
     sp = document.createElement("canvas"); sp.width = sp.height = Math.round(size * k);
-    const sc = sp.getContext("2d"); sc.scale(k, k); paintCell(sc, 0, 0, color, size);
+    const sc = sp.getContext("2d"); sc.scale(k, k); paintCell(sc, 0, 0, color, size, feast === "halloween" ? glyphFor(color) : "");   // v62: motív v kocke
     sprites[key] = sp;
   }
   c.drawImage(sp, x * size, y * size, size, size);
@@ -2830,6 +2860,34 @@ document.querySelectorAll("#touch button").forEach(b => {
   ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, stop));
 });
 
+/* ===== v62: TAJNÉ TEMATICKÉ PREKVAPENIA – 3× rýchle ťuknutie na „⚙️ Nastavenia" ===== */
+const FEAST_KEY = "rodinnyTetris_sviatok";
+let feast = ""; try { feast = localStorage.getItem(FEAST_KEY) || ""; } catch (e) {}
+const HAL_MOTIVY = { I: "💀", J: "🦴", L: "🎃", O: "👻", S: "🕷️", T: "🧟", Z: "🦇" };      // motívy vnútri kociek
+const HAL_POZADIE = ["🎃", "👻", "💀", "🦇", "🕷️", "🕸️"];                                 // motívy v pozadí
+function glyphFor(color) { const t = TYPES.find(x => SHAPES[x].color === color); return t ? HAL_MOTIVY[t] : ""; }
+function applyFeast(k) {
+  feast = k === "halloween" ? "halloween" : "";
+  try { localStorage.setItem(FEAST_KEY, feast); } catch (e) {}
+  document.documentElement.setAttribute("data-feast", feast || "off");
+  document.querySelectorAll(".tp").forEach(t => {                        // tetrominá v pozadí -> motívy
+    t.textContent = feast === "halloween" ? HAL_POZADIE[Math.floor(Math.random() * HAL_POZADIE.length)] : "";
+  });
+  $("feastHalloween").classList.toggle("on", feast === "halloween");
+  if (canvasReady) refreshCanvas();                                      // kocky sa prekreslia s motívmi
+}
+(function secretMenu() {
+  let taps = 0, cas = 0;
+  document.querySelector('#sideTabs .tab[data-p="settings"]').addEventListener("pointerdown", () => {
+    const teraz = Date.now();
+    taps = teraz - cas < 1300 ? taps + 1 : 1; cas = teraz;
+    if (taps >= 3) { taps = 0; $("secret").hidden = false; }            // 3 rýchle ťuknutia = tajné menu
+  });
+  $("feastHalloween").onclick = () => applyFeast("halloween");
+  $("feastReset").onclick = () => { applyFeast(""); $("secretMsg").textContent = "✨ Všetko je späť v pôvodnom nastavení."; };
+  $("secretClose").onclick = () => { $("secret").hidden = true; $("secretMsg").textContent = ""; };
+  applyFeast(feast);                                                     // uložená téma sa obnoví po štarte
+})();
 /* v21: verzia aplikácie sa automaticky prečíta z cache kľúča service workera (tetris-v20 -> "Verzia 20") */
 async function showAppVersion() {
   try {

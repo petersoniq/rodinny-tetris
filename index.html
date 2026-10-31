@@ -451,6 +451,7 @@
   /* v65: téma prepíše aj zvolený accent a farbu mena hráča – všetko zvýraznené je oranžové */
   :root[data-feast="halloween"] button:not(.ghost):not(.danger):not(.sm):not(.chip):not(.tab):not(.swatch):not(.pick) { background: linear-gradient(180deg, #ff9a3d, #d1581a); }
   :root[data-feast="halloween"] #player, :root[data-feast="halloween"] #sheetName { color: #F08C4A !important; }
+  :root[data-feast="halloween"] #hudAva { background: #F08C4A !important; }
   :root[data-feast="halloween"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
@@ -1175,6 +1176,7 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent) && navigator.standalone) docum
 
 /* Farba mena hráča; v svetlej téme ju CSS (trieda pc) stmaví, aby bola čitateľná */
 function colorize(el, color) {
+  if (feast === "halloween") color = HAL_COLOR;                 // v65: aktívna téma prefarbí mená na farbu dyne
   el.style.color = color || "";
   if (color) { el.classList.add("pc"); el.style.setProperty("--pc", color); }
   else { el.classList.remove("pc"); el.style.removeProperty("--pc"); }
@@ -2241,6 +2243,7 @@ async function saveLook(zmena) {
 /* ===== v51: ZVÝRAZŇOVACIA FARBA (žltá -> vybraná; v účtu, platí na všetkých zariadeniach) ===== */
 const ACCENTS = [null, "#5BC0EB", "#52B788", "#EF6A6A", "#9D6BCE", "#D96C9D", "#F4A261", "#2A9D8F", "#6D6875"];   // null = predvolená zlatá; v60: 9 farieb
 function applyAccent(c) {
+  if (feast === "halloween") c = HAL_COLOR;                          // v65: aktívna téma má prednosť pred vlastným zvýraznením
   let s = $("accentStyle");
   if (!s) { s = document.createElement("style"); s.id = "accentStyle"; document.head.appendChild(s); }
   if (!c) { s.textContent = ""; return; }                                     // bez voľby ostáva pôvodná zlatá
@@ -2874,6 +2877,7 @@ document.querySelectorAll("#touch button").forEach(b => {
 
 /* ===== v62: TAJNÉ TEMATICKÉ PREKVAPENIA – 3× rýchle ťuknutie na „⚙️ Nastavenia" ===== */
 const FEAST_KEY = "rodinnyTetris_sviatok";
+const HAL_COLOR = "#F08C4A";                                             // v65: pumpkinová oranžová celej témy
 let feast = ""; try { feast = localStorage.getItem(FEAST_KEY) || ""; } catch (e) {}
 const HAL_MOTIVY = { I: "💀", J: "🦴", L: "🎃", O: "👻", S: "🕷️", T: "🧟", Z: "🦇" };      // motívy vnútri kociek
 const HAL_POZADIE = ["🎃", "👻", "💀", "🦇", "🕷️", "🕸️"];                                 // motívy v pozadí
@@ -2896,7 +2900,7 @@ function applyFeast(k) {
     t.textContent = feast === "halloween" ? HAL_POZADIE[Math.floor(Math.random() * HAL_POZADIE.length)] : "";
   });
   $("feastHalloween").classList.toggle("on", feast === "halloween");
-  applyAccent(feast === "halloween" ? null : ((player && player.settings && player.settings.accent) || null));   // v65: téma prepíše zvolené zvýraznenie
+  applyAccent((player && player.settings && player.settings.accent) || null);   // v65: farbu témy alebo používateľa vyrieši applyAccent
   const meta = document.querySelector('meta[name="theme-color"]');   // stavový riadok mobilu v temnej farbe
   if (meta) meta.setAttribute("content", feast === "halloween" ? "#060409" : (jeSvetla() ? "#f3f5fb" : "#0b0e17"));
   if (canvasReady) refreshCanvas();                                    // kocky sa prekreslia s motívmi

@@ -438,7 +438,11 @@
     --gold: #F08C4A; --accent: #F08C4A; --chartline: #F08C4A; --heat-on: #F08C4A;
     --line: rgba(255,150,80,.22); --line2: rgba(255,150,80,.34); }
   :root[data-feast="halloween"] .lbl, :root[data-feast="halloween"] .tag { color: #FFB36B; letter-spacing: .12em; }
-  :root[data-feast="halloween"] button:not(.ghost):not(.danger) { background: linear-gradient(180deg, #ffb36b, #e2661f); }
+  :root[data-feast="halloween"] #login .logo { background: linear-gradient(180deg, #ffb36b 0%, #e2661f 70%);
+    -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 3px 14px rgba(240,140,74,.55)); }
+  :root[data-feast="halloween"] #comboBadge.b2b { background: linear-gradient(180deg, #ff9a3d, #d1581a); border-color: transparent; }
+  :root[data-feast="halloween"] .game-bg .tp { opacity: .45; width: 30px; height: 30px; font-size: 30px; line-height: 30px; }
+  :root[data-feast="halloween"] .login-bg .tp { opacity: .5; }
   :root[data-feast="halloween"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
@@ -2687,8 +2691,8 @@ function paintCell(c, x, y, color, size, glyph) {
   roundRectPath(c, px + w * 0.18, py + w * 0.14, w * 0.64, w * 0.16, r * 0.5);   // jemný lesk
   c.fillStyle = svetla ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.22)"; c.fill();
   if (glyph) {                                    // v62: halloweenský motív vnútri kocky
-    c.font = Math.round(w * .84) + "px system-ui"; c.textAlign = "center"; c.textBaseline = "middle";
-    c.fillText(glyph, px + w / 2, py + w / 2 + w * .05);
+    c.font = Math.round(w * .95) + "px system-ui"; c.textAlign = "center"; c.textBaseline = "middle"; c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = w * .12;
+    c.fillText(glyph, px + w / 2, py + w / 2 + w * .04); c.shadowBlur = 0;
   }
 }
 
@@ -2870,11 +2874,23 @@ function applyFeast(k) {
   feast = k === "halloween" ? "halloween" : "";
   try { localStorage.setItem(FEAST_KEY, feast); } catch (e) {}
   document.documentElement.setAttribute("data-feast", feast || "off");
-  document.querySelectorAll(".tp").forEach(t => {                        // tetrominá v pozadí -> motívy
+  document.querySelectorAll(".feastTp").forEach(s => s.remove());       // dekory pridané minulým spustením
+  if (feast === "halloween") {                                         // v63: ďalšie motívy okolo hracej plochy
+    const gb = document.querySelector(".game-bg");
+    for (let i = 0; i < 8; i++) {
+      const s = document.createElement("span"); s.className = "tp feastTp";
+      s.style.cssText = "--c:#F08C4A;top:" + (5 + Math.random() * 88).toFixed(1) + "%;left:" + (3 + Math.random() * 92).toFixed(1) +
+        "%;animation-duration:" + (9 + Math.random() * 10).toFixed(1) + "s;animation-delay:-" + (Math.random() * 8).toFixed(1) + "s";
+      gb.appendChild(s);
+    }
+  }
+  document.querySelectorAll(".tp").forEach(t => {                      // tetrominá v pozadí -> motívy
     t.textContent = feast === "halloween" ? HAL_POZADIE[Math.floor(Math.random() * HAL_POZADIE.length)] : "";
   });
   $("feastHalloween").classList.toggle("on", feast === "halloween");
-  if (canvasReady) refreshCanvas();                                      // kocky sa prekreslia s motívmi
+  const meta = document.querySelector('meta[name="theme-color"]');   // stavový riadok mobilu v temnej farbe
+  if (meta) meta.setAttribute("content", feast === "halloween" ? "#060409" : (jeSvetla() ? "#f3f5fb" : "#0b0e17"));
+  if (canvasReady) refreshCanvas();                                    // kocky sa prekreslia s motívmi
 }
 (function secretMenu() {
   let taps = 0, cas = 0;

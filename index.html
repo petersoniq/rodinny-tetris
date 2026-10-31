@@ -451,6 +451,8 @@
   /* v65: téma prepíše aj zvolený accent a farbu mena hráča – všetko zvýraznené je oranžové */
   :root[data-feast="halloween"] button:not(.ghost):not(.danger):not(.sm):not(.chip):not(.tab):not(.swatch):not(.pick) { background: linear-gradient(180deg, #ff9a3d, #d1581a); }
   :root[data-feast="halloween"] #player, :root[data-feast="halloween"] #sheetName { color: #F08C4A !important; }
+  /* v71: skóre v téme zdedí jej farbu */
+  :root[data-feast="halloween"] .hudScore .big { background: linear-gradient(180deg, #ffb36b 0%, #f08c4a 75%); -webkit-background-clip: text; background-clip: text; }
   :root[data-feast="halloween"] #hudAva { background: #F08C4A !important; }
   /* v67: viac pumpkinových prvkov + halloweenské obrázky po bokoch plochy */
   :root[data-feast="halloween"] #touch button { background: linear-gradient(180deg, rgba(255,150,80,.30), rgba(255,150,80,.10)); border-color: rgba(255,150,80,.38); }

@@ -330,6 +330,9 @@
   .lookRow { margin-top: 2px; }
   .lookLbl { font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--gold); margin-bottom: 2px; }
   .lookRow .picks { margin: 4px 0 10px; }
+  .lookGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 2px; }
+  .lookGrid .picks { margin: 2px 0 8px; }
+  .lookGrid .lookLbl { margin-bottom: 0; }
   #accentPicks, #colorPicks { display: grid; grid-template-columns: repeat(3, max-content); gap: 8px; }
   #palettePicks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   #palettePicks .palBtn { width: 100%; min-width: 0; }
@@ -729,13 +732,18 @@
         <div class="card" id="pLook">
           <h2>🎨 Môj vzhľad</h2>
           <div class="lookRow">
-            <div class="lookLbl">Meno v hre – emoji a farba</div>
+            <div class="lookLbl">Meno v hre – emoji</div>
             <div class="picks" id="emojiPicks"></div>
-            <div class="picks" id="colorPicks"></div>
           </div>
-          <div class="lookRow">
-            <div class="lookLbl">Zvýrazňovacia farba (namiesto zlatej)</div>
-            <div class="picks" id="accentPicks"></div>
+          <div class="lookGrid">
+            <div class="lookCol">
+              <div class="lookLbl">Farba mena</div>
+              <div class="picks" id="colorPicks"></div>
+            </div>
+            <div class="lookCol">
+              <div class="lookLbl">Zvýraznenie</div>
+              <div class="picks" id="accentPicks"></div>
+            </div>
           </div>
           <div class="lookRow">
             <div class="lookLbl">Farby kociek (motív hry)</div>

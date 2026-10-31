@@ -448,6 +448,9 @@
   :root[data-feast="halloween"] #login .tab.on, :root[data-feast="halloween"] .tog input:checked {
     background: linear-gradient(180deg, #ff9a3d, #d1581a); border-color: transparent; color: #2a1d00; }
   :root[data-feast="halloween"] .pick.sel, :root[data-feast="halloween"] .swatch.sel { outline-color: #F08C4A; }
+  /* v65: téma prepíše aj zvolený accent a farbu mena hráča – všetko zvýraznené je oranžové */
+  :root[data-feast="halloween"] button:not(.ghost):not(.danger):not(.sm):not(.chip):not(.tab):not(.swatch):not(.pick) { background: linear-gradient(180deg, #ff9a3d, #d1581a); }
+  :root[data-feast="halloween"] #player, :root[data-feast="halloween"] #sheetName { color: #F08C4A !important; }
   :root[data-feast="halloween"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
@@ -2893,6 +2896,7 @@ function applyFeast(k) {
     t.textContent = feast === "halloween" ? HAL_POZADIE[Math.floor(Math.random() * HAL_POZADIE.length)] : "";
   });
   $("feastHalloween").classList.toggle("on", feast === "halloween");
+  applyAccent(feast === "halloween" ? null : ((player && player.settings && player.settings.accent) || null));   // v65: téma prepíše zvolené zvýraznenie
   const meta = document.querySelector('meta[name="theme-color"]');   // stavový riadok mobilu v temnej farbe
   if (meta) meta.setAttribute("content", feast === "halloween" ? "#060409" : (jeSvetla() ? "#f3f5fb" : "#0b0e17"));
   if (canvasReady) refreshCanvas();                                    // kocky sa prekreslia s motívmi

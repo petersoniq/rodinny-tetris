@@ -80,8 +80,11 @@
   #lvBar i { display: block; height: 100%; width: 0%; border-radius: 2px; transition: width .3s;
              background: linear-gradient(90deg, var(--gold), color-mix(in srgb, var(--gold) 55%, #fff)); }
   .palPrev { display: inline-flex; gap: 2px; vertical-align: middle; margin-right: 6px; }
-  .palPrev i { width: 10px; height: 10px; border-radius: 3px; }
-  .swatch.palBtn { border-radius: 10px; width: auto; min-width: 34px; display: inline-flex; align-items: center; justify-content: center; background: var(--fill2); }
+  .palPrev i { width: 12px; height: 12px; border-radius: 3px; }
+  .swatch.palBtn { border-radius: 12px; width: auto; display: inline-flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 10px; background: var(--fill2); }
+  .palBtn .palPrev { margin-right: 0; }
+  .palBtn .palLbl { font-size: .68rem; font-weight: 600; color: var(--muted); line-height: 1; }
+  .palBtn.sel .palLbl { color: var(--text); }
   .panel { padding: 14px; }
   .glass { padding: 18px; border-radius: 22px; }
   h1 { margin: 0 0 12px; font-size: 1.4rem; }
@@ -2224,7 +2227,8 @@ function applyAccent(c) {
   items.forEach(it => {
     const b = document.createElement("button"); b.type = "button"; b.className = "swatch palBtn"; b.dataset.k = it.k;
     b.setAttribute("aria-label", "Farby kociek: " + it.label); b.title = it.label;
-    if (it.k) b.appendChild(mkPrev(PALETTY[it.k].c)); else b.textContent = "✕";
+    b.appendChild(mkPrev(it.k ? PALETTY[it.k].c : BASE_COLORS));
+    const l = document.createElement("span"); l.className = "palLbl"; l.textContent = it.label; b.appendChild(l);
     b.onclick = async () => {
       const stare = (player.settings && player.settings.palette) || "";
       applyPalette(it.k);

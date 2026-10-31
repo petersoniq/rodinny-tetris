@@ -326,7 +326,9 @@
   .badgeSum .bar { flex: 1; margin: 0; }
   .badgeSum .num { font-size: .82rem; font-weight: 700; color: var(--gold); white-space: nowrap; }
   .badgeSec { margin: 12px 0 6px; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-  #lookPrev { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; overflow-wrap: anywhere; }
+  .lookRow { margin-top: 2px; }
+  .lookLbl { font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--gold); margin-bottom: 2px; }
+  .lookRow .picks { margin: 4px 0 8px; }
   .picks { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 12px; }
   .pick { width: 38px; height: 38px; padding: 0; font-size: 1.2rem; border-radius: 10px; background: var(--fill2); border: 1px solid var(--line); color: var(--text); }
   .swatch { width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid var(--line2); color: var(--text); font-size: .8rem; }
@@ -721,16 +723,21 @@
         </div>
         <div class="card" id="pLook">
           <h2>🎨 Môj vzhľad</h2>
-          <div id="lookPrev"></div>
-          <div class="sub">Emoji pri mene</div>
-          <div class="picks" id="emojiPicks"></div>
-          <div class="sub">Farba mena</div>
-          <div class="picks" id="colorPicks"></div>
-          <div class="sub">Zvýrazňovacia farba aplikácie (namiesto zlatej)</div>
-          <div class="picks" id="accentPicks"></div>
-          <div class="sub">Farby kociek (motív hry)</div>
-          <div class="picks" id="palettePicks"></div>
-          <div class="sub" id="lookMsg" role="status"></div>
+          <div class="lookRow">
+            <div class="lookLbl">Meno v hre – emoji a farba</div>
+            <div class="picks" id="emojiPicks"></div>
+            <div class="picks" id="colorPicks"></div>
+          </div>
+          <div class="lookRow">
+            <div class="lookLbl">Zvýrazňovacia farba (namiesto zlatej)</div>
+            <div class="picks" id="accentPicks"></div>
+          </div>
+          <div class="lookRow">
+            <div class="lookLbl">Farby kociek (motív hry)</div>
+            <div class="picks" id="palettePicks"></div>
+          </div>
+          <div class="sub" id="lookMsg" role="status" style="margin:2px 0 0"></div>
+          <div class="sub" style="opacity:.75">Všetko sa ukladá v tvojom účtu – platí na všetkých zariadeniach.</div>
         </div>
       </div>
       <div class="view" id="setGame" hidden>
@@ -2143,7 +2150,7 @@ const FARBY = ["#4DD0E1", "#5C7CFA", "#F08C4A", "#E9C46A", "#52B788", "#9D6BCE",
 
 function applyLook() {                         // premietne emoji a farbu do karty hráča, panelu a náhľadu
   const meno = (player.emoji ? player.emoji + " " : "") + player.username + (player.is_admin ? " ★" : "");
-  [$("sheetName"), $("lookPrev")].forEach(e => { e.textContent = meno; colorize(e, player.color); });
+  $("sheetName").textContent = meno; colorize($("sheetName"), player.color);
   $("player").textContent = player.username + (player.is_admin ? " ★" : "");   // v hlavičke bez emoji – avatar už je v #hudAva
   colorize($("player"), player.color);
   const ava = $("hudAva");                                     // avatar v hlavičke: emoji alebo prvé písmeno

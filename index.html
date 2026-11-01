@@ -485,13 +485,13 @@
   :root[data-feast="xmas"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
   :root[data-feast="xmas"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
-  /* ===== v76: tematické bočné pruhy priamo v hernom okne (na mobile, kde je pozadie vypnuté) ===== */
-  .feastBar { display: none; position: absolute; top: 50%; transform: translateY(-50%); height: 84%; pointer-events: none; }
-  #feastBarL { left: 2px; } #feastBarR { right: 2px; }
+  /* ===== v76/77: tematické bočné pruhy vo voľnom priestore VEDĽA hracej plochy ===== */
+  .feastBar { display: none; position: absolute; top: 0; height: 100%; pointer-events: none; }
+  #feastBarL { right: calc(100% + 8px); } #feastBarR { left: calc(100% + 8px); }
   .fbIc { font-size: 22px; line-height: 1.15; animation: fbPulse 3.2s ease-in-out infinite; }
   @keyframes fbPulse { 0%,100% { opacity: .4; } 50% { opacity: .95; } }
   @media (max-width: 700px) {
-    :root:not([data-feast="off"]) #game .feastBar { display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+    :root:not([data-feast="off"]) #board-wrap .feastBar { display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
   }
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
   .appbar { display: flex; align-items: center; gap: 12px; flex: none;
@@ -657,8 +657,6 @@
 
 <!-- ===== 2. HRA ===== -->
 <div id="game" class="glass">
-  <div id="feastBarL" class="feastBar" aria-hidden="true"></div>
-  <div id="feastBarR" class="feastBar" aria-hidden="true"></div>
   <div class="game-bg" aria-hidden="true">
     <span class="tp" data-s="I" style="--c:#5BC0EB; top:5%;  left:3%;  animation-duration:16s"></span>
     <span class="tp" data-s="O" style="--c:#E9C46A; top:12%; right:4%; animation-duration:13s; animation-delay:-3s"></span>
@@ -691,6 +689,8 @@
   <div id="main">
     <div id="left">
       <div id="board-wrap">
+        <div id="feastBarL" class="feastBar" aria-hidden="true"></div>
+        <div id="feastBarR" class="feastBar" aria-hidden="true"></div>
         <div id="comboBadge" aria-hidden="true"></div>
         <canvas id="board" width="300" height="600"></canvas>
         <div id="overlay">
@@ -1373,7 +1373,7 @@ function fitBoard() {
     // na šírku je horná lišta a ovládanie po stranách plochy, preto sa výška neznižuje
     const availH = land ? vh - padY - 4
                         : vh - padY - $("hud").offsetHeight - $("touch").offsetHeight - gaps - 4;
-    const availW = land ? root.clientWidth - padX - 2 * 130 - 24 : root.clientWidth - padX - (feast ? 76 : 0);   // v76: miesto pre bočné tematické pruhy
+    const availW = land ? root.clientWidth - padX - 2 * 130 - 24 : root.clientWidth - padX;   // v77: pôvodná veľkosť plochy – pruhy sa ukladajú do voľného priestoru vedľa
     root.style.setProperty("--bw", Math.floor(Math.max(150, Math.min(availW, availH / 2, 520))) + "px");
   } else root.style.removeProperty("--bw");
   sizeCanvas($("board"), ctx, 300, 600);

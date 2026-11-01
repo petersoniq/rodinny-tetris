@@ -485,6 +485,14 @@
   :root[data-feast="xmas"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
   :root[data-feast="xmas"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
+  /* ===== v76: tematické bočné pruhy priamo v hernom okne (na mobile, kde je pozadie vypnuté) ===== */
+  .feastBar { display: none; position: absolute; top: 50%; transform: translateY(-50%); height: 84%; pointer-events: none; }
+  #feastBarL { left: 2px; } #feastBarR { right: 2px; }
+  .fbIc { font-size: 22px; line-height: 1.15; animation: fbPulse 3.2s ease-in-out infinite; }
+  @keyframes fbPulse { 0%,100% { opacity: .4; } 50% { opacity: .95; } }
+  @media (max-width: 700px) {
+    :root:not([data-feast="off"]) #game .feastBar { display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+  }
   .side.open, #admin.open { visibility: visible; opacity: 1; transform: none; transition: opacity .18s ease, transform .18s ease, visibility 0s; }
   .appbar { display: flex; align-items: center; gap: 12px; flex: none;
     padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
@@ -649,6 +657,8 @@
 
 <!-- ===== 2. HRA ===== -->
 <div id="game" class="glass">
+  <div id="feastBarL" class="feastBar" aria-hidden="true"></div>
+  <div id="feastBarR" class="feastBar" aria-hidden="true"></div>
   <div class="game-bg" aria-hidden="true">
     <span class="tp" data-s="I" style="--c:#5BC0EB; top:5%;  left:3%;  animation-duration:16s"></span>
     <span class="tp" data-s="O" style="--c:#E9C46A; top:12%; right:4%; animation-duration:13s; animation-delay:-3s"></span>
@@ -1363,7 +1373,7 @@ function fitBoard() {
     // na šírku je horná lišta a ovládanie po stranách plochy, preto sa výška neznižuje
     const availH = land ? vh - padY - 4
                         : vh - padY - $("hud").offsetHeight - $("touch").offsetHeight - gaps - 4;
-    const availW = land ? root.clientWidth - padX - 2 * 130 - 24 : root.clientWidth - padX;
+    const availW = land ? root.clientWidth - padX - 2 * 130 - 24 : root.clientWidth - padX - (feast ? 76 : 0);   // v76: miesto pre bočné tematické pruhy
     root.style.setProperty("--bw", Math.floor(Math.max(150, Math.min(availW, availH / 2, 520))) + "px");
   } else root.style.removeProperty("--bw");
   sizeCanvas($("board"), ctx, 300, 600);
@@ -2963,13 +2973,22 @@ function applyFeast(k) {
   document.querySelectorAll(".tp").forEach(t => {                      // tetrominá v pozadí -> motívy
     t.textContent = (feast && FEASTY[feast]) ? FEASTY[feast].pozadie[Math.floor(Math.random() * FEASTY[feast].pozadie.length)] : "";
   });
+  ["feastBarL", "feastBarR"].forEach(id => {                          // v76: bočné pruhy s ikonami popri ploche
+    const el = $(id); el.textContent = "";
+    if (feast) for (let i = 0; i < 7; i++) {
+      const s = document.createElement("span");
+      s.className = "feastTp fbIc"; s.style.animationDelay = (i * .35).toFixed(2) + "s";
+      s.textContent = FEASTY[feast].pozadie[Math.floor(Math.random() * FEASTY[feast].pozadie.length)];
+      el.appendChild(s);
+    }
+  });
   $("feastHalloween").classList.toggle("on", feast === "halloween");
   $("feastXmas").classList.toggle("on", feast === "xmas");
   applyAccent((player && player.settings && player.settings.accent) || null);   // v65: farbu témy alebo používateľa vyrieši applyAccent
   if (player) { colorize($("player"), player.color); colorize($("sheetName"), player.color); }   // v72: oprava – po vypnutí témy sa vráti farba mena
   const meta = document.querySelector('meta[name="theme-color"]');   // stavový riadok mobilu v temnej farbe
   if (meta) meta.setAttribute("content", (feast && FEASTY[feast]) ? FEASTY[feast].bg : (jeSvetla() ? "#f3f5fb" : "#0b0e17"));
-  if (canvasReady) refreshCanvas();                                    // kocky sa prekreslia s motívmi
+  if (canvasReady) { fitBoard(); refreshCanvas(); }                    // v76: plocha sa preráta (bočné pruhy) a prekreslia sa kocky s motívmi
 }
 (function secretMenu() {
   let taps = 0, cas = 0;

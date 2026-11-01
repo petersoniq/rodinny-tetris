@@ -527,6 +527,16 @@
   .udetail:empty { display: none; }
   .ucard .help div { padding: 2px 0; }
 
+  /* ===== v78: tematická animácia v strede obrazovky pri Tetrise ===== */
+  #tetrisFx { position: fixed; inset: 0; display: none; pointer-events: none; z-index: 60; }
+  #tetrisFx.on { display: block; }
+  #tetrisFx span { position: absolute; left: 50%; top: 44%; font-size: 42px; line-height: 1;
+    animation: tFx 1.05s ease-out forwards; }
+  @keyframes tFx {
+    0% { transform: translate(-50%, -50%) scale(.25) rotate(0); opacity: 0; }
+    18% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.45) rotate(var(--dr)); opacity: 0; }
+  }
   /* ===== MOBIL: hracia plocha + horná lišta, ostatné až po ťuknutí na hráča ===== */
   @media (max-width: 700px), (orientation: landscape) and (max-height: 520px) {
     :root { --bw: min(calc(100vw - 28px), 360px, max(150px, calc((100vh - 235px) / 2))); }
@@ -656,6 +666,7 @@
 </div>
 
 <!-- ===== 2. HRA ===== -->
+<div id="tetrisFx" aria-hidden="true"></div>
 <div id="game" class="glass">
   <div class="game-bg" aria-hidden="true">
     <span class="tp" data-s="I" style="--c:#5BC0EB; top:5%;  left:3%;  animation-duration:16s"></span>
@@ -1035,6 +1046,19 @@ function showCombo(c, bonus, isB2B, n) {
 }
 function updateComboHud() {
   $("comboHud").textContent = combo > 1 ? "Combo ×" + combo : "";
+}
+function tetrisFx() {                                  // v78: výbuch tematických ikon v strede obrazovky (len so zapnutou témou)
+  const cfg = feast && FEASTY[feast]; if (!cfg) return;                // bez zvolenej témy žiadna animácia
+  const el = $("tetrisFx"); el.textContent = ""; el.classList.add("on");
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement("span");
+    const ang = Math.random() * Math.PI * 2, d = 100 + Math.random() * 200;
+    s.style.cssText = "--dx:" + Math.round(Math.cos(ang) * d) + "px;--dy:" + Math.round(Math.sin(ang) * d - 50) +
+      "px;--dr:" + Math.round((Math.random() * 2 - 1) * 200) + "deg;animation-delay:" + (Math.random() * .15).toFixed(2) + "s";
+    s.textContent = cfg.pozadie[Math.floor(Math.random() * cfg.pozadie.length)];
+    el.appendChild(s);
+  }
+  setTimeout(() => { el.classList.remove("on"); el.textContent = ""; }, 1300);
 }
 
 /* Tvary kociek: každý je matica, 1 = štvorček. Farby sú pri každom tvare. */
@@ -2707,7 +2731,7 @@ function finishClear() {
   const b2bBonus = isB2B ? Math.round(rowPoints(4) * level * BONUS.b2b / 100) : 0;
   const multiBonus = n > 1 ? (n - 1) * BONUS.multi * level : 0;   // v27: bonus za viac riadkov naraz (dvojité/trojité/Tetris)
   score += rowPoints(n) * level + comboBonus + b2bBonus + multiBonus;
-  if (n === 4) { tetrises++; spawnConfetti(rows); }             // v53: Tetris = konfety
+  if (n === 4) { tetrises++; spawnConfetti(rows); tetrisFx(); }         // v78: pri Tetrise aj tematická animácia v strede
   b2b = n === 4;
   if (comboBonus || b2bBonus || multiBonus) showCombo(combo, comboBonus + b2bBonus + multiBonus, isB2B, n);
   updateComboHud();

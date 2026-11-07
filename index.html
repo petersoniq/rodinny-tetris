@@ -244,6 +244,10 @@
   .nextSlot { width: auto; height: 42px; border-radius: 12px; background: var(--fill1); border: 1px solid var(--line); padding: 0 4px;
               display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: inset 0 2px 8px rgba(0,0,0,.18); }
   #pNext canvas { display: block; width: 34px; height: 34px; }
+  /* v79: odkladacia zásobka (Hold) */
+  #holdBox { cursor: pointer; border-radius: 12px; padding: 1px 2px; }
+  #holdBox.off { opacity: .5; }
+  #holdBox canvas { width: 34px; height: 34px; }
   #next2, #next3 { width: 24px; height: 24px; opacity: .88; }
   .hudBest { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .hudMeta { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 4px; }
@@ -691,6 +695,10 @@
       <div id="lvBar"><i id="lvFill"></i></div>
     </div>
     <div id="pNext">
+      <div id="holdBox" title="Odklad – ťuknutím vymeníš kocku (raz za padanie)">
+        <div class="lbl nextLbl">Odklad</div>
+        <div class="nextSlot"><canvas id="hold" width="60" height="60"></canvas></div>
+      </div>
       <div class="lbl nextLbl">Ďalšia</div>
       <div class="nextSlot"><canvas id="next" width="120" height="120"></canvas><canvas id="next2" width="60" height="60"></canvas><canvas id="next3" width="60" height="60"></canvas></div>
     </div>
@@ -1036,10 +1044,10 @@ const rowPoints = n => [0, BONUS.p1, BONUS.p2, BONUS.p3, BONUS.p4][n] || 0;     
 
 /* v20: combo (po sebe idúce mazania) a back-to-back Tetris */
 let combo = 0, b2b = false;
-function showCombo(c, bonus, isB2B, n) {
+function showCombo(c, bonus, isB2B, n, gold) {
   const b = $("comboBadge");
   const nazov = n === 4 ? (isB2B ? "B2B TETRIS!" : "TETRIS!") : n === 3 ? "TROJITNÉ!" : n === 2 ? "DVOJITNÉ!" : "COMBO ×" + c;
-  b.textContent = nazov + " +" + bonus;
+  b.textContent = nazov + " +" + bonus + (gold ? " ✨ ×2" : "");      // v79: zlatá kocka zdvojnásobí body
   b.classList.toggle("b2b", isB2B || n === 4);
   b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
   sfx("combo", c);
@@ -1226,7 +1234,7 @@ let themePref = "dark", canvasReady = false;
 const jeSvetla = () => document.documentElement.getAttribute("data-theme") === "light";
 const mqSvetla = window.matchMedia ? window.matchMedia("(prefers-color-scheme: light)") : null;
 const resolveTheme = pref => (pref === "light" || (pref === "auto" && mqSvetla && mqSvetla.matches) ? "light" : "dark");
-function refreshCanvas() { drawnSig = ""; if (grid) { draw(); if (current && nextType) drawNext(); } }      // hracia plocha sa prekreslí farbami novej témy
+function refreshCanvas() { drawnSig = ""; if (grid) { draw(); if (current && nextType) { drawNext(); drawHold(); } } }      // v79: aj odklad
 function applyTheme(pref) {
   themePref = ["dark", "light", "auto"].includes(pref) ? pref : "dark";
   const t = resolveTheme(themePref);
@@ -1719,6 +1727,7 @@ $("restartBtn").onclick = () => {
   else newGame();
 };
 $("newBtn").onclick = () => { clearSave(); newGame(); };
+$("holdBox").onclick = doHold;                                        // v79: ťuk na okienko Odklad = výmena
 function goFullscreen() {                          // v75: natívny fullscreen – v nainštalovanej PWA (standalone) sa nespúšťa
   const d = document.documentElement;
   if (!document.fullscreenElement && !window.matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches && d.requestFullscreen)
@@ -2545,10 +2554,14 @@ async function init() {
 const ctx = $("board").getContext("2d");
 const nctx = $("next").getContext("2d");
 const n2ctx = $("next2").getContext("2d"), n3ctx = $("next3").getContext("2d");
+const hctx = $("hold").getContext("2d");                              // v79: odkladacia zásobka
+const GOLD = "#F7C948";                                               // v79: zlatá kocka
+let holdType = null, holdUsed = false, holdGold = false, pieceCount = 0, goldPiece = false;   // v79
+const pieceColor = t => (goldPiece && current && current.type === t) ? GOLD : SHAPES[t].color;   // farba padajúcej kocky (zlatá = bonusová)
 let grid, current, nextType, nextExtra = [], score, lines, level, tetrises = 0;   // nextExtra = 2. a 3. nasledujúca kocka
 let dropTimer, lastTime, running, paused, rafId;
 let gridRev = 0, drawnSig = "";     // plocha sa prekreslí len vtedy, keď sa niečo zmenilo (šetrí batériu)
-const stateSig = () => gridRev + "|" + (current ? current.type + current.x + "," + current.y + current.m.map(r => r.join("")).join("/") : "-");
+const stateSig = () => gridRev + "|" + (current ? current.type + current.x + "," + current.y + current.m.map(r => r.join("")).join("/") : "-") + "|" + holdType + (goldPiece ? "g" : "");   // v79: aj odklad a zlatá kocka
 function startLoop() { drawnSig = ""; cancelAnimationFrame(rafId); lastTime = performance.now(); rafId = requestAnimationFrame(loop); }
 
 const emptyGrid = () => Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -2573,6 +2586,7 @@ function makePiece(type) {
 
 function newGame() {
   anim = null; gameId = newId(); tetrises = 0; gridRev++;
+  holdType = null; holdGold = false; holdUsed = false; pieceCount = 0; goldPiece = false;   // v79
   grid = emptyGrid(); score = 0; lines = 0; level = 1; combo = 0; b2b = false; updateComboHud();
   dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
   nextType = randomType(); nextExtra = [randomType(), randomType()];
@@ -2584,9 +2598,11 @@ function newGame() {
 
 /* Vytvorí novú kocku; ak sa nezmestí, je koniec hry */
 function spawn() {
+  pieceCount++; goldPiece = pieceCount % 20 === 0;                    // v79: každá 20. kocka je zlatá (2× body)
+  holdUsed = false;
   current = makePiece(nextType);
   nextType = nextExtra.length ? nextExtra.shift() : randomType(); nextExtra.push(randomType());
-  drawNext();
+  drawNext(); drawHold();
   if (collides(current.m, current.x, current.y)) gameOver(); else saveGame();
 }
 
@@ -2653,7 +2669,7 @@ function saveGame() {
   try {
     localStorage.setItem(saveKey(), JSON.stringify({
       v: 1, gid: gameId, tet: tetrises, grid, cur: { type: current.type, m: current.m, x: current.x, y: current.y },
-      next: nextType, score, lines, level, at: Date.now()
+      next: nextType, score, lines, level, at: Date.now(), hld: holdType, hldG: holdGold, pc: pieceCount   // v79: odklad aj zlatá kocka
     }));
   } catch (e) {}
 }
@@ -2678,6 +2694,8 @@ function resumeGame() {
   const d = savedGame; savedGame = null;
   grid = d.grid; nextType = d.next; nextExtra = [randomType(), randomType()]; score = d.score; lines = d.lines; level = d.level;
   tetrises = Number.isInteger(d.tet) && d.tet >= 0 ? d.tet : 0; gridRev++;
+  holdType = (typeof d.hld === "string" && SHAPES[d.hld]) ? d.hld : null; holdGold = !!d.hldG;   // v79
+  pieceCount = Number.isInteger(d.pc) && d.pc >= 0 ? d.pc : 0; goldPiece = false; holdUsed = false;
   current = { type: d.cur.type, m: d.cur.m, x: d.cur.x, y: d.cur.y };
   anim = null; confetti = []; dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
   gameId = (typeof d.gid === "string" && /^[0-9a-f-]{36}$/i.test(d.gid)) ? d.gid : newId();
@@ -2690,7 +2708,7 @@ function resumeGame() {
 let anim = null;                 // { rows: [čísla riadkov], t0: začiatok, dur: trvanie v ms }
 function lockPiece() {
   current.m.forEach((row, y) => row.forEach((v, x) => {
-    if (v && current.y + y >= 0) grid[current.y + y][current.x + x] = SHAPES[current.type].color;
+    if (v && current.y + y >= 0) grid[current.y + y][current.x + x] = pieceColor(current.type);   // v79: zlatá kocka sa uloží zlate
   }));
   current = null; gridRev++;
   const full = [];
@@ -2722,6 +2740,7 @@ function spawnConfetti(rows) {
 
 function finishClear() {
   const n = anim.rows.length, before = level, rows = anim.rows;
+  const goldRows = rows.some(y => grid[y].some(c => c === GOLD));      // v79: zlatá kocka v mazaných riadkoch = 2× body
   grid = grid.filter((r, i) => !rows.includes(i));
   while (grid.length < ROWS) grid.unshift(Array(COLS).fill(null));
   gridRev++;
@@ -2730,10 +2749,10 @@ function finishClear() {
   const isB2B = n === 4 && b2b;                   // v20: dva Tetrisy po sebe = back-to-back
   const b2bBonus = isB2B ? Math.round(rowPoints(4) * level * BONUS.b2b / 100) : 0;
   const multiBonus = n > 1 ? (n - 1) * BONUS.multi * level : 0;   // v27: bonus za viac riadkov naraz (dvojité/trojité/Tetris)
-  score += rowPoints(n) * level + comboBonus + b2bBonus + multiBonus;
+  score += (rowPoints(n) * level + comboBonus + b2bBonus + multiBonus) * (goldRows ? 2 : 1);   // v79: zlatý bonus
   if (n === 4) { tetrises++; spawnConfetti(rows); tetrisFx(); }         // v78: pri Tetrise aj tematická animácia v strede
   b2b = n === 4;
-  if (comboBonus || b2bBonus || multiBonus) showCombo(combo, comboBonus + b2bBonus + multiBonus, isB2B, n);
+  if (comboBonus || b2bBonus || multiBonus) showCombo(combo, comboBonus + b2bBonus + multiBonus, isB2B, n, goldRows);
   updateComboHud();
   lines += n;
   level = Math.floor(lines / 10) + 1;             // každých 10 riadkov = vyššia úroveň
@@ -2794,7 +2813,7 @@ function drawCell(c, x, y, color, size) {
   let sp = sprites[key];
   if (!sp) {
     sp = document.createElement("canvas"); sp.width = sp.height = Math.round(size * k);
-    const sc = sp.getContext("2d"); sc.scale(k, k); paintCell(sc, 0, 0, color, size, feast && FEASTY[feast] ? glyphFor(color) : "");   // v62: motív v kocke
+    const sc = sp.getContext("2d"); sc.scale(k, k); paintCell(sc, 0, 0, color, size, color === GOLD ? "✨" : (feast && FEASTY[feast] ? glyphFor(color) : ""));   // v79: zlatá kocka má iskru
     sprites[key] = sp;
   }
   c.drawImage(sp, x * size, y * size, size, size);
@@ -2819,14 +2838,14 @@ function draw() {
   if (ghostOn) {                                                           // tieň sa dá vypnúť v nastaveniach
   let gy = current.y;                                                      // tieň: kde kocka dopadne
   while (!collides(current.m, current.x, gy + 1)) gy++;
-  ctx.save(); ctx.globalAlpha = jeSvetla() ? 0.8 : 0.4; ctx.lineWidth = 2; ctx.strokeStyle = jeSvetla() ? darken(SHAPES[current.type].color, 0.25) : SHAPES[current.type].color;
+  ctx.save(); ctx.globalAlpha = jeSvetla() ? 0.8 : 0.4; ctx.lineWidth = 2; ctx.strokeStyle = jeSvetla() ? darken(pieceColor(current.type), 0.25) : pieceColor(current.type);
   current.m.forEach((row, y) => row.forEach((v, x) => {
     if (v) { roundRectPath(ctx, (current.x + x) * CELL + 3, (gy + y) * CELL + 3, CELL - 6, CELL - 6, 6); ctx.stroke(); }
   }));
   ctx.restore();
   }
   current.m.forEach((row, y) => row.forEach((v, x) => {
-    if (v) drawCell(ctx, current.x + x, current.y + y, SHAPES[current.type].color, CELL);
+    if (v) drawCell(ctx, current.x + x, current.y + y, pieceColor(current.type), CELL);
   }));
   for (let i = confetti.length - 1; i >= 0; i--) {                  // v53: konfety padajú a miznú pod plochou
     const f = confetti[i]; f.x += f.vx; f.y += f.vy; f.vy += .25; f.r += f.vr;
@@ -2849,6 +2868,23 @@ function drawNext() {
     const ox2 = (60 / s2 - w2) / 2, oy2 = (60 / s2 - h2) / 2;
     s.m.forEach((row, y) => row.forEach((v, x) => { if (v) drawCell(c, ox2 + x, oy2 + y, s.color, s2); }));
   });
+  drawHold();
+}
+function drawHold() {                                                 // v79: náhľad odkladanej kocky
+  hctx.clearRect(0, 0, 60, 60);
+  $("holdBox").classList.toggle("off", holdUsed);                      // po vymene kocky zhasne, kým nepadne nová
+  if (!holdType) return;
+  const s = SHAPES[holdType], s2 = 12, w2 = s.m[0].length, h2 = s.m.length;
+  const ox2 = (60 / s2 - w2) / 2, oy2 = (60 / s2 - h2) / 2;
+  s.m.forEach((row, y) => row.forEach((v, x) => { if (v) drawCell(hctx, ox2 + x, oy2 + y, holdGold ? GOLD : s.color, s2); }));
+}
+function doHold() {                                                   // v79: výmena kocky s odkladom – raz za padanie
+  if (!running || paused || anim || !current || holdUsed) return;
+  const curType = current.type, curGold = goldPiece, from = holdType, fromGold = holdGold;
+  holdType = curType; holdGold = curGold; holdUsed = true;
+  sfx("rotate");
+  if (from) { goldPiece = fromGold; current = makePiece(from); drawNext(); saveGame(); }
+  else { spawn(); holdUsed = true; }                                  // prázdny odklad → padne ďalšia z radu (výmena sa minula)
 }
 
 /* =========================================================
@@ -2880,6 +2916,7 @@ function act(a) {
   else if (a === "right") move(1);
   else if (a === "rotate") rotate();
   else if (a === "down") { if (softDrop()) score += BONUS.soft; updateStats(); dropTimer = 0; }
+  else if (a === "hold") doHold();                                     // v79: výmena s odkladom
   else if (a === "drop") { hardDrop(); }
 }
 
@@ -2911,7 +2948,7 @@ document.addEventListener("keydown", e => {
   if (!running && $("overlay").style.display === "flex" && overlayMode !== "pause" && !e.repeat && (e.key === "Enter" || e.key === " ")) {
     e.preventDefault(); $("restartBtn").click(); return;
   }
-  const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "rotate", ArrowDown: "down", " ": "drop" };
+  const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "rotate", ArrowDown: "down", " ": "drop", c: "hold", C: "hold", Shift: "hold" };
   if (map[e.key]) {                                   // pohyb sa pri držaní opakuje, otočenie a pád nie
     e.preventDefault();
     if (!e.repeat || ["left", "right", "down"].includes(map[e.key])) act(map[e.key]);

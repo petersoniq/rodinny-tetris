@@ -553,7 +553,9 @@
     body { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
     #hud { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 6px; padding: 5px 10px; border-radius: 12px; }
     #pPlayer { flex: 1 1 auto; min-width: 0; justify-self: auto; }
-    #pNext { order: 3; justify-self: auto; }
+    #pNext { order: 3; justify-self: auto; flex-direction: row; align-items: center; gap: 8px; }   /* v80: Odklad a Ďalšia vedľa seba – hlavička zostane nízka */
+    #pNext > .nextLbl, #pNext > .nextSlot { order: 1; }                /* v80: na mobile je „Ďalšia" vľavo, „Odklad" vpravo */
+    #holdBox { order: 2; display: flex; flex-direction: row; align-items: center; gap: 4px; }
     #pScore { order: 2; flex: 1 1 auto; justify-self: auto; text-align: center; }
     #pScore .big { font-size: 1.5rem; }
     #pMeta { order: 4; flex: 1 1 100%; justify-content: center; font-size: .85rem; }

@@ -2547,6 +2547,10 @@ async function init() {
   window.addEventListener("orientationchange", () => setTimeout(fitBoard, 200));
   if (window.visualViewport) window.visualViewport.addEventListener("resize", fitBoard);
   document.addEventListener("fullscreenchange", fitBoard);   // v75: plocha sa preráta po prepnutí na celú obrazovku
+  if (window.ResizeObserver) {                                  // v83: keď hlavička alebo ovládanie zmení výšku počas hry (pribudne čip Combo, skóre priberie číslice…), plocha sa okamžite preráta – spodné menu už nikdy neprepadne
+    const ro = new ResizeObserver(() => fitBoard());
+    ro.observe($("hud")); ro.observe($("touch"));
+  }
   $("nameInput").focus();
   const pozv = new URLSearchParams(location.search).get("kod");          // pozvánka: ?kod=...
   if (pozv) history.replaceState(null, "", location.pathname + location.hash);   // kód nezostane v adrese

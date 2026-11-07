@@ -553,27 +553,34 @@
     body { padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
     #hud { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 6px; padding: 5px 10px; border-radius: 12px; }
     #pPlayer { flex: 1 1 auto; min-width: 0; justify-self: auto; }
-    #pNext { order: 3; justify-self: auto; flex-direction: row; align-items: center; gap: 8px; }   /* v80: Odklad a Ďalšia vedľa seba – hlavička zostane nízka */
-    #pNext > .nextLbl, #pNext > .nextSlot { order: 1; }                /* v80: na mobile je „Ďalšia" vľavo, „Odklad" vpravo */
-    #holdBox { order: 2; display: flex; flex-direction: row; align-items: center; gap: 4px; }
+    #pNext { order: 3; justify-self: auto; flex-direction: row; align-items: center; gap: 6px; flex: 0 0 auto; }   /* v81: vždy v jednom riadku s menom a skóre */
+    #pNext > .nextLbl, #pNext > .nextSlot { order: 1; }                /* „Ďalšia" vľavo, „Odklad" vpravo */
+    #holdBox { order: 2; display: flex; flex-direction: row; align-items: center; gap: 3px; }
+    /* v81: kompaktná hlavička – všetko prenesené do jedného riadku */
+    #hud { padding: 4px 8px; gap: 2px 6px; }
+    #pNext canvas { width: 22px; height: 22px; }
+    #next2, #next3 { width: 15px; height: 15px; }
+    .nextSlot { height: 26px; padding: 0 2px; gap: 2px; border-radius: 8px; }
+    .nextLbl { font-size: .5rem; }
+    .pname { font-size: .85rem; }
+    #pPlayer .sub { font-size: .62rem; }
+    #pScore .big { font-size: 1.2rem; }
+    #hudAva { width: 24px; height: 24px; font-size: .8rem; }
+    .hudMeta { font-size: .74rem; gap: 3px; }
+    #hudAva { width: 24px; height: 24px; font-size: .8rem; }
     #pScore { order: 2; flex: 1 1 auto; justify-self: auto; text-align: center; }
-    #pScore .big { font-size: 1.5rem; }
-    #pMeta { order: 4; flex: 1 1 100%; justify-content: center; font-size: .85rem; }
+    #pMeta { order: 4; flex: 1 1 100%; justify-content: center; }
     .card { padding: 5px 10px; border-radius: 12px; }
     .game-bg { display: none; }              /* na mobile šetrí batériu */
     .sub { font-size: .75rem; line-height: 1.2; }
-    .pname { font-size: .95rem; line-height: 1.2; }
+    .pname { line-height: 1.2; }
     .big { font-size: 1.2rem; line-height: 1.25; }
-    .hudMeta { flex-wrap: wrap; gap: 4px; }
+    .hudMeta { flex-wrap: wrap; }
     .hudMeta .chip { flex: none; padding: 4px 11px; border-radius: 9px; }
     #updBadge { padding: 4px 11px; font-size: .78rem; }
     #pPlayer .sub { white-space: nowrap; }
     .chev { display: none; }
-    .nextLbl { font-size: .56rem; }
-    #hudAva { width: 28px; height: 28px; font-size: .9rem; border-radius: 9px; }
-    .nextSlot { width: auto; height: 36px; border-radius: 10px; padding: 0 3px; gap: 3px; }
-    #pNext canvas { width: 28px; height: 28px; }
-    #next2, #next3 { width: 20px; height: 20px; }
+    #hudAva { border-radius: 8px; }
     #main { display: flex; flex-direction: column; align-items: stretch; flex: 1; }
     #left { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
     #touch { width: 100%; margin-top: 6px; gap: 8px; }

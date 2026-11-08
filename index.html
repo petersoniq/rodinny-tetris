@@ -489,6 +489,30 @@
   :root[data-feast="xmas"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
   :root[data-feast="xmas"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
+  /* ===== v84: ⚽ ŠPORTOVÁ TÉMA – štadiónová modrá a trávová zelená ===== */
+  :root[data-feast="sport"] { --bg: #050d1c; --glow1: #0b2e3e; --glow2: #12244d;
+    --gold: #6FE04A; --accent: #6FE04A; --chartline: #6FE04A; --heat-on: #6FE04A;
+    --line: rgba(130,230,140,.22); --line2: rgba(130,230,140,.34); }
+  :root[data-feast="sport"] .lbl, :root[data-feast="sport"] .tag { color: #9FE07A; letter-spacing: .12em; }
+  :root[data-feast="sport"] #login .logo { background: linear-gradient(180deg, #c8f59a 0%, #3a9d2e 70%);
+    -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 3px 14px rgba(111,224,74,.55)); }
+  :root[data-feast="sport"] #comboBadge.b2b { background: linear-gradient(180deg, #c8f59a, #3a9d2e); border-color: transparent; }
+  :root[data-feast="sport"] .game-bg .tp { opacity: .45; width: 30px; height: 30px; font-size: 30px; line-height: 30px; }
+  :root[data-feast="sport"] .login-bg .tp { opacity: .5; }
+  :root[data-feast="sport"] .tab.on, :root[data-feast="sport"] .chip.on,
+  :root[data-feast="sport"] #login .tab.on, :root[data-feast="sport"] .tog input:checked {
+    background: linear-gradient(180deg, #b6f26b, #3a9d2e); border-color: transparent; color: #0d2400; }
+  :root[data-feast="sport"] .pick.sel, :root[data-feast="sport"] .swatch.sel { outline-color: #6FE04A; }
+  :root[data-feast="sport"] button:not(.ghost):not(.danger):not(.sm):not(.chip):not(.tab):not(.swatch):not(.pick) { background: linear-gradient(180deg, #b6f26b, #3a9d2e); }
+  :root[data-feast="sport"] #player, :root[data-feast="sport"] #sheetName { color: #6FE04A !important; }
+  :root[data-feast="sport"] .hudScore .big { background: linear-gradient(180deg, #c8f59a 0%, #6fe04a 75%); -webkit-background-clip: text; background-clip: text; }
+  :root[data-feast="sport"] #hudAva { background: #6FE04A !important; }
+  :root[data-feast="sport"] #touch button { background: linear-gradient(180deg, rgba(130,230,140,.30), rgba(130,230,140,.10)); border-color: rgba(130,230,140,.38); }
+  :root[data-feast="sport"] .glass { border-color: rgba(130,230,140,.28); }
+  :root[data-feast="sport"] #overlayText > div:first-child { color: #6FE04A; }
+  :root[data-feast="sport"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
+  :root[data-feast="sport"] .tp { width: 22px; height: 22px; background: none !important;
+    box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
   /* ===== v76/77: tematické bočné pruhy vo voľnom priestore VEDĽA hracej plochy ===== */
   .feastBar { display: none; position: absolute; top: 0; height: 100%; pointer-events: none; }
   #feastBarL { right: calc(100% + 8px); } #feastBarR { left: calc(100% + 8px); }
@@ -901,6 +925,7 @@
     <div class="secretActs">
       <button id="feastHalloween" type="button">🎃 Halloween</button>
       <button id="feastXmas" type="button">🎄 Vianoce</button>
+      <button id="feastSport" type="button">⚽ Šport</button>
       <button id="feastReset" type="button" class="ghost">✨ Pôvodný vzhľad</button>
       <button id="secretClose" type="button" class="ghost">Zavrieť</button>
     </div>
@@ -3017,7 +3042,10 @@ const FEASTY = {
     pozadie: ["🎃", "👻", "💀", "🦇", "🕷️", "🕸️"] },
   xmas: { color: "#F2C14E", bg: "#04140c",
     motivy: { I: "❄️", J: "🎁", L: "🎄", O: "⭐", S: "🕯️", T: "🧦", Z: "🔔" },
-    pozadie: ["🎄", "⭐", "❄️", "🎁", "🔔", "🕯️", "🧦"] }
+    pozadie: ["🎄", "⭐", "❄️", "🎁", "🔔", "🕯️", "🧦"] },
+  sport: { color: "#6FE04A", bg: "#050d1c",
+    motivy: { I: "🏃", J: "🏀", L: "⚽", O: "🏆", S: "🎾", T: "🏐", Z: "🥇" },
+    pozadie: ["⚽", "🏀", "🏆", "🎾", "🏐", "🏃", "🥇"] }
 };
 const HAL_COLOR = FEASTY.halloween.color;                               // v65: pumpkinová oranžová celej témy
 let feast = ""; try { feast = localStorage.getItem(FEAST_KEY) || ""; } catch (e) {}
@@ -3059,6 +3087,7 @@ function applyFeast(k) {
   });
   $("feastHalloween").classList.toggle("on", feast === "halloween");
   $("feastXmas").classList.toggle("on", feast === "xmas");
+  $("feastSport").classList.toggle("on", feast === "sport");
   applyAccent((player && player.settings && player.settings.accent) || null);   // v65: farbu témy alebo používateľa vyrieši applyAccent
   if (player) { colorize($("player"), player.color); colorize($("sheetName"), player.color); }   // v72: oprava – po vypnutí témy sa vráti farba mena
   const meta = document.querySelector('meta[name="theme-color"]');   // stavový riadok mobilu v temnej farbe
@@ -3074,6 +3103,7 @@ function applyFeast(k) {
   });
   $("feastHalloween").onclick = () => applyFeast("halloween");
   $("feastXmas").onclick = () => applyFeast("xmas");                        // v72: vianočná téma
+  $("feastSport").onclick = () => applyFeast("sport");                      // v84: športová téma
   $("feastReset").onclick = () => { applyFeast(""); $("secretMsg").textContent = "✨ Všetko je späť v pôvodnom nastavení."; };
   $("secretClose").onclick = () => { $("secret").hidden = true; $("secretMsg").textContent = ""; };
   applyFeast(feast);                                                     // uložená téma sa obnoví po štarte

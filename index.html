@@ -489,27 +489,27 @@
   :root[data-feast="xmas"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
   :root[data-feast="xmas"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
-  /* ===== v84: ⚽ ŠPORTOVÁ TÉMA – štadiónová modrá a trávová zelená ===== */
-  :root[data-feast="sport"] { --bg: #050d1c; --glow1: #0b2e3e; --glow2: #12244d;
-    --gold: #6FE04A; --accent: #6FE04A; --chartline: #6FE04A; --heat-on: #6FE04A;
-    --line: rgba(130,230,140,.22); --line2: rgba(130,230,140,.34); }
-  :root[data-feast="sport"] .lbl, :root[data-feast="sport"] .tag { color: #9FE07A; letter-spacing: .12em; }
-  :root[data-feast="sport"] #login .logo { background: linear-gradient(180deg, #c8f59a 0%, #3a9d2e 70%);
-    -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 3px 14px rgba(111,224,74,.55)); }
-  :root[data-feast="sport"] #comboBadge.b2b { background: linear-gradient(180deg, #c8f59a, #3a9d2e); border-color: transparent; }
+  /* ===== v84/85: ⚽ ŠPORTOVÁ TÉMA – zemitejšia zelená, tlmené sivasté texty ===== */
+  :root[data-feast="sport"] { --bg: #050d1c; --glow1: #08222e; --glow2: #0d1b38;
+    --gold: #3FA844; --accent: #3FA844; --chartline: #3FA844; --heat-on: #3FA844;
+    --line: rgba(90,180,100,.20); --line2: rgba(90,180,100,.30); }
+  :root[data-feast="sport"] .lbl, :root[data-feast="sport"] .tag { color: #5F9E52; letter-spacing: .12em; }
+  :root[data-feast="sport"] #login .logo { background: linear-gradient(180deg, #7fd45e 0%, #2e7d24 70%);
+    -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 3px 14px rgba(63,168,68,.45)); }
+  :root[data-feast="sport"] #comboBadge.b2b { background: linear-gradient(180deg, #7cc75a, #2e7d24); border-color: transparent; }
   :root[data-feast="sport"] .game-bg .tp { opacity: .45; width: 30px; height: 30px; font-size: 30px; line-height: 30px; }
   :root[data-feast="sport"] .login-bg .tp { opacity: .5; }
   :root[data-feast="sport"] .tab.on, :root[data-feast="sport"] .chip.on,
   :root[data-feast="sport"] #login .tab.on, :root[data-feast="sport"] .tog input:checked {
-    background: linear-gradient(180deg, #b6f26b, #3a9d2e); border-color: transparent; color: #0d2400; }
-  :root[data-feast="sport"] .pick.sel, :root[data-feast="sport"] .swatch.sel { outline-color: #6FE04A; }
-  :root[data-feast="sport"] button:not(.ghost):not(.danger):not(.sm):not(.chip):not(.tab):not(.swatch):not(.pick) { background: linear-gradient(180deg, #b6f26b, #3a9d2e); }
-  :root[data-feast="sport"] #player, :root[data-feast="sport"] #sheetName { color: #6FE04A !important; }
-  :root[data-feast="sport"] .hudScore .big { background: linear-gradient(180deg, #c8f59a 0%, #6fe04a 75%); -webkit-background-clip: text; background-clip: text; }
-  :root[data-feast="sport"] #hudAva { background: #6FE04A !important; }
-  :root[data-feast="sport"] #touch button { background: linear-gradient(180deg, rgba(130,230,140,.30), rgba(130,230,140,.10)); border-color: rgba(130,230,140,.38); }
-  :root[data-feast="sport"] .glass { border-color: rgba(130,230,140,.28); }
-  :root[data-feast="sport"] #overlayText > div:first-child { color: #6FE04A; }
+    background: linear-gradient(180deg, #7cc75a, #2e7d24); border-color: transparent; color: #041500; }
+  :root[data-feast="sport"] .pick.sel, :root[data-feast="sport"] .swatch.sel { outline-color: #3FA844; }
+  :root[data-feast="sport"] button:not(.ghost):not(.danger):not(.sm):not(.chip):not(.tab):not(.swatch):not(.pick) { background: linear-gradient(180deg, #7cc75a, #2e7d24); }
+  :root[data-feast="sport"] #player, :root[data-feast="sport"] #sheetName { color: #3FA844 !important; }
+  :root[data-feast="sport"] .hudScore .big { background: linear-gradient(180deg, #8fd470 0%, #3fa844 75%); -webkit-background-clip: text; background-clip: text; }
+  :root[data-feast="sport"] #hudAva { background: #3FA844 !important; }
+  :root[data-feast="sport"] #touch button { background: linear-gradient(180deg, rgba(90,180,100,.25), rgba(90,180,100,.08)); border-color: rgba(90,180,100,.32); }
+  :root[data-feast="sport"] .glass { border-color: rgba(90,180,100,.22); }
+  :root[data-feast="sport"] #overlayText > div:first-child { color: #3FA844; }
   :root[data-feast="sport"] .feastSide { width: 34px; height: 34px; font-size: 34px; line-height: 34px; opacity: .6; }
   :root[data-feast="sport"] .tp { width: 22px; height: 22px; background: none !important;
     box-shadow: none !important; opacity: .55; font-size: 20px; line-height: 22px; }
@@ -3043,7 +3043,7 @@ const FEASTY = {
   xmas: { color: "#F2C14E", bg: "#04140c",
     motivy: { I: "❄️", J: "🎁", L: "🎄", O: "⭐", S: "🕯️", T: "🧦", Z: "🔔" },
     pozadie: ["🎄", "⭐", "❄️", "🎁", "🔔", "🕯️", "🧦"] },
-  sport: { color: "#6FE04A", bg: "#050d1c",
+  sport: { color: "#3FA844", bg: "#050d1c",
     motivy: { I: "🏃", J: "🏀", L: "⚽", O: "🏆", S: "🎾", T: "🏐", Z: "🥇" },
     pozadie: ["⚽", "🏀", "🏆", "🎾", "🏐", "🏃", "🥇"] }
 };

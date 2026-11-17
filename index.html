@@ -1834,7 +1834,8 @@ async function loadAdmin() {
   const [u, c, v] = await Promise.all([db.rpc("admin_users"), db.rpc("admin_get_code"), db.rpc("admin_versions")]);   // v87: aj verzie appiek
   if (u.error) return adminMsg("Chyba: " + u.error.message);
   const verMap = {};
-  if (!v.error) (v.data || []).forEach(x => { verMap[x.id] = x.app_version; });
+  if (v.error) adminMsg("⚠️ Verzie appiek sa nedajú načítať – v Supabase chýba sekcia 8 zo súboru supabase-suboje.sql (" + v.error.message + ")");
+  else (v.data || []).forEach(x => { verMap[x.id] = x.app_version; });
   const curVer = Number((($("appVersion").textContent || "").match(/\d+/) || [])[0]) || null;
   $("codeAdmin").value = c.data || "";
   kodNaServeri = c.data || ""; if (!$("qrBox").hidden) renderQr();
@@ -3300,7 +3301,10 @@ async function showAppVersion() {
   } catch (e) { /* offline alebo nedostupný sw.js: zóstane neutrálne "Verzia…" */ }
 }
 function reportVersion(ver) {                          // v87: uloží poslednú použitú verziu appky do profilu
-  try { if (player && db && ver) db.rpc("set_app_version", { p_ver: ver }); } catch (e) {}
+  if (!player || !db || !ver) return;
+  db.rpc("set_app_version", { p_ver: ver }).then(r => {
+    if (r && r.error) console.warn("Verzia sa neuložila (chýba SQL sekcia 8?):", r.error.message);   // v88: diagnostika
+  }).catch(() => {});
 }
 showAppVersion();
 

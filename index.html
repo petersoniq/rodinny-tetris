@@ -1393,6 +1393,7 @@ async function enterGame() {
   showStart();
   fitBoard();
   refreshPanels();
+  showAppVersion();                             // v87: po prihlásení sa verzia zapíše do profilu (vidí admin)
   flushQueue();
 }
 
@@ -1830,8 +1831,11 @@ async function showScores(r, el) {
 
 const pl = (n, a, b, c) => (n === 1 ? a : n >= 2 && n <= 4 ? b : c);      // slovenské tvary: 1 hráč, 2 hráči, 5 hráčov
 async function loadAdmin() {
-  const [u, c] = await Promise.all([db.rpc("admin_users"), db.rpc("admin_get_code")]);
+  const [u, c, v] = await Promise.all([db.rpc("admin_users"), db.rpc("admin_get_code"), db.rpc("admin_versions")]);   // v87: aj verzie appiek
   if (u.error) return adminMsg("Chyba: " + u.error.message);
+  const verMap = {};
+  if (!v.error) (v.data || []).forEach(x => { verMap[x.id] = x.app_version; });
+  const curVer = Number((($("appVersion").textContent || "").match(/\d+/) || [])[0]) || null;
   $("codeAdmin").value = c.data || "";
   kodNaServeri = c.data || ""; if (!$("qrBox").hidden) renderQr();
   const hry = u.data.reduce((a, r) => a + Number(r.games), 0), blok = u.data.filter(r => r.is_blocked).length;
@@ -1849,6 +1853,10 @@ async function loadAdmin() {
     if (r.is_blocked) who.append(mk("span", "badge2 red", "blokovaný"));
     head.append(who, mk("span", "uchev", "▾"));
     const info = mk("div", "help", "max " + fmtN(r.best) + " · " + r.games + " " + pl(Number(r.games), "hra", "hry", "hier") + " · registrácia " + fmtDate(r.created_at) + " · naposledy " + fmtDate(r.last_sign_in));
+    const ver = verMap[r.id];                          // v87: posledná verzia appky, ktorú hráč mal zapnutú
+    const vspan = mk("span", "", " · appka " + (ver ? "v" + ver : "neznáma"));
+    if (ver && curVer && Number(ver) < curVer) { vspan.style.color = "var(--red-ink)"; vspan.textContent += " ⚠️ stará"; }
+    info.appendChild(vspan);
     const acts = mk("div", "uact"), detail = mk("div", "help udetail");
     if (r.id !== player.id) {   // sám seba blokovať, zmazať ani povyšovať nemožno
       acts.append(
@@ -3285,8 +3293,14 @@ async function showAppVersion() {
     const r = await fetch("sw.js", { cache: "no-cache" });
     const t = await r.text();
     const m = t.match(/tetris-v(\d+)/);
-    if (m) $("appVersion").textContent = "Verzia " + m[1];
+    if (m) {
+      $("appVersion").textContent = "Verzia " + m[1];
+      reportVersion(m[1]);                             // v87: verzia sa zapíše do účtu (vidí admin)
+    }
   } catch (e) { /* offline alebo nedostupný sw.js: zóstane neutrálne "Verzia…" */ }
+}
+function reportVersion(ver) {                          // v87: uloží poslednú použitú verziu appky do profilu
+  try { if (player && db && ver) db.rpc("set_app_version", { p_ver: ver }); } catch (e) {}
 }
 showAppVersion();
 

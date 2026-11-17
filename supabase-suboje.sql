@@ -107,3 +107,20 @@ grant execute on function duel_accept(uuid) to authenticated;
 grant execute on function duel_decline(uuid) to authenticated;
 grant execute on function duel_submit(uuid, int, int, int) to authenticated;
 grant execute on function weekly_league() to authenticated;
+
+-- 8) POSLEDNÁ VERZIA APPKY HRÁČA (pre prehľad admina)
+alter table profiles add column if not exists app_version text;
+
+create or replace function set_app_version(p_ver text) returns void
+language sql security definer set search_path = public as $$
+  update profiles set app_version = p_ver where id = auth.uid();
+$$;
+
+create or replace function admin_versions()
+returns table(id uuid, app_version text)
+language sql stable security definer set search_path = public as $$
+  select id, app_version from profiles order by username;
+$$;
+
+grant execute on function set_app_version(text) to authenticated;
+grant execute on function admin_versions() to authenticated;

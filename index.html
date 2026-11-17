@@ -437,6 +437,14 @@
             background: var(--overlay); padding: 18px; }
   #secret[hidden] { display: none; }
   .secretCard { max-width: 340px; width: 100%; text-align: center; }
+  /* ===== v86: súboje a liga ===== */
+  .duelRow { display: flex; gap: 8px; align-items: center; }
+  .duelSel { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--fill1); color: var(--text); font-size: 1rem; }
+  .duelIt { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 6px; }
+  .duelIt span { flex: 1; min-width: 0; }
+  #duelBanner { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-radius: 12px;
+    border: 1px solid var(--gold); background: var(--me-bg); margin: 0 0 6px; font-weight: 700; }
+  #duelBanner[hidden] { display: none; }
   .secretActs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0 8px; }
   :root[data-feast="halloween"] { --bg: #060409; --glow1: #2a1206; --glow2: #180a24;
     --gold: #F08C4A; --accent: #F08C4A; --chartline: #F08C4A; --heat-on: #F08C4A;
@@ -706,6 +714,7 @@
 <!-- ===== 2. HRA ===== -->
 <div id="tetrisFx" aria-hidden="true"></div>
 <div id="game" class="glass">
+  <div id="duelBanner" hidden><span id="duelBannerTxt" style="flex:1;min-width:0"></span><button id="duelAccept" class="sm" type="button">⚔️ Prijať</button><button id="duelDecline" class="sm ghost" type="button">✕</button></div>
   <div class="game-bg" aria-hidden="true">
     <span class="tp" data-s="I" style="--c:#5BC0EB; top:5%;  left:3%;  animation-duration:16s"></span>
     <span class="tp" data-s="O" style="--c:#E9C46A; top:12%; right:4%; animation-duration:13s; animation-delay:-3s"></span>
@@ -736,7 +745,7 @@
       <div class="lbl nextLbl">Ďalšia</div>
       <div class="nextSlot"><canvas id="next" width="120" height="120"></canvas><canvas id="next2" width="60" height="60"></canvas><canvas id="next3" width="60" height="60"></canvas></div>
     </div>
-    <div id="pMeta" class="sub hudMeta"><span class="chip">Riadky <span id="lines">0</span></span> <span class="chip">Úr. <span id="level">1</span><span id="lvLeft"></span></span> <span id="comboHud" class="chip"></span> <button id="updBadge" class="sm ghost" style="display:none" title="Klikni na obnovenie">↻ Nová verzia</button></div>
+    <div id="pMeta" class="sub hudMeta"><span class="chip">Riadky <span id="lines">0</span></span> <span class="chip">Úr. <span id="level">1</span><span id="lvLeft"></span></span> <span id="comboHud" class="chip"></span> <span id="powerChip" class="chip" style="display:none"></span> <button id="updBadge" class="sm ghost" style="display:none" title="Klikni na obnovenie">↻ Nová verzia</button></div>
   </div>
 
   <div id="main">
@@ -796,6 +805,20 @@
           <table id="leaderboard"></table>
           <button class="link" id="lbMore" type="button" hidden></button>
           <div class="sub" id="gapLine"></div>
+        </div>
+        <div class="card" id="pLeague">
+          <h2>🏆 Týždenná liga</h2>
+          <table id="leagueTbl"></table>
+          <div class="sub" id="leagueMsg" role="status" style="margin-top:6px">Súčet tvojich 3 najlepších hier tento týždeň. Víťaz týždňa získa korunu 👑.</div>
+        </div>
+        <div class="card" id="pDuels">
+          <h2>⚔️ Súboje 1 : 1</h2>
+          <div class="duelRow">
+            <select id="duelWho" class="duelSel" aria-label="Vyber súpera"></select>
+            <button id="duelNew" type="button">Vyzvať</button>
+          </div>
+          <div id="duelList" style="margin-top:10px"></div>
+          <div class="sub" id="duelMsg" role="status" style="margin-top:6px">Obaja hráte úplne rovnaké kocky. Vyhráva vyššie skóre.</div>
         </div>
         <div class="card" id="pHall">
           <h2>🏛️ Sieň slávy</h2>
@@ -879,6 +902,7 @@
           <label class="tog"><span>👻 Tieň kocky (ukáže, kde dopadne)</span><input type="checkbox" id="optGhost"></label>
           <label class="tog"><span>👁 Náhľad ďalších kociek (2. a 3.)</span><input type="checkbox" id="optPreview"></label>
           <label class="tog"><span>🧩 Combo štítok v lište</span><input type="checkbox" id="optCombo"></label>
+          <label class="tog"><span>🎁 Bonusové kocky (💥 🧊 🔮)</span><input type="checkbox" id="optPower"></label>
           <div class="sub" id="gameMsg" role="status"></div>
         </div>
         <div class="card" id="pSet">
@@ -1254,7 +1278,7 @@ function casText(iso) {
 
 /* ===== NASTAVENIA (zvuk, vibrácie): ukladajú sa v tomto zariadení, predvolene sú vypnuté ===== */
 const SETTINGS_KEY = "rodinnyTetris_nastavenia";
-const nast = Object.assign({ sound: false, vibrate: false },
+const nast = Object.assign({ sound: false, vibrate: false, powerups: true },
   (() => { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch (e) { return {}; } })());
 const saveNast = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(nast)); } catch (e) {} };
 const canVibrate = "vibrate" in navigator;
@@ -1513,6 +1537,112 @@ async function refreshPanels() {
   const cakaju = readQueue(queueKey(me)).length;
   const serie = lastStats && lastStats.cur_streak > 0 ? " · séria: " + lastStats.cur_streak + " " + dniText(lastStats.cur_streak) : "";
   if (!cnt.error) $("myStats").textContent = "Odohraté hry: " + cnt.count + serie + (cakaju ? " · čaká na odoslanie: " + cakaju : "");
+  loadLeague();                                                       // v86: týždenná liga
+  loadDuels();                                                        // v86: súboje
+}
+
+/* ===== v86: TÝŽDENNÁ LIGA – súčet 3 najlepších hier tohto týždňa, víťaz dostane korunu ===== */
+async function loadLeague() {
+  if (!player) return;
+  const me = player;
+  const r = await db.rpc("weekly_league");
+  if (player !== me) return;
+  if (r.error) { $("leagueMsg").textContent = "Liga vyžaduje aktualizáciu databázy – spusti v Supabase súbor supabase-suboje.sql."; return; }
+  const rows = r.data || [];
+  if (!rows.length) { $("leagueTbl").textContent = ""; $("leagueMsg").textContent = "Tento týždeň ešte nikto nehral. Zahraj prvú hru! 🎮"; return; }
+  fillTable($("leagueTbl"), rows.map((u, i) => [i === 0 ? "👑" : (MEDAL[i] || i + 1), u.username, fmtN(u.total)]),
+    k => rows[k].username === (player && player.username), k => rows[k].color);
+  $("leagueMsg").textContent = "Súčet tvojich 3 najlepších hier tento týždeň. Víťaz týždňa získa korunu 👑.";
+}
+
+/* ===== v86: SÚBOJE 1 : 1 – obaja hrajú rovnakú sekvenciu kociek (rovnaký seed), vyhráva vyššie skóre ===== */
+let duel = null, duelRng = null, duelListData = [];
+const mulberry32 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+async function loadDuels() {
+  if (!player) return;
+  const me = player;
+  const r = await db.rpc("my_duels");
+  if (player !== me) return;
+  if (r.error) { $("duelMsg").textContent = "Súboje vyžadujú aktualizáciu databázy – spusti v Supabase súbor supabase-suboje.sql."; return; }
+  duelListData = r.data || [];
+  renderDuels();
+}
+function renderDuels() {
+  const sel = $("duelWho");
+  sel.innerHTML = "";
+  lbData.filter(u => player && u.username !== player.username).forEach(u => {
+    const o = document.createElement("option");
+    o.value = u.username; o.textContent = (u.emoji ? u.emoji + " " : "") + u.username;
+    sel.appendChild(o);
+  });
+  const L = $("duelList"); L.textContent = "";
+  duelListData.forEach(d => {
+    const ja = d.role === "c", opp = ja ? d.opponent : d.challenger;
+    const row = document.createElement("div"); row.className = "duelIt";
+    const info = document.createElement("span");
+    const btn = (txt, fn, ghost) => { const b = document.createElement("button"); b.type = "button"; b.textContent = txt; if (ghost) b.className = "sm ghost"; b.onclick = fn; return b; };
+    if (d.status === "pending" && !ja) {
+      info.textContent = "⚔️ Výzva od " + opp;
+      row.append(info, btn("Prijať", () => duelAccept(d)), btn("Odmietnuť", () => duelDecline(d), true));
+    } else if (d.status === "pending") {
+      info.textContent = "⏳ Čaká sa na " + opp + " – môžeš už hrať, výzva platí 7 dní.";
+      row.append(info);
+    } else if (d.status === "active") {
+      info.textContent = "🎮 Súboj s " + opp + " prebieha";
+      row.append(info, btn("Zahrať", () => startDuel(d)));
+    } else if (d.status === "done") {
+      const my = ja ? d.c_score : d.o_score, op = ja ? d.o_score : d.c_score;
+      if (my == null) info.textContent = "⏳ Výsledok čaká na teba – súboj s " + opp;
+      else if (op == null) info.textContent = "✅ Odohrané (" + fmtN(my) + ") · čaká sa na " + opp;
+      else info.textContent = (my > op ? "🏆 Výhra nad " : my < op ? "😮 Prehra s " : "🤝 Remíza s ") + opp + " " + fmtN(my) + " : " + fmtN(op);
+      row.append(info);
+    }
+    L.appendChild(row);
+  });
+  const pend = duelListData.find(d => d.status === "pending" && d.role === "o");
+  $("duelBanner").hidden = !pend;
+  if (pend) $("duelBannerTxt").textContent = "⚔️ " + pend.challenger + " ťa vyzýva na súboj!";
+}
+function startDuel(d) {
+  duel = { id: d.duel_id, role: d.role, opp: d.role === "c" ? d.opponent : d.challenger };
+  duelRng = mulberry32(Number(d.seed) || 1);
+  bag = [];                                                            // rovnaký štart pre oboch
+  closeSheet(); showView("board"); newGame();
+  loadDuels();                                                         // banner/list sa obnoví
+}
+async function duelAccept(d) {
+  const r = await db.rpc("duel_accept", { p_duel: d.duel_id });
+  if (r.error) { $("duelMsg").textContent = "Nepodarilo sa prijať: " + r.error.message; return; }
+  startDuel(d);
+}
+async function duelDecline(d) {
+  await db.rpc("duel_decline", { p_duel: d.duel_id });
+  loadDuels();
+}
+$("duelNew").onclick = async () => {
+  const who = $("duelWho").value;
+  if (!who) { $("duelMsg").textContent = "Najprv si zahraj hru, aby sa načítal rebríček rodiny."; return; }
+  $("duelMsg").textContent = "Otváram súboj…";
+  const r = await db.rpc("create_duel", { p_opponent: who });
+  if (r.error) { $("duelMsg").textContent = "Nepodarilo sa: " + r.error.message; return; }
+  $("duelMsg").textContent = "⚔️ Výzva odoslaná hráčovi " + who + ". Môžeš začať hrať rovno teraz!";
+  startDuel({ duel_id: r.data.id, seed: r.data.seed, role: "c", opponent: who });
+};
+$("duelAccept").onclick = () => { const p = duelListData.find(d => d.status === "pending" && d.role === "o"); if (p) duelAccept(p); };
+$("duelDecline").onclick = () => { const p = duelListData.find(d => d.status === "pending" && d.role === "o"); if (p) duelDecline(p); };
+async function finishDuel() {                                          // odoslanie výsledku súboja po konci hry
+  const d = duel; duel = null; duelRng = null;
+  const r = await db.rpc("duel_submit", { p_duel: d.id, p_score: score, p_lines: lines, p_level: level });
+  const q = await db.rpc("my_duels");
+  const dd = q.error ? null : (q.data || []).find(x => x.duel_id === d.id);
+  let extra = "";
+  if (dd && dd.status === "done") {
+    const my = d.role === "c" ? dd.c_score : dd.o_score, op = d.role === "c" ? dd.o_score : dd.c_score;
+    if (op != null) extra = (my > op ? "🏆 VYHRAL SI súboj s " : my < op ? "😮 Prehral si so " : "🤝 Remíza s ") + d.opp + " " + fmtN(my) + " : " + fmtN(op);
+  }
+  if (!extra) extra = "⚔️ Súboj s " + d.opp + " odohraný" + (r.error ? " (výsledok sa nepodarilo odoslať)" : "") + " – výsledok uvidíš v sekcii Súboje.";
+  $("overlayText").innerHTML += "<br><span style='color:var(--accent);font-weight:700'>" + extra + "</span>";
+  loadDuels();
 }
 
 /* ===== ČAKAJÚCE SKÓRE: ak sa odoslanie nepodarí (výpadok siete), skóre sa uloží v zariadení a odošle neskôr ===== */
@@ -1773,6 +1903,12 @@ $("pPlayer").onclick = openSheet;
 $("closeSheet").onclick = closeSheet;
 document.querySelectorAll("#admTabs .chip").forEach(b => { b.onclick = () => showAdminView(b.dataset.a); });
 $("optSound").checked = nast.sound;
+$("optPower").checked = nast.powerups !== false;                       // v86: bonusové kocky
+$("optPower").onchange = e => {
+  nast.powerups = e.target.checked; saveNast();
+  $("gameMsg").textContent = e.target.checked ? "🎁 Bonusové kocky zapnuté – každá 12. kocka nesie bonus." : "🎁 Bonusové kocky vypnuté.";
+  try { db.rpc("set_setting", { p_key: "powerups", p_value: e.target.checked }); } catch (err) {}   // ak databáza kľúč ešte nepozná, platí aspoň v tomto zariadení
+};
 $("optVibe").checked = nast.vibrate && canVibrate;
 $("optSound").onchange = e => { nast.sound = e.target.checked; saveNast(); if (nast.sound) { unlockAudio(); sfx("rotate"); } };
 $("optVibe").onchange = e => { nast.vibrate = e.target.checked; saveNast(); if (nast.vibrate) vibrate(40); };
@@ -2594,6 +2730,29 @@ const ctx = $("board").getContext("2d");
 const nctx = $("next").getContext("2d");
 const n2ctx = $("next2").getContext("2d"), n3ctx = $("next3").getContext("2d");
 const hctx = $("hold").getContext("2d");                              // v79: odkladacia zásobka
+/* ===== v86: BONUSOVÉ KOCKY (power-upy) – každá 12. kocka nesie bonus, aktivuje sa pri dopade ===== */
+const POWERS = ["bomb", "ice", "crystal"];
+const POWER_TXT = { bomb: "💥 Bomba", ice: "🧊 Ľad", crystal: "🔮 Kryštáľ" };
+let power = null, iceUntil = 0;
+function updatePowerHud() {
+  const c = $("powerChip");
+  if (!power && performance.now() >= iceUntil) { c.style.display = "none"; return; }
+  c.style.display = "";
+  c.textContent = power ? POWER_TXT[power] : "🧊 " + Math.max(1, Math.ceil((iceUntil - performance.now()) / 1000)) + " s";
+}
+function applyPower() {                                // v86: efekt bonusu po uzamknutí kocky
+  if (!power) return;
+  if (power === "bomb") {                              // 💥 zmaže 2 spodné riadky (bez bodov – len záchrana)
+    grid.splice(ROWS - 2, 2);
+    while (grid.length < ROWS) grid.unshift(Array(COLS).fill(null));
+    gridRev++; spawnConfetti([ROWS - 2, ROWS - 1]); sfx("clear", 2); vibrate([60, 40, 60]);
+  } else if (power === "ice") {                        // 🧊 gravitácia stojí 8 sekúnd
+    iceUntil = performance.now() + 8000; sfx("level");
+  } else if (power === "crystal") {                    // 🔮 ďalšia kocka je I-čko
+    nextType = "I"; drawNext(); sfx("level");
+  }
+  power = null; updatePowerHud();
+}
 const GOLD = "#F7C948";                                               // v79: zlatá kocka
 let holdType = null, holdUsed = false, holdGold = false, pieceCount = 0, goldPiece = false;   // v79
 const pieceColor = t => (goldPiece && current && current.type === t) ? GOLD : SHAPES[t].color;   // farba padajúcej kocky (zlatá = bonusová)
@@ -2608,10 +2767,11 @@ const emptyGrid = () => Array.from({ length: ROWS }, () => Array(COLS).fill(null
 /* Náhodný výber tvaru (7-bag: každý tvar príde raz za sedem kociek) */
 let bag = [];
 function randomType() {
+  const rnd = duelRng || Math.random;              // v86: v súboji rovnaká sekvencia kociek pre oboch
   if (!bag.length) {
     bag = [...TYPES];
     for (let i = bag.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(rnd() * (i + 1));
       [bag[i], bag[j]] = [bag[j], bag[i]];
     }
   }
@@ -2625,6 +2785,7 @@ function makePiece(type) {
 
 function newGame() {
   anim = null; gameId = newId(); tetrises = 0; gridRev++;
+  bag = [];                                            // v86: čerstvý "bag" – v súboji tak oboch padá úplne rovnaká sekvencia
   holdType = null; holdGold = false; holdUsed = false; pieceCount = 0; goldPiece = false;   // v79
   grid = emptyGrid(); score = 0; lines = 0; level = 1; combo = 0; b2b = false; updateComboHud();
   dropTimer = 0; lastTime = performance.now(); paused = false; running = true;
@@ -2638,6 +2799,8 @@ function newGame() {
 /* Vytvorí novú kocku; ak sa nezmestí, je koniec hry */
 function spawn() {
   pieceCount++; goldPiece = pieceCount % 20 === 0;                    // v79: každá 20. kocka je zlatá (2× body)
+  power = (nast.powerups !== false && !duel && pieceCount % 12 === 0) ? POWERS[Math.floor(Math.random() * POWERS.length)] : null;   // v86: každá 12. kocka nesie bonus (v súboji vypnuté kvôli férovosti)
+  updatePowerHud();
   holdUsed = false;
   current = makePiece(nextType);
   nextType = nextExtra.length ? nextExtra.shift() : randomType(); nextExtra.push(randomType());
@@ -2652,6 +2815,7 @@ function gameOver() {
   $("overlayText").innerHTML = "Koniec hry<br><span style='color:var(--accent)'>Skóre: " + score + "</span>";
   overlayMode = "over"; $("restartBtn").textContent = "Hrať znova"; $("newBtn").style.display = "none";
   $("overlay").style.display = "flex";
+  if (duel) finishDuel();                              // v86: výsledok súboja sa odošle a porovná
 }
 
 /* =========================================================
@@ -2759,6 +2923,7 @@ function lockPiece() {
   } else {
     sfx("drop"); vibrate(12);
     combo = 0; b2b = false; updateComboHud();      // v20: bez mazania sa combo preruší
+    applyPower();                                  // v86: bonusová kocka sa aktivuje pri dopade
     spawn();
   }
   updateStats();
@@ -2886,6 +3051,11 @@ function draw() {
   current.m.forEach((row, y) => row.forEach((v, x) => {
     if (v) drawCell(ctx, current.x + x, current.y + y, pieceColor(current.type), CELL);
   }));
+  if (power) {                                   // v86: pulzujúca biela žiara bonusovej kocky
+    ctx.save(); ctx.globalAlpha = .4 + .4 * Math.sin(performance.now() / 160); ctx.lineWidth = 3.5; ctx.strokeStyle = "#fff";
+    current.m.forEach((row, y) => row.forEach((v, x) => { if (v) { roundRectPath(ctx, (current.x + x) * CELL + 2, (current.y + y) * CELL + 2, CELL - 4, CELL - 4, 7); ctx.stroke(); } }));
+    ctx.restore();
+  }
   for (let i = confetti.length - 1; i >= 0; i--) {                  // v53: konfety padajú a miznú pod plochou
     const f = confetti[i]; f.x += f.vx; f.y += f.vy; f.vy += .25; f.r += f.vr;
     if (f.y > ROWS * CELL + 24) { confetti.splice(i, 1); continue; }
@@ -2934,13 +3104,14 @@ function loop(now) {
   try {                                       // v69: ani jedna prechodná chyba už nezastaví hru ani skóre
     const dt = now - lastTime; lastTime = now;
     if (anim) { if (now - anim.t0 >= anim.dur) finishClear(); }       // animácia mazania riadkov
+    else if (performance.now() < iceUntil) { dropTimer = 0; updatePowerHud(); }   // v86: 🧊 gravitácia stojí
     else {
       dropTimer += dt;
       const interval = Math.max(90, 800 - (level - 1) * 70);   // ms na 1 riadok
       if (dropTimer > interval) { dropTimer = 0; softDrop(); }
     }
     const sg = stateSig();
-    if (anim || confetti.length || sg !== drawnSig) { draw(); drawnSig = sg; }          // kreslí sa len pri zmene (alebo počas animácie)
+    if (anim || confetti.length || power || sg !== drawnSig) { draw(); drawnSig = sg; }          // kreslí sa len pri zmene (alebo počas animácie / bonusu)
   } catch (e) { console.error("Chyba v slučke hry:", e); }
   rafId = requestAnimationFrame(loop);
 }
